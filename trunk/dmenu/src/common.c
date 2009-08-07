@@ -1,3 +1,13 @@
+/*
+ *  Copyright (C) 2009 Rookie1 <mr.rookie1@gmail.com>
+ *
+ *  Author: <mr.rookie1@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
