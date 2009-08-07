@@ -1,0 +1,23 @@
+[0.4]
+- Added UTF8 support. UTF8 chars in theme.cfg name strings, and file selector
+will display the UTF8 chars accordingly. Font file specified by the theme need
+to contain the necessary chars.
+- Menu wrapping when left or right key pressed at begingng or eng of Menu
+respectively. Same for MenuItem (up/down).
+- File selector wrapping at begining and end of file list.
+- Easier file selection. Use Y + up/down to scroll 1 page at a time
+
+[0.3]
+- Fixed a display bug where the menu items above the mainmenu are overlapping
+- Execute programs directly instead of via '/bin/sh' to reduce memory usage
+- Re-structured config files to add theme support and reading config from
+application directories. See readme.txt for details.
+
+[0.2a]
+- Dynamically link against libconfuse since it's provided by the rootfs.
+- Remove the mechanism to restart dmenu after the executed program has finished.
+Not required since dmenu is respawn by init.
+- Added script local/sbin/main to run dmenu at system startup
+
+[0.1]
+Initial release
