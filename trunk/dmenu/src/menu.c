@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2009 Rookie1 <mr.rookie1@gmail.com>
+ *                     sca <scahoo <at> gmail <dot> com>
  *
  *  Author: <mr.rookie1@gmail.com>
  *
@@ -15,6 +16,7 @@
 #include "menu.h"
 #include "conf.h"
 #include "filelist.h"
+#include "persistent.h"
 
 extern cfg_t *cfg;
 cfg_t *m;
@@ -92,6 +94,10 @@ int menu_init()
             mi = cfg_getnsec(m, "MenuItem", j);
 
             tmp_surface = IMG_Load(cfg_getstr(mi, "Icon"));
+            if (!tmp_surface) {
+                printf("Failed to load %s: %s\n", cfg_getstr(mi, "Icon"), IMG_GetError());
+                return 1;
+            }
             menuitem_icons[i][j] = SDL_DisplayFormatAlpha(tmp_surface);
             SDL_FreeSurface(tmp_surface);
 
@@ -101,8 +107,16 @@ int menu_init()
         }
     }
 
-    current_menu_index = 0;
-    current_menuitem_index = 0;
+    // Restore menu position
+    current_menu_index     = g_persistent.current_menu;
+    current_menuitem_index = g_persistent.current_menuitem;
+
+    if (current_menu_index < 0 || current_menu_index >= number_of_menu) {
+        current_menu_index     = 0;
+        current_menuitem_index = 0;
+    } else if (current_menuitem_index < 0 || current_menuitem_index >= number_of_menuitem[current_menu_index]) {
+        current_menuitem_index = 0;
+    }
 
     TTF_CloseFont(menu_font);
     TTF_CloseFont(menuitem_font);
@@ -114,6 +128,10 @@ int menu_init()
 void menu_deinit()
 {
     int i, j;
+
+    // Save current menu state
+    g_persistent.current_menu     = current_menu_index;
+    g_persistent.current_menuitem = current_menuitem_index;
 
     SDL_FreeSurface(background);
     SDL_FreeSurface(cursor);
