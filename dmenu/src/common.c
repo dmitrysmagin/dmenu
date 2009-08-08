@@ -15,6 +15,7 @@
 #include <SDL.h>
 #include "filelist.h"
 #include "conf.h"
+#include "persistent.h"
 
 void run_internal_command(char* command, char* args, char* workdir);
 
@@ -83,6 +84,9 @@ void run_command(char* executable, char* args, char* workdir)
     char* filename;
     const char delimeter[] = " ";
     filename = strsep(&executable, delimeter);
+
+	// Save persistent memory
+	persistent_write();
 
     if (executable && (executable[0] != '\0')) {
         if (args)

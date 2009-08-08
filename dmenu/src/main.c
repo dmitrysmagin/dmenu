@@ -17,6 +17,7 @@
 #include "menu.h"
 #include "filelist.h"
 #include "conf.h"
+#include "persistent.h"
 
 enum MenuState state;
 
@@ -86,6 +87,15 @@ int main ( int argc, char** argv )
     // disable mouse pointer
     SDL_ShowCursor(SDL_DISABLE);
 
+    // Read saved persistent state
+    if (!persistent_init())
+    {
+        printf("Unable to initialize persistent memory\n");
+        return 1;
+    }
+    persistent_read();
+
+
     // init menu config
     if (menu_init())
     {
@@ -151,6 +161,9 @@ int main ( int argc, char** argv )
     menu_deinit();
     filelist_deinit();
     conf_unload();
+
+    // Write persistent data
+    persistent_write();
 
     // all is well ;)
     //printf("Exited cleanly\n");
