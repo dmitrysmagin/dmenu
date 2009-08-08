@@ -18,7 +18,7 @@
 #include "persistent.h"
 
 void run_internal_command(char* command, char* args, char* workdir);
-
+/*
 void fill_fb(Uint16* source)
 {
     int fbdev;
@@ -28,7 +28,7 @@ void fill_fb(Uint16* source)
     fb=(Uint16 *)mmap(0, 320*240*sizeof(Uint16), PROT_WRITE, MAP_SHARED, fbdev, 0);
     memcpy(fb, source, 320*240*sizeof(Uint16));
 }
-
+*/
 /*
 void run_command(char* executable, char* args, char* workdir)
 {

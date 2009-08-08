@@ -390,14 +390,16 @@ void filelist_left()
 
 }
 
-void filelist_run()
+// Since filelist_run() has multiple purpose, the next state
+// need to be returned from this function.
+enum MenuState filelist_run()
 {
     char file_name[PATH_MAX];
     int i = current_list_start+current_highlight;
 
     if (S_ISDIR(statlist[i].st_mode) && (!filelist_theme)) {
         filelist_right();
-        return;
+        return FILELIST;
     }
 
     if (filelist_theme) {
@@ -410,10 +412,19 @@ void filelist_run()
 
     filelist_deinit();
     //SDL_Quit();
+
+    // deinit menu as well if we are not coming back
+    if (!filelist_theme) menu_deinit();
+
     if (current_executable[0] != '\0')
         run_command(current_executable, file_name, work_path);
     else
         run_command(file_name, NULL, work_path);
+
+    // If this is theme selection, we will return here from
+    // run_command();
+    // If it's running a program, it will not return.
+    return MAINMENU;
 }
 
 enum MenuState filelist_keypress(SDLKey keysym)
@@ -439,8 +450,7 @@ enum MenuState filelist_keypress(SDLKey keysym)
         if (!filelist_theme) filelist_left();
     }
     else if (keysym == SDLK_LCTRL) {
-        filelist_run();
-        return MAINMENU;
+        return filelist_run();
     }
 
     return FILELIST;
