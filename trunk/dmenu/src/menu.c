@@ -209,12 +209,12 @@ void menu_draw(SDL_Surface* screen)
         done = 0;
 
         while (!done) {
-            SDL_SetAlpha(menuitem_icons[current_menu_index][currently_drawing_menuitem], SDL_SRCALPHA, 128);
-            SDL_BlitSurface(menuitem_icons[current_menu_index][currently_drawing_menuitem], 0, screen, &dstrect);
             txtrect.x = dstrect.x + menuitem_icons[current_menu_index][currently_drawing_menuitem]->w;
             txtrect.y = dstrect.y +
                         (menuitem_icons[current_menu_index][currently_drawing_menuitem]->h -
                          menuitem_text[current_menu_index][currently_drawing_menuitem]->h) / 2;
+            SDL_SetAlpha(menuitem_icons[current_menu_index][currently_drawing_menuitem], SDL_SRCALPHA, 128);
+            SDL_BlitSurface(menuitem_icons[current_menu_index][currently_drawing_menuitem], 0, screen, &dstrect);
             SDL_SetAlpha(menuitem_text[current_menu_index][currently_drawing_menuitem], SDL_SRCALPHA, 128);
             SDL_BlitSurface(menuitem_text[current_menu_index][currently_drawing_menuitem], 0, screen, &txtrect);
             if (dstrect.y <= 0) done = 1;
