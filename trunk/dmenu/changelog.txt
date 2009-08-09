@@ -6,6 +6,7 @@ to contain the necessary chars.
 respectively. Same for MenuItem (up/down).
 - File selector wrapping at begining and end of file list.
 - Easier file selection. Use Y + up/down to scroll 1 page at a time
+- Added OSD
 
 [0.3]
 - Fixed a display bug where the menu items above the mainmenu are overlapping
