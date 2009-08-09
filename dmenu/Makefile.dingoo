@@ -1,8 +1,8 @@
 TARGET	:= dmenu
 BUILD	:= build
 TOOLCHAINDIR := /opt/mipsel-linux-uclibc
-INCLS	:= src
-SOURCES	:= src
+INCLS	:= src ../dosd/include
+SOURCES	:= src ../dosd/src
 LIBPATH := $(TOOLCHAINDIR)/usr/lib
 
 ARCH	:= mipsel-linux-

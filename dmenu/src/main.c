@@ -18,6 +18,7 @@
 #include "filelist.h"
 #include "conf.h"
 #include "persistent.h"
+#include "dosd/dosd.h"
 
 enum MenuState state;
 
@@ -104,6 +105,9 @@ int main ( int argc, char** argv )
     }
 
     state = MAINMENU;
+    
+    // Init OSD
+    dosd_init(0xFFFFFF); // TODO: Get this from theme.cfg
 
     next_time = SDL_GetTicks() + TICK_INTERVAL;
 
@@ -147,6 +151,8 @@ int main ( int argc, char** argv )
         else if (state == FILELIST)
             filelist_draw(screen);
 
+        dosd_show(screen);
+        
         // DRAWING ENDS HERE
 
         // finally, update the screen :)
@@ -161,7 +167,8 @@ int main ( int argc, char** argv )
     menu_deinit();
     filelist_deinit();
     conf_unload();
-
+    dosd_deinit();
+    
     // Write persistent data
     persistent_write();
 

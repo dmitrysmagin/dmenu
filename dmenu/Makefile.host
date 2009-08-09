@@ -1,8 +1,8 @@
 TARGET	:= dmenu-host
 BUILD	:= build-host
 TOOLCHAINDIR := /
-INCLS	:= src ../confuse-2.6 ../confuse-2.6/src
-SOURCES	:= src ../confuse-2.6/src
+INCLS	:= src ../confuse-2.6 ../confuse-2.6/src ../dosd/include
+SOURCES	:= src ../confuse-2.6/src ../dosd/src
 LIBPATH := $(TOOLCHAINDIR)/usr/lib
 
 ARCH	:= 
