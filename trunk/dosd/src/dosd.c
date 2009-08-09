@@ -12,34 +12,33 @@
 #include "dosd/dosd.h"
 #include "dosd/images.h"
 
-#define GPIO_LOCK_MASK (0x400000)
+#define GPIO_LOCK_MASK    (0x400000)
+#define GPIO_POWER_MASK (0x10000000)
 
 typedef enum {
-    BAT_FULL  = 3794,
-    BAT_2     = 3743,
-    BAT_1     = 3692,
-    BAT_EMPTY = 0      // Voltage drops off below ~3636 mV
-} battery_state_t;
+    BAT_EMPTY = 0,
+    BAT_LV1,
+    BAT_LV2,
+    BAT_FULL,
+    BAT_MAX
+} battery_state_e;
 
 // ___ Globals ___________________________________________
-const battery_state_t c_battery_states[] = {
-    BAT_FULL, BAT_2, BAT_1, BAT_EMPTY
-};
-
 // Global state
 struct {
     FILE* proc_battery;
     FILE* proc_gpio;
     bool is_locked;
-    bool is_charging; // TODO: Implement this
-    battery_state_t battery;
+    bool is_charging;
+    battery_state_e battery;
+    int battery_anim;
+    unsigned int update_counter;
+    // Measured in SDL_GetTick()s
+    uint32_t next_update;
 } g_state;
 
-// Processes images
+// Processed images
 image_t g_images[IMG_MAX];
-
-// Measured in SDL_GetTick()s
-uint32_t g_next_update = 0;
 
 // ___ Functions ___________________________________________________
 void _blit(SDL_Surface *surface, image_e which_image, ...);
@@ -139,29 +138,33 @@ void dosd_deinit()
 
 void dosd_show(SDL_Surface* surface)
 {
-    if (SDL_GetTicks() >= g_next_update)
+    image_e battery_status;
+    
+    if (SDL_GetTicks() >= g_state.next_update)
         _update();
     
     // Battery
     _blit(surface, IMG_BATTERY, -1);
-    switch (g_state.battery)
+    // This is a bit of a hack, as it relies on battery_state_e
+    // To have the same index as image_e
+    battery_status = g_state.battery;
+    if (g_state.is_charging)
     {
-        case BAT_FULL:
-            _blit(surface, IMG_BATTERY_3, -1);
-            break;
+        if (g_state.update_counter > 0 && g_state.update_counter % 2 == 0)
+        {
+            // This happens every 2 * DOSD_UPDATE_INTERVAL ticks
+            g_state.battery_anim++;
+            g_state.update_counter = 0;
+        }
         
-        case BAT_2:
-            _blit(surface, IMG_BATTERY_2, -1);
-            break;
-        
-        case BAT_1:
-            _blit(surface, IMG_BATTERY_1, -1);
-            break;
-        
-        case BAT_EMPTY:
-            // TODO: Flash battery icon
-            break;
+        if (battery_status + g_state.battery_anim >= BAT_MAX)
+                g_state.battery_anim = 0;
+
+        battery_status += g_state.battery_anim;
     }
+   
+    if (battery_status != BAT_EMPTY)
+        _blit(surface, battery_status, -1);
     
     if (g_state.is_locked)
         _blit(surface, IMG_LOCK, IMG_BATTERY, -1);
@@ -206,7 +209,6 @@ void _update()
     char buf[128];
     int mvolts, i;
     uint32_t gpio;
-    battery_state_t bat_state;
     
     rewind(g_state.proc_battery);
     fgets(buf, 127, g_state.proc_battery);
@@ -217,24 +219,21 @@ void _update()
     sscanf(buf, "%x", &gpio);
     
     // Battery charge level
-    for (i = 0; i < 4; i++)
-    {
-        bat_state = c_battery_states[i];
-        if (mvolts >= bat_state)
-        {
-            g_state.battery = bat_state;
-            break;
-        }
-    }
+    if       (mvolts >= 3794) g_state.battery = BAT_FULL;
+    else if (mvolts >= 3743) g_state.battery = BAT_LV2;
+    else if (mvolts >= 3692) g_state.battery = BAT_LV1;
+    else                      g_state.battery = BAT_EMPTY;
     
     // Lock status
     g_state.is_locked   = !((bool)(gpio & GPIO_LOCK_MASK));
+    g_state.is_charging = ((bool)(gpio & GPIO_POWER_MASK));
 #else
     g_state.is_locked   = true;
-    g_state.is_charging = false;
-    g_state.battery     = BAT_FULL;
+    g_state.is_charging = true;
+    g_state.battery     = BAT_EMPTY;
 #endif
     
     // Next update
-    g_next_update       = SDL_GetTicks() + DOSD_UPDATE_INTERVAL;
+    g_state.next_update = SDL_GetTicks() + DOSD_UPDATE_INTERVAL;
+    g_state.update_counter++;
 }
