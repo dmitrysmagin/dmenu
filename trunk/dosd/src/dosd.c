@@ -145,27 +145,14 @@ void dosd_show(SDL_Surface* surface)
     
     // Battery
     _blit(surface, IMG_BATTERY, -1);
+    
     // This is a bit of a hack, as it relies on battery_state_e
     // To have the same index as image_e
-    battery_status = g_state.battery;
-    if (g_state.is_charging)
-    {
-        if (g_state.update_counter > 0 && g_state.update_counter % 2 == 0)
-        {
-            // This happens every 2 * DOSD_UPDATE_INTERVAL ticks
-            g_state.battery_anim++;
-            g_state.update_counter = 0;
-        }
-        
-        if (battery_status + g_state.battery_anim >= BAT_MAX)
-                g_state.battery_anim = 0;
-
-        battery_status += g_state.battery_anim;
-    }
-   
+    battery_status = g_state.is_charging ? g_state.battery_anim : g_state.battery;
     if (battery_status != BAT_EMPTY)
         _blit(surface, battery_status, -1);
     
+    // Lock
     if (g_state.is_locked)
         _blit(surface, IMG_LOCK, IMG_BATTERY, -1);
 }
@@ -224,7 +211,7 @@ void _update()
     else if (mvolts >= 3611) g_state.battery = BAT_LV1;
     else                     g_state.battery = BAT_EMPTY;
     
-    // Lock status
+    // Lock & charge status
     g_state.is_locked   = !((bool)(gpio & GPIO_LOCK_MASK));
     g_state.is_charging = !((bool)(gpio & GPIO_POWER_MASK));
 #else
@@ -236,4 +223,12 @@ void _update()
     // Next update
     g_state.next_update = SDL_GetTicks() + DOSD_UPDATE_INTERVAL;
     g_state.update_counter++;
+    
+    if (g_state.is_charging && g_state.update_counter % 2 == 0)
+    {
+        // This happens every 2 * DOSD_UPDATE_INTERVAL ticks
+        g_state.battery_anim++;
+        if (g_state.battery_anim >= BAT_MAX)
+            g_state.battery_anim = BAT_EMPTY;
+    }
 }
