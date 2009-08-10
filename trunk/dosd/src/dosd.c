@@ -207,7 +207,7 @@ void _update()
 {
 #ifdef DINGOO_BUILD
     char buf[128];
-    int mvolts, i;
+    int mvolts;
     uint32_t gpio;
     
     rewind(g_state.proc_battery);
@@ -219,14 +219,14 @@ void _update()
     sscanf(buf, "%x", &gpio);
     
     // Battery charge level
-    if       (mvolts >= 3794) g_state.battery = BAT_FULL;
-    else if (mvolts >= 3743) g_state.battery = BAT_LV2;
-    else if (mvolts >= 3692) g_state.battery = BAT_LV1;
-    else                      g_state.battery = BAT_EMPTY;
+    if      (mvolts >= 3739) g_state.battery = BAT_FULL;
+    else if (mvolts >= 3675) g_state.battery = BAT_LV2;
+    else if (mvolts >= 3611) g_state.battery = BAT_LV1;
+    else                     g_state.battery = BAT_EMPTY;
     
     // Lock status
     g_state.is_locked   = !((bool)(gpio & GPIO_LOCK_MASK));
-    g_state.is_charging = ((bool)(gpio & GPIO_POWER_MASK));
+    g_state.is_charging = !((bool)(gpio & GPIO_POWER_MASK));
 #else
     g_state.is_locked   = true;
     g_state.is_charging = true;
