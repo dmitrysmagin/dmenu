@@ -137,6 +137,9 @@ int main ( int argc, char** argv )
                     // exit if ESCAPE is pressed
                     if (event.key.keysym.sym == SDLK_ESCAPE)
                         done = 1;
+                    
+                    if (dosd_is_locked())
+                        continue;
 
                     if (state == MAINMENU)
                         state = menu_keypress(event.key.keysym.sym);
