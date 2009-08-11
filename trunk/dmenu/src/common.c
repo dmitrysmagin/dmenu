@@ -15,8 +15,8 @@
 #include <SDL.h>
 #include "filelist.h"
 #include "conf.h"
-#include "persistent.h"
 #include "menu.h"
+#include "dosd/dosd.h"
 
 void run_internal_command(char* command, char* args, char* workdir);
 /*
@@ -96,8 +96,6 @@ void run_command(char* executable, char* args, char* workdir)
     conf_unload();
     dosd_deinit();
 
-    persistent_write();
-
     if (executable && (executable[0] != '\0')) {
         if (args)
             execlp(filename, filename, executable, args, NULL);
@@ -113,7 +111,9 @@ void run_command(char* executable, char* args, char* workdir)
     // it should not return, otherwise it means we are not able to execute the application
     printf("Unable to execute %s\n", executable);
     perror(0);
-    exit(1);
+    
+    // Exit without calling any atexit() functions
+    _exit(1);
 }
 
 void run_internal_command(char* command, char* args, char* workdir)

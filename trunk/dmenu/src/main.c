@@ -74,6 +74,9 @@ int main ( int argc, char** argv )
         return 1;
     }
 
+    // make sure SDL cleans up before exit
+    atexit(SDL_Quit);
+    
     // create a new window
     SDL_Surface* screen = SDL_SetVideoMode(320, 240, 16, SDL_SWSURFACE);
     if ( !screen )
@@ -89,10 +92,7 @@ int main ( int argc, char** argv )
     if (!persistent_init())
     {
         printf("Unable to initialize persistent memory\n");
-        return 1;
     }
-    persistent_read();
-
 
     // init menu config
     if (menu_init())
@@ -172,13 +172,6 @@ int main ( int argc, char** argv )
     filelist_deinit();
     conf_unload();
     dosd_deinit();
-    
-    // Write persistent data
-    persistent_write();
-    
-    // Manually clean up SDL, otherwise it'll be called twice
-    // in run_command()
-    SDL_Quit();
 
     // all is well ;)
     //printf("Exited cleanly\n");

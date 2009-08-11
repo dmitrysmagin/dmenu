@@ -108,8 +108,8 @@ int menu_init()
     }
 
     // Restore menu position
-    current_menu_index     = g_persistent.current_menu;
-    current_menuitem_index = g_persistent.current_menuitem;
+    current_menu_index     = g_persistent->current_menu;
+    current_menuitem_index = g_persistent->current_menuitem;
 
     if (current_menu_index < 0 || current_menu_index >= number_of_menu) {
         current_menu_index     = 0;
@@ -130,8 +130,8 @@ void menu_deinit()
     int i, j;
 
     // Save current menu state
-    g_persistent.current_menu     = current_menu_index;
-    g_persistent.current_menuitem = current_menuitem_index;
+    g_persistent->current_menu     = current_menu_index;
+    g_persistent->current_menuitem = current_menuitem_index;
 
     SDL_FreeSurface(background);
     SDL_FreeSurface(cursor);

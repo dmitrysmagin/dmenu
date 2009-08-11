@@ -16,10 +16,8 @@ typedef struct {
     int current_menu, current_menuitem;
 } persistent_t;
 
-extern persistent_t g_persistent;
+extern persistent_t* g_persistent;
 
 int persistent_init();
-void persistent_read();
-void persistent_write();
 
 #endif//__PERSISTENT_H__
