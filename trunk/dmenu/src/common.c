@@ -16,6 +16,7 @@
 #include "filelist.h"
 #include "conf.h"
 #include "persistent.h"
+#include "menu.h"
 
 void run_internal_command(char* command, char* args, char* workdir);
 /*
@@ -85,8 +86,17 @@ void run_command(char* executable, char* args, char* workdir)
     const char delimeter[] = " ";
     filename = strsep(&executable, delimeter);
 
-	// Save persistent memory
-	persistent_write();
+    /* Call destructors, otherwise open FDs will be leaked to the
+       exec()'ed process.
+       Yes, this is ugly. If another situation like this arises we should write
+       a custom atexit implementation.
+    */    
+    menu_deinit();
+    filelist_deinit();
+    conf_unload();
+    dosd_deinit();
+
+    persistent_write();
 
     if (executable && (executable[0] != '\0')) {
         if (args)

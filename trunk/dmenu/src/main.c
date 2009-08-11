@@ -74,9 +74,6 @@ int main ( int argc, char** argv )
         return 1;
     }
 
-    // make sure SDL cleans up before exit
-    atexit(SDL_Quit);
-
     // create a new window
     SDL_Surface* screen = SDL_SetVideoMode(320, 240, 16, SDL_SWSURFACE);
     if ( !screen )
@@ -178,6 +175,10 @@ int main ( int argc, char** argv )
     
     // Write persistent data
     persistent_write();
+    
+    // Manually clean up SDL, otherwise it'll be called twice
+    // in run_command()
+    SDL_Quit();
 
     // all is well ;)
     //printf("Exited cleanly\n");
