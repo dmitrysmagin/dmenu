@@ -107,7 +107,11 @@ int main ( int argc, char** argv )
     state = MAINMENU;
     
     // Init OSD
-    dosd_init(0xFFFFFF); // TODO: Get this from theme.cfg
+    if (!dosd_init(0xFFFFFF))
+    {
+        printf("Unable to initialize OSD\n");
+        return 1;
+    }
 
     next_time = SDL_GetTicks() + TICK_INTERVAL;
 
