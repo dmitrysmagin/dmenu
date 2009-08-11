@@ -6,14 +6,12 @@
  * published by the Free Software Foundation.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <stdarg.h>
 #include "dosd/dosd.h"
 #include "dosd/images.h"
 
 #define GPIO_LOCK_MASK    (0x400000)
-#define GPIO_POWER_MASK (0x10000000)
+#define GPIO_POWER_MASK (0x40000000)
 
 typedef enum {
     BAT_EMPTY = 0,
@@ -27,7 +25,8 @@ typedef enum {
 // Global state
 struct {
     FILE* proc_battery;
-    FILE* proc_gpio;
+    FILE* proc_gpio3;
+    FILE* proc_gpio1;
     bool is_locked;
     bool is_charging;
     battery_state_e battery;
@@ -56,8 +55,11 @@ int dosd_init(uint32_t color)
     g_state.proc_battery = fopen("/proc/jz/battery", "rb");
     if (!g_state.proc_battery) goto init_error;
     
-    g_state.proc_gpio = fopen("/proc/jz/gpio3_pxpin", "rb");
-    if (!g_state.proc_gpio) goto init_error;
+    g_state.proc_gpio1 = fopen("/proc/jz/gpio1_pxpin", "rb");
+    if (!g_state.proc_gpio1) goto init_error;
+    
+    g_state.proc_gpio3 = fopen("/proc/jz/gpio3_pxpin", "rb");
+    if (!g_state.proc_gpio3) goto init_error;
 #endif
     
     // Make room for alpha "channel"
@@ -125,8 +127,11 @@ void dosd_deinit()
     if (g_state.proc_battery)
         fclose(g_state.proc_battery);
     
-    if (g_state.proc_gpio)
-        fclose(g_state.proc_gpio);
+    if (g_state.proc_gpio1)
+        fclose(g_state.proc_gpio1);
+    
+    if (g_state.proc_gpio3)
+        fclose(g_state.proc_gpio3);
 #endif
     
     for (i = 0; i < IMG_MAX; i++)
@@ -155,6 +160,11 @@ void dosd_show(SDL_Surface* surface)
     // Lock
     if (g_state.is_locked)
         _blit(surface, IMG_LOCK, IMG_BATTERY, -1);
+}
+
+inline bool dosd_is_locked()
+{
+    return g_state.is_locked;
 }
 
 // ___ Helpers ___________________________________________________
@@ -201,21 +211,31 @@ void _update()
     fgets(buf, 127, g_state.proc_battery);
     sscanf(buf, "%d", &mvolts);
     
-    rewind(g_state.proc_gpio);
-    fgets(buf, 127, g_state.proc_gpio);
+#if 0
+    // Charge status
+    rewind(g_state.proc_gpio1);
+    fgets(buf, 127, g_state.proc_gpio1);
     sscanf(buf, "%x", &gpio);
+    
+    // FIXME: the GPIO bit indicating charge status seems
+    // to randomly jump when a USB cable is attached.
+    g_state.is_charging = ((gpio & GPIO_POWER_MASK) == 0);
+#endif
+    
+    // Lock status
+    rewind(g_state.proc_gpio3);
+    fgets(buf, 127, g_state.proc_gpio3);
+    sscanf(buf, "%x", &gpio);
+    
+    g_state.is_locked = ((gpio & GPIO_LOCK_MASK) == 0);
     
     // Battery charge level
     if      (mvolts >= 3739) g_state.battery = BAT_FULL;
     else if (mvolts >= 3675) g_state.battery = BAT_LV2;
     else if (mvolts >= 3611) g_state.battery = BAT_LV1;
     else                     g_state.battery = BAT_EMPTY;
-    
-    // Lock & charge status
-    g_state.is_locked   = !((bool)(gpio & GPIO_LOCK_MASK));
-    g_state.is_charging = !((bool)(gpio & GPIO_POWER_MASK));
 #else
-    g_state.is_locked   = true;
+    g_state.is_locked   = false;
     g_state.is_charging = true;
     g_state.battery     = BAT_EMPTY;
 #endif
