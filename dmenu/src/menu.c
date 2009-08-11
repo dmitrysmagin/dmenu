@@ -320,8 +320,6 @@ void menuitem_previous()
 
 void menuitem_run()
 {
-    menu_deinit();
-    //SDL_Quit();
     run_command(cfg_getstr(mi, "Executable"), NULL, cfg_getstr(mi, "WorkDir"));
 }
 
