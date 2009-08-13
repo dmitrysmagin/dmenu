@@ -410,12 +410,6 @@ enum MenuState filelist_run()
         strcat(file_name, namelist[i]->d_name);
     }
 
-    filelist_deinit();
-    //SDL_Quit();
-
-    // deinit menu as well if we are not coming back
-    if (!filelist_theme) menu_deinit();
-
     if (current_executable[0] != '\0')
         run_command(current_executable, file_name, work_path);
     else
