@@ -2,11 +2,13 @@
 - Added UTF8 support. UTF8 chars in theme.cfg name strings, and file selector
 will display the UTF8 chars accordingly. Font file specified by the theme need
 to contain the necessary chars.
-- Menu wrapping when left or right key pressed at begingng or eng of Menu
+- Menu wrapping when left or right key pressed at begining or end of Menu
 respectively. Same for MenuItem (up/down).
 - File selector wrapping at begining and end of file list.
 - Easier file selection. Use Y + up/down to scroll 1 page at a time
-- Added OSD
+- Added OSD.
+- Menuitem text overlapping problem should be fixed now.
+- Fixed problem of passing multiple args when launching a program 
 
 [0.3]
 - Fixed a display bug where the menu items above the mainmenu are overlapping
