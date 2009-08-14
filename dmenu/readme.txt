@@ -8,10 +8,8 @@ original XMB-like menu comes with the stock Dingoo A320 firmware.
 Installation
 ------------
 All files of Dmenu need to go to /usr/local/dmenu. To start dmenu on system start,
-use a shell script as /usr/local/sbin/main to start dmenu.
-
-Due to an unknown bug, dmenu cannot be directly run as /usr/local/sbin/main at the
-moment.
+use a shell script as /usr/local/sbin/main to start dmenu, or copy dmenu to
+/usr/local/sbin/main.
 
 
 Keys
@@ -23,9 +21,11 @@ up, down key - select menu item
 A key - run the selected menu item
 Select key - exit dmenu
 
+
 In file selector menu,
 
 up, down key - select file
+Y + up/down key - page up/down
 left - change to the parent directory
 right - go to the selected directory
 A key - run the selected file or go to the selected directory

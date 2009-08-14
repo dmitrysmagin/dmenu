@@ -80,11 +80,35 @@ void run_command(char* executable, char* args, char* workdir)
         perror(0);
     }
 
-    // separate the executable file name from the rest of command line,
-    // in case there are arguments specified in the config file
-    char* filename;
+    // the system ARG_MAX might be too large. just use a fixed
+    // value here.
+#define MAX_CMD_LEN 4096
+    char *commandline = malloc(MAX_CMD_LEN);
+
+    // commandline = executable + args
+    strcpy(commandline, executable);
+    if (args) {
+        strcat(commandline, " ");
+        strcat(commandline, args);
+    }
+
+    // build the args list for exec()
+    char** args_list = NULL;
+    char* token;
+    int args_list_size = 0;
     const char delimeter[] = " ";
-    filename = strsep(&executable, delimeter);
+    while ((token = strsep(&commandline, delimeter))) {
+        if (token[0] != '\0') {
+            args_list_size ++;
+            args_list = realloc(args_list, args_list_size * sizeof(char*));
+            args_list[args_list_size-1] = token;
+        }
+    }
+
+    // add null poiner as the last arg
+    args_list_size ++;
+    args_list = realloc(args_list, args_list_size * sizeof(char*));
+    args_list[args_list_size-1] = NULL;
 
     /* Call destructors, otherwise open FDs will be leaked to the
        exec()'ed process.
@@ -96,20 +120,17 @@ void run_command(char* executable, char* args, char* workdir)
     conf_unload();
     dosd_deinit();
 
-    if (executable && (executable[0] != '\0')) {
-        if (args)
-            execlp(filename, filename, executable, args, NULL);
-        else
-            execlp(filename, filename, executable, NULL);
-    } else {
-        if (args)
-            execlp(filename, filename, args, NULL);
-        else
-            execlp(filename, filename, NULL);
-    }
+    // launch the program
+    execvp(args_list[0], args_list);
 
     // it should not return, otherwise it means we are not able to execute the application
-    printf("Unable to execute %s\n", executable);
+    printf("Unable to execute. Command line - ");
+    int i=0;
+    while (args_list[i]) {
+        printf("%s ", args_list[i]);
+        i++;
+    }
+    printf("\n");
     perror(0);
     
     // Exit without calling any atexit() functions
