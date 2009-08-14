@@ -67,6 +67,7 @@ void run_command(char* executable, char* args, char* workdir)
 void run_command(char* executable, char* args, char* workdir)
 {
     int rc;
+    char *workdir_copy = strdup(workdir);
 
     if (executable[0] == '!') {
         run_internal_command(executable, args, workdir);
@@ -74,11 +75,6 @@ void run_command(char* executable, char* args, char* workdir)
     }
 
     SDL_Quit();
-    rc = chdir(workdir);
-    if (rc != 0) {
-        printf("Unable to change to directory %s\n", workdir);
-        perror(0);
-    }
 
     // the system ARG_MAX might be too large. just use a fixed
     // value here.
@@ -119,6 +115,12 @@ void run_command(char* executable, char* args, char* workdir)
     filelist_deinit();
     conf_unload();
     dosd_deinit();
+
+    rc = chdir(workdir_copy);
+    if (rc != 0) {
+        printf("Unable to change to directory %s\n", workdir_copy);
+        perror(0);
+    }
 
     // launch the program
     execvp(args_list[0], args_list);
