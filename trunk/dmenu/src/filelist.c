@@ -279,7 +279,10 @@ void filelist_up()
         }
         current_list_start = num_of_files - files_per_page;
         if (current_list_start < 0) current_list_start = 0;
-        current_highlight = files_per_page - 1;
+        if (num_of_files > files_per_page)
+            current_highlight = files_per_page - 1;
+        else
+            current_highlight = num_of_files - 1;
         filelist_fill();
     }
 
@@ -413,7 +416,7 @@ enum MenuState filelist_run()
     if (current_executable[0] != '\0')
         run_command(current_executable, file_name, work_path);
     else
-        run_command(file_name, NULL, work_path);
+        run_command(file_name, NULL, current_path);
 
     // If this is theme selection, we will return here from
     // run_command();
