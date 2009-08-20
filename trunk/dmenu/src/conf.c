@@ -18,12 +18,23 @@
 
 #define is_set(f, x) (((f) & (x)) == (f))
 
+cfg_opt_t submenuitem_opts[] = {
+    CFG_STR("Icon", 0, CFGF_NONE),
+    CFG_STR("Name", 0, CFGF_NONE),
+    CFG_STR("Executable", 0, CFGF_NONE),
+    CFG_STR("WorkDir", ".", CFGF_NONE),
+    CFG_BOOL("Selector", cfg_false, CFGF_NONE),
+    CFG_END()
+};
+
 cfg_opt_t menuitem_opts[] = {
     CFG_STR("Icon", 0, CFGF_NONE),
     CFG_STR("Name", 0, CFGF_NONE),
     CFG_STR("Executable", 0, CFGF_NONE),
-    CFG_STR("WorkDir", 0, CFGF_NONE),
+    CFG_STR("WorkDir", ".", CFGF_NONE),
     CFG_BOOL("Selector", cfg_false, CFGF_NONE),
+    CFG_SEC("SubMenuItem", submenuitem_opts, CFGF_MULTI | CFGF_TITLE),
+    CFG_FUNC("include", cfg_include),
     CFG_END()
 };
 
@@ -142,7 +153,8 @@ int conf_load()
         number_of_menuitem = cfg_size(m, "MenuItem");
         for (j=0;j<number_of_menuitem;j++) {
             mi = cfg_getnsec(m, "MenuItem", j);
-            if (strcmp(cfg_getstr(mi, "Executable"), COMMAND_THEMESELECT) == 0) {
+            if (cfg_getstr(mi, "Executable") &&
+                (strcmp(cfg_getstr(mi, "Executable"), COMMAND_THEMESELECT) == 0)) {
                 cfg_setbool(mi, "Selector", cfg_true);
                 cfg_setstr(mi, "WorkDir", "..");
             }
