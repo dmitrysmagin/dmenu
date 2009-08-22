@@ -10,6 +10,7 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <sys/mman.h>
 #include <SDL.h>
@@ -83,10 +84,6 @@ void run_command(char* executable, char* args, char* workdir)
 
     // commandline = executable + args
     strcpy(commandline, executable);
-    if (args) {
-        strcat(commandline, " ");
-        strcat(commandline, args);
-    }
 
     // build the args list for exec()
     char** args_list = NULL;
@@ -99,6 +96,17 @@ void run_command(char* executable, char* args, char* workdir)
             args_list = realloc(args_list, args_list_size * sizeof(char*));
             args_list[args_list_size-1] = token;
         }
+    }
+
+    // filelist.c will pass the selected filename in args. filename
+    // may contain spaces.
+    char *filename = NULL;
+    if (args) {
+        filename = malloc(PATH_MAX);
+        strcpy(filename, args);
+        args_list_size ++;
+        args_list = realloc(args_list, args_list_size * sizeof(char*));
+        args_list[args_list_size-1] = filename;
     }
 
     // add null poiner as the last arg
