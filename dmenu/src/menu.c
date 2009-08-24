@@ -17,11 +17,14 @@
 #include "conf.h"
 #include "filelist.h"
 #include "persistent.h"
+#include "sound.h"
 
 extern cfg_t *cfg;
 cfg_t *m;
 cfg_t *mi;
 cfg_t *smi;
+
+enum eSE SEnum;
 
 SDL_Surface* background;
 SDL_Surface* cursor;
@@ -128,6 +131,9 @@ int menu_init()
         current_menuitem_index = 0;
     }
 
+    // Init sound
+    SE_Init();
+
     return 0;
 }
 
@@ -164,6 +170,10 @@ void menu_deinit()
     TTF_Quit();
 
     if (number_of_submenuitem > 0) submenu_close();
+
+    // De-init sound
+    SE_deInit();
+
 }
 
 void menu_draw(SDL_Surface* screen)
@@ -373,16 +383,28 @@ enum MenuState menu_keypress(SDLKey keysym)
 
 void menu_next()
 {
-    if (number_of_submenuitem > 0) return; // need to close submenu before go to another menu
+    if (number_of_submenuitem > 0) {
+        SEnum = OUT;
+        SE_out( SEnum );
+        return;
+    } // need to close submenu before go to another menu
     current_menu_index++;
+    SEnum = MENU_MOVE;
+    SE_out( SEnum );
     if (current_menu_index == number_of_menu) current_menu_index = 0;
     current_menuitem_index = 0;
 }
 
 void menu_previous()
 {
-    if (number_of_submenuitem > 0) return; // need to close submenu before go to another menu
+    if (number_of_submenuitem > 0) {
+        SEnum = OUT;
+        SE_out( SEnum );
+        return;
+    } // need to close submenu before go to another menu
     current_menu_index--;
+    SEnum = MENU_MOVE;
+    SE_out( SEnum );
     if (current_menu_index < 0) current_menu_index = number_of_menu - 1; 
     current_menuitem_index = 0;
 }
@@ -397,6 +419,8 @@ void menuitem_next()
         current_submenuitem_index++;
         if (current_submenuitem_index == number_of_submenuitem) current_submenuitem_index = 0;
     }
+    SEnum = MENUITEM_MOVE;
+    SE_out( SEnum );
 }
 
 void menuitem_previous()
@@ -409,6 +433,8 @@ void menuitem_previous()
         current_submenuitem_index--;
         if (current_submenuitem_index < 0) current_submenuitem_index = number_of_submenuitem - 1;
     }
+    SEnum = MENUITEM_MOVE;
+    SE_out( SEnum );
 }
 
 void menuitem_run()
@@ -423,6 +449,10 @@ void menuitem_run()
 void submenu_open()
 {
     int i;
+
+    SEnum = DECIDE;
+    SE_out( SEnum );
+
     SDL_Color color = {255,255,255,0};
 
     number_of_submenuitem = cfg_size(mi, "SubMenuItem");
@@ -451,7 +481,8 @@ void submenu_open()
 void submenu_close()
 {
     int i;
-
+    SEnum = CANCEL;
+    SE_out( SEnum );
     for (i=0;i<number_of_submenuitem;i++) {
         SDL_FreeSurface(submenuitem_icons[i]);
         SDL_FreeSurface(submenuitem_text[i]);
