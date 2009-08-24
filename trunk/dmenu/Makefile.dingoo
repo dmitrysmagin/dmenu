@@ -9,7 +9,7 @@ ARCH	:= mipsel-linux-
 CC	:= $(ARCH)gcc
 CFLAGS	:= -DDINGOO_BUILD -O3 -Wall -s -fomit-frame-pointer -funroll-loops -DHAVE_CONFIG_H -I$(TOOLCHAINDIR)/usr/include -I$(TOOLCHAINDIR)/usr/include/SDL
 #CFLAGS	:= -DDINGOO_BUILD -O3 -Wall -g -fomit-frame-pointer -funroll-loops -DHAVE_CONFIG_H -I$(TOOLCHAINDIR)/usr/include -I$(TOOLCHAINDIR)/usr/include/SDL
-LDFLAG := -s -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lconfuse
+LDFLAG := -s -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -lconfuse
 #LDFLAG := -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lconfuse
 
 ifneq ($(notdir $(CURDIR)), $(BUILD))

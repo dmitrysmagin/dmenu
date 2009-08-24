@@ -38,7 +38,7 @@ DEPENDS := $(OFILES:.o=.d)
 
 
 $(OUTPUT): $(OFILES) 
-	$(CC) $^ $(LIBDIRS) -lSDLmain -lSDL -lSDL_image -lSDL_ttf -o $@
+	$(CC) $^ $(LIBDIRS) -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -o $@
 
 %.o : %.c
 	$(CC) -MM $(CFLAGS) $(INCLUDE) -o $*.d $<
