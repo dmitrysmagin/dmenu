@@ -78,7 +78,7 @@ cfg_opt_t standalone_opts[] = {
 
 cfg_opt_t main_opts[] = {
     CFG_STR("Theme", "default", CFGF_NONE),
-    CFG_STR("SearchPath", "", CFGF_NONE),
+    CFG_STR_LIST("SearchPath", "{}", CFGF_NONE),
     CFG_BOOL("AllowDynamicThemeChange", cfg_false, CFGF_NONE),
     CFG_END()
 };
@@ -106,16 +106,6 @@ int conf_load()
         return rc;
     }
 
-    char search_path[PATH_MAX];
-    char* search_path_in_conf = cfg_getstr(cfg_main, "SearchPath");
-    if (search_path_in_conf[0] == '/') { // SearchPath is absolute
-        strcpy(search_path, search_path_in_conf);
-    } else { // SearchPath is relative to dmenu directory
-        getcwd(search_path, PATH_MAX);
-        strcat(search_path, "/");
-        strcat(search_path, search_path_in_conf);
-    }
-
     // cd to theme directory
     char theme_dir[PATH_MAX] = "themes/";
     strcat(theme_dir, cfg_getstr(cfg_main, "Theme"));
@@ -135,15 +125,27 @@ int conf_load()
     }
 
     // load dmenu.cfg files from SearchPath
+    char search_path[PATH_MAX];
     char work_path[PATH_MAX];
-    num_of_files = scandir(search_path, &namelist, path_filter, alphasort);
-    if (num_of_files > 0) {
-        for (i=0;i<num_of_files;i++) {
-            strcpy(work_path, search_path);
-            strcat(work_path, "/");
-            strcat(work_path, namelist[i]->d_name);
-            strcat(work_path, "/dmenu.cfg");
-            conf_merge_standalone(work_path);
+    for (j=0;j<cfg_size(cfg_main, "SearchPath");j++) {
+        char* search_path_in_conf = cfg_getnstr(cfg_main, "SearchPath", j);
+        if (search_path_in_conf[0] == '/') { // SearchPath is absolute
+            strcpy(search_path, search_path_in_conf);
+        } else { // SearchPath is relative to dmenu directory
+            getcwd(search_path, PATH_MAX);
+            strcat(search_path, "/../../"); //cwd is the theme directory
+            strcat(search_path, search_path_in_conf);
+        }
+
+        num_of_files = scandir(search_path, &namelist, path_filter, alphasort);
+        if (num_of_files > 0) {
+            for (i=0;i<num_of_files;i++) {
+                strcpy(work_path, search_path);
+                strcat(work_path, "/");
+                strcat(work_path, namelist[i]->d_name);
+                strcat(work_path, "/dmenu.cfg");
+                conf_merge_standalone(work_path);
+            }
         }
     }
 
@@ -217,31 +219,40 @@ void conf_merge_standalone(char *conf_file)
             if (strcmp(cfg_title(m), cfg_title(standalone_m)) == 0) {
 
                 cfg_t* standalone_mi = cfg_getsec(standalone_m, "MenuItem");
-                char* icon_path = cfg_getstr(standalone_mi, "Icon");
-                if (icon_path[0] != '/') { // Icon path is relative
-                    char work_path[PATH_MAX];
-                    strcpy(work_path, conf_file_dir);
-                    strcat(work_path, "/");
-                    strcat(work_path, icon_path);
-                    cfg_setstr(standalone_mi, "Icon", work_path);
+                // Don't include this MenuItem if it includes SubMenuItems,
+                // Our dupopts routine does not handle sections, hence doesn't
+                // doesn't work for SubMenuItems
+                if (cfg_size(standalone_mi, "SubMenuItem") > 0) {
+                    printf("Not supported - dmenu.cfg contains SubMenuItems\n");
+                    printf("in directory %s\n", conf_file_dir);
                 }
+                else {
+                    char* icon_path = cfg_getstr(standalone_mi, "Icon");
+                    if (icon_path[0] != '/') { // Icon path is relative
+                        char work_path[PATH_MAX];
+                        strcpy(work_path, conf_file_dir);
+                        strcat(work_path, "/");
+                        strcat(work_path, icon_path);
+                        cfg_setstr(standalone_mi, "Icon", work_path);
+                    }
 
-                cfg_opt_t* standalone_mi_opt = cfg_getopt(standalone_m, "MenuItem");
-                cfg_opt_t* mi_opt = cfg_getopt(m, "MenuItem");
-                mi_opt->values = realloc(mi_opt->values,
-                                      (mi_opt->nvalues+1) * sizeof(cfg_value_t *));
-                mi_opt->values[mi_opt->nvalues] = malloc(sizeof(cfg_value_t));
-                mi_opt->values[mi_opt->nvalues]->section = calloc(1, sizeof(cfg_t));
-                cfg_t* mi_sec = mi_opt->values[mi_opt->nvalues]->section;
-                mi_opt->nvalues++;
-                cfg_t* s_mi_sec = standalone_mi_opt->values[0]->section;
-                mi_sec->name = strdup(s_mi_sec->name);
-                mi_sec->flags = s_mi_sec->flags;
-                mi_sec->filename = s_mi_sec->filename ? strdup(s_mi_sec->filename) : 0; 
-                mi_sec->line = s_mi_sec->line;
-                mi_sec->errfunc = s_mi_sec->errfunc;
-                mi_sec->title = s_mi_sec->title; 
-                mi_sec->opts = conf_dupopts(s_mi_sec->opts);
+                    cfg_opt_t* standalone_mi_opt = cfg_getopt(standalone_m, "MenuItem");
+                    cfg_opt_t* mi_opt = cfg_getopt(m, "MenuItem");
+                    mi_opt->values = realloc(mi_opt->values,
+                                          (mi_opt->nvalues+1) * sizeof(cfg_value_t *));
+                    mi_opt->values[mi_opt->nvalues] = malloc(sizeof(cfg_value_t));
+                    mi_opt->values[mi_opt->nvalues]->section = calloc(1, sizeof(cfg_t));
+                    cfg_t* mi_sec = mi_opt->values[mi_opt->nvalues]->section;
+                    mi_opt->nvalues++;
+                    cfg_t* s_mi_sec = standalone_mi_opt->values[0]->section;
+                    mi_sec->name = strdup(s_mi_sec->name);
+                    mi_sec->flags = s_mi_sec->flags;
+                    mi_sec->filename = s_mi_sec->filename ? strdup(s_mi_sec->filename) : 0; 
+                    mi_sec->line = s_mi_sec->line;
+                    mi_sec->errfunc = s_mi_sec->errfunc;
+                    mi_sec->title = s_mi_sec->title; 
+                    mi_sec->opts = conf_dupopts(s_mi_sec->opts);
+                }
             }
         }
     }
@@ -278,7 +289,10 @@ cfg_opt_t* conf_dupopts(cfg_opt_t* opts)
                 dupopts[i].values[j]->boolean = opts[i].values[j]->boolean;
                 break;
               case CFGT_STR:
-                dupopts[i].values[j]->string = strdup(opts[i].values[j]->string);
+                if (opts[i].values[j]->string)
+                    dupopts[i].values[j]->string = strdup(opts[i].values[j]->string);
+                else
+                    dupopts[i].values[j]->string = NULL;
                 break;
               default: //we are not handling the other types
                 break;
