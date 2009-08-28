@@ -19,6 +19,9 @@
 #include "filelist.h"
 #include "menu.h"
 
+#include "sound.h"
+#include "dingoo.h"
+
 extern cfg_t *cfg;
 
 extern SDL_Surface* background;
@@ -32,6 +35,8 @@ SDL_Surface* list_file_icon;
 SDL_Surface* tmp_surface;
 
 TTF_Font* list_font;
+
+enum eSE SEnum;
 
 int status_changed;
 
@@ -258,6 +263,9 @@ void filelist_up()
     int i;
     SDL_Color color = {255,255,255,0};
 
+    SEnum = MENUITEM_MOVE;
+    SE_out( SEnum );
+
     if (current_highlight > 0) {
         current_highlight--;
     } else if (current_list_start > 0) {
@@ -293,6 +301,9 @@ void filelist_page_up()
 {
     int i;
 
+    SEnum = MENU_MOVE;
+    SE_out( SEnum );
+
     for (i=0;i<files_per_page;i++) {
         if (list_filename[i]) SDL_FreeSurface(list_filename[i]);
     }
@@ -309,6 +320,9 @@ void filelist_down()
 {
     int i;
     SDL_Color color = {255,255,255,0};
+
+    SEnum = MENUITEM_MOVE;
+    SE_out( SEnum );
 
     if (current_highlight < (files_per_page - 1) &&
         (current_list_start + current_highlight) < (num_of_files - 1)) {
@@ -343,6 +357,9 @@ void filelist_page_down()
 {
     int i;
 
+    SEnum = MENU_MOVE;
+    SE_out( SEnum );
+
     for (i=0;i<files_per_page;i++) {
         if (list_filename[i]) SDL_FreeSurface(list_filename[i]);
     }
@@ -359,6 +376,10 @@ void filelist_right()
 {
     char temp_path[PATH_MAX];
     int i = current_list_start+current_highlight;
+
+    SEnum = DECIDE;
+    SE_out( SEnum );
+
     if (S_ISDIR(statlist[i].st_mode)) {
         strcpy(temp_path, current_path);
         strcat(temp_path, "/");
@@ -373,6 +394,9 @@ void filelist_right()
 void filelist_left()
 {
     int i = strlen(current_path);
+
+    SEnum = CANCEL;
+    SE_out( SEnum );
 
     if ((i == 1) && (current_path[0] == '/')) {
         return;
@@ -428,25 +452,25 @@ enum MenuState filelist_keypress(SDLKey keysym)
 {
     Uint8 *keystate = SDL_GetKeyState(NULL);
 
-    if (keysym == SDLK_LALT) {
+    if (keysym == DINGOO_BUTTON_B) {
         filelist_deinit();
         return MAINMENU;
     }
-    else if (keysym == SDLK_UP) {
-        if (keystate[SDLK_LSHIFT]) filelist_page_up();
+    else if (keysym == DINGOO_BUTTON_UP) {
+        if (keystate[DINGOO_BUTTON_Y]) filelist_page_up();
         else filelist_up();
     }
-    else if (keysym == SDLK_DOWN) {
-        if (keystate[SDLK_LSHIFT]) filelist_page_down();
+    else if (keysym == DINGOO_BUTTON_DOWN) {
+        if (keystate[DINGOO_BUTTON_Y]) filelist_page_down();
         else filelist_down();
     }
-    else if (keysym == SDLK_RIGHT) {
+    else if (keysym == DINGOO_BUTTON_RIGHT) {
         if (!filelist_theme) filelist_right();
     }
-    else if (keysym == SDLK_LEFT) {
+    else if (keysym == DINGOO_BUTTON_LEFT) {
         if (!filelist_theme) filelist_left();
     }
-    else if (keysym == SDLK_LCTRL) {
+    else if (keysym == DINGOO_BUTTON_A) {
         return filelist_run();
     }
 

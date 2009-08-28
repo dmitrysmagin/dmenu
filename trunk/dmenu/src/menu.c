@@ -19,6 +19,8 @@
 #include "persistent.h"
 #include "sound.h"
 
+#include "dingoo.h"
+
 extern cfg_t *cfg;
 cfg_t *m;
 cfg_t *mi;
@@ -346,19 +348,19 @@ enum MenuState menu_keypress(SDLKey keysym)
 {
     enum MenuState state = MAINMENU;
 
-    if (keysym == SDLK_LEFT) {
+    if (keysym == DINGOO_BUTTON_LEFT) {
         menu_previous();
     }
-    else if (keysym== SDLK_RIGHT) {
+    else if (keysym== DINGOO_BUTTON_RIGHT) {
         menu_next();
     }
-    else if (keysym == SDLK_UP) {
+    else if (keysym == DINGOO_BUTTON_UP) {
         menuitem_previous();
     }
-    else if (keysym == SDLK_DOWN) {
+    else if (keysym == DINGOO_BUTTON_DOWN) {
         menuitem_next();
     }
-    else if (keysym == SDLK_LCTRL) {
+    else if (keysym == DINGOO_BUTTON_A) {
         m = cfg_getnsec(cfg, "Menu", current_menu_index);
         mi = cfg_getnsec(m, "MenuItem", current_menuitem_index);
         if (number_of_submenuitem > 0) {
@@ -374,7 +376,7 @@ enum MenuState menu_keypress(SDLKey keysym)
             menuitem_run();
         }
     }
-    else if (keysym == SDLK_LALT) {
+    else if (keysym == DINGOO_BUTTON_B) {
         if (number_of_submenuitem > 0) submenu_close();
     }
 
