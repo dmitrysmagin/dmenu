@@ -36,8 +36,6 @@ SDL_Surface* tmp_surface;
 
 TTF_Font* list_font;
 
-enum eSE SEnum;
-
 int status_changed;
 
 struct dirent **namelist;
@@ -263,8 +261,7 @@ void filelist_up()
     int i;
     SDL_Color color = {255,255,255,0};
 
-    SEnum = MENUITEM_MOVE;
-    SE_out( SEnum );
+    SE_out( MENUITEM_MOVE );
 
     if (current_highlight > 0) {
         current_highlight--;
@@ -301,8 +298,7 @@ void filelist_page_up()
 {
     int i;
 
-    SEnum = MENU_MOVE;
-    SE_out( SEnum );
+    SE_out( MENU_MOVE );
 
     for (i=0;i<files_per_page;i++) {
         if (list_filename[i]) SDL_FreeSurface(list_filename[i]);
@@ -321,8 +317,7 @@ void filelist_down()
     int i;
     SDL_Color color = {255,255,255,0};
 
-    SEnum = MENUITEM_MOVE;
-    SE_out( SEnum );
+    SE_out( MENUITEM_MOVE );
 
     if (current_highlight < (files_per_page - 1) &&
         (current_list_start + current_highlight) < (num_of_files - 1)) {
@@ -357,8 +352,7 @@ void filelist_page_down()
 {
     int i;
 
-    SEnum = MENU_MOVE;
-    SE_out( SEnum );
+    SE_out( MENU_MOVE );
 
     for (i=0;i<files_per_page;i++) {
         if (list_filename[i]) SDL_FreeSurface(list_filename[i]);
@@ -377,8 +371,7 @@ void filelist_right()
     char temp_path[PATH_MAX];
     int i = current_list_start+current_highlight;
 
-    SEnum = DECIDE;
-    SE_out( SEnum );
+    SE_out( DECIDE );
 
     if (S_ISDIR(statlist[i].st_mode)) {
         strcpy(temp_path, current_path);
@@ -395,8 +388,7 @@ void filelist_left()
 {
     int i = strlen(current_path);
 
-    SEnum = CANCEL;
-    SE_out( SEnum );
+    SE_out( CANCEL );
 
     if ((i == 1) && (current_path[0] == '/')) {
         return;

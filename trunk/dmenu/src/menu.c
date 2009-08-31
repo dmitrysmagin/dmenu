@@ -26,8 +26,6 @@ cfg_t *m;
 cfg_t *mi;
 cfg_t *smi;
 
-enum eSE SEnum;
-
 SDL_Surface* background;
 SDL_Surface* cursor;
 
@@ -386,13 +384,11 @@ enum MenuState menu_keypress(SDLKey keysym)
 void menu_next()
 {
     if (number_of_submenuitem > 0) {
-        SEnum = OUT;
-        SE_out( SEnum );
+        SE_out( OUT );
         return;
     } // need to close submenu before go to another menu
     current_menu_index++;
-    SEnum = MENU_MOVE;
-    SE_out( SEnum );
+    SE_out( MENU_MOVE );
     if (current_menu_index == number_of_menu) current_menu_index = 0;
     current_menuitem_index = 0;
 }
@@ -400,13 +396,11 @@ void menu_next()
 void menu_previous()
 {
     if (number_of_submenuitem > 0) {
-        SEnum = OUT;
-        SE_out( SEnum );
+        SE_out( OUT );
         return;
     } // need to close submenu before go to another menu
     current_menu_index--;
-    SEnum = MENU_MOVE;
-    SE_out( SEnum );
+    SE_out( MENU_MOVE );
     if (current_menu_index < 0) current_menu_index = number_of_menu - 1; 
     current_menuitem_index = 0;
 }
@@ -421,8 +415,7 @@ void menuitem_next()
         current_submenuitem_index++;
         if (current_submenuitem_index == number_of_submenuitem) current_submenuitem_index = 0;
     }
-    SEnum = MENUITEM_MOVE;
-    SE_out( SEnum );
+    SE_out( MENUITEM_MOVE );
 }
 
 void menuitem_previous()
@@ -435,25 +428,24 @@ void menuitem_previous()
         current_submenuitem_index--;
         if (current_submenuitem_index < 0) current_submenuitem_index = number_of_submenuitem - 1;
     }
-    SEnum = MENUITEM_MOVE;
-    SE_out( SEnum );
+    SE_out( MENUITEM_MOVE );
 }
 
 void menuitem_run()
 {
     char* executable = cfg_getstr(mi, "Executable");
-    if (executable)
+    if (executable) {
         run_command(executable, NULL, cfg_getstr(mi, "WorkDir"));
-    else
+    } else {
         submenu_open();
+    }
 }
 
 void submenu_open()
 {
     int i;
 
-    SEnum = DECIDE;
-    SE_out( SEnum );
+    SE_out( DECIDE );
 
     SDL_Color color = {255,255,255,0};
 
@@ -483,8 +475,8 @@ void submenu_open()
 void submenu_close()
 {
     int i;
-    SEnum = CANCEL;
-    SE_out( SEnum );
+
+    SE_out( CANCEL );
     for (i=0;i<number_of_submenuitem;i++) {
         SDL_FreeSurface(submenuitem_icons[i]);
         SDL_FreeSurface(submenuitem_text[i]);
