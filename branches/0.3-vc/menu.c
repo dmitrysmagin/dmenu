@@ -365,9 +365,11 @@ enum MenuState menu_keypress(SDLKey keysym)
 	}
 	else if (keysym == DINGOO_BUTTON_X) {
 		bright_set(+1);
+	        SE_out( TEST );
 	}
 	else if (keysym == DINGOO_BUTTON_Y) {
 		bright_set(-1);
+	        SE_out( TEST );
 	}
     else if (keysym == DINGOO_BUTTON_LEFT) {
         menu_previous();

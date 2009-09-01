@@ -21,6 +21,7 @@
 #include "dosd/dosd.h"
 
 #include "volume.h"
+#include "brightness.h"
 
 enum MenuState state;
 
@@ -160,6 +161,7 @@ int main ( int argc, char** argv )
         dosd_show(screen);
 
 	vol_show(screen);
+	bright_show(screen);
 
         // DRAWING ENDS HERE
 
@@ -178,6 +180,7 @@ int main ( int argc, char** argv )
     dosd_deinit();
 
 	vol_deinit();
+	bright_deinit();
 
     // all is well ;)
     //printf("Exited cleanly\n");
