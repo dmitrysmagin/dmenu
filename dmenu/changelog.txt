@@ -1,4 +1,9 @@
 [0.4]
+- Default theme created by 1@qbQD4T5Z0949
+- Change SearchPath to a string list to allow multiple search paths
+- Menu sound effect
+- Sub-menu support
+- Fix parsing of multiple args
 - Added UTF8 support. UTF8 chars in theme.cfg name strings, and file selector
 will display the UTF8 chars accordingly. Font file specified by the theme need
 to contain the necessary chars.
@@ -9,6 +14,7 @@ respectively. Same for MenuItem (up/down).
 - Added OSD.
 - Menuitem text overlapping problem should be fixed now.
 - Fixed problem of passing multiple args when launching a program 
+- Persist index of selected menu/menuitem
 
 [0.3]
 - Fixed a display bug where the menu items above the mainmenu are overlapping

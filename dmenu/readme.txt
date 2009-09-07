@@ -1,15 +1,15 @@
-                               Dmenu 0.3
+                               Dmenu 0.4
                                =========
 
-Dmenu is a simple menu system for Dingux (Linux on Dingoo A320). It resembles the
-original XMB-like menu comes with the stock Dingoo A320 firmware.
+Dmenu is a simple menu system for Dingux (Linux on Dingoo A320). It resembles
+the original XMB-like menu comes with the stock Dingoo A320 firmware.
 
 
 Installation
 ------------
-All files of Dmenu need to go to /usr/local/dmenu. To start dmenu on system start,
-use a shell script as /usr/local/sbin/main to start dmenu, or copy dmenu to
-/usr/local/sbin/main.
+All files of Dmenu need to go to /usr/local/dmenu. To start dmenu on system
+start, use a shell script as /usr/local/sbin/main to start dmenu, or copy dmenu
+to /usr/local/sbin/main.
 
 
 Keys
@@ -34,16 +34,16 @@ B key - exit file selector menu
 
 Theme support
 -------------
-Dmenu on startup reads /usr/local/dmenu/main.cfg, which contains a line to specify
-the theme in the form of "Theme = <theme name>".
+Dmenu on startup reads /usr/local/dmenu/main.cfg, which contains a line to 
+specify the theme in the form of "Theme = <theme name>".
 
 Dmenu reads /usr/local/dmenu/themes/<theme name>/theme.cfg to load the theme.
 
 Check theme 'default' to find out what are the options available in theme config
 file.
 
-Due to miniSD file system corruption bug in Dingux, theme selection within Dmenu is
-disabled by default. To enable theme selection, add
+Due to miniSD file system corruption bug in Dingux, theme selection within Dmenu
+is disabled by default. To enable theme selection, add
 
         AllowDynamicThemeChange = Yes
 
@@ -56,29 +56,30 @@ to main.cfg, and add below MenuItem to one of the menu,
             Executable = "!themeselect"
         }
 
-Once you select this MenuItem in Dmenu, it will display a list of themes available
-and allow you to switch the theme.
+Once you select this MenuItem in Dmenu, it will display a list of themes 
+available and allow you to switch the theme.
 
-************************************************************************************** 
-A word of caution, this will update main.cfg with the new theme name you have selected.
-There is a possibility of file system corruption. Use it at your own risk.
+******************************************************************************* 
+A word of caution, this will update main.cfg with the new theme name you have 
+selected. There is a possibility of file system corruption. Use it at your own
+risk.
 
-The recommended method of changing theme is manually edit main.cfg outside Dingux,
-until the bug is fixed.
-**************************************************************************************
+The recommended method of changing theme is manually edit main.cfg outside
+Dingux, until the bug is fixed.
+*******************************************************************************
 
 
 Theme config file includes
 --------------------------
-Theme config file can include other config files. See theme.cfg in the sample theme
-called 'include_sample'.
+Theme config file can include other config files. See theme.cfg in the sample 
+theme called 'include_sample'.
 
 
 SearchPath
 ----------
-Dmenu is able to search additional path for config files. Use SearchPath option in
-main.cfg to specify the path to search. Applications can provide its own dmenu config
-file (must be named dmenu.cfg) in the following format,
+Dmenu is able to search additional path for config files. Use SearchPath option 
+in main.cfg to specify the path to search. Applications can provide its own 
+dmenu config file (must be named dmenu.cfg) in the following format,
 
 Menu <Menu name>
 {
@@ -91,7 +92,8 @@ Menu <Menu name>
     }
 }
 
-After Dmenu read this file, it will add the MenuItem into the Menu specified by <Menu name>.
+After Dmenu read this file, it will add the MenuItem into the Menu specified by 
+<Menu name>.
 
 For example, with the following directory structure,
 
@@ -108,13 +110,75 @@ For example, with the following directory structure,
 .
 .
 
-And "SearchDir = <Some Dir>" is specified in main.cfg, Dmenu will read all dmenu.cfg files
-in subdirectories of <Some Dir>. Currently Dmenu will only search to the subdirectories
-immediately below <Some Dir>. It does not search deeper into the directory structure.
+And "SearchDir = <Some Dir>" is specified in main.cfg, Dmenu will read all 
+dmenu.cfg files in subdirectories of <Some Dir>.
 
-In the individual dmenu.cfg files, if the icon file path is relative (i.e. the first char is
-not '/'), Dmenu will treat this as relative to the directory where this dmenu.cfg is in.
+To specify multiple search directories, use the following format,
+
+SearchDir = {"search dir 1", "search dir 2", etc}
+
+
+In the individual dmenu.cfg files, if the icon file path is relative (i.e. the 
+first char is not '/'), Dmenu will treat this as relative to the directory where
+this dmenu.cfg is in.
 
 Take a look at <dmenu install dir>/sample_search_dir to see how this works.
+
+
+
+SubMenu
+-------
+To add a submenu, just add a menuitem without executable and workpath, but with
+SubMenuItems. For example,
+
+    MenuItem SubMenuTest
+    {
+        Icon = "res/game1.png"
+        Name = "SubMenuTest"
+
+        SubMenuItem SubTest1
+        {
+            Icon = "res/game2.png"
+            Name = "SubTest1"
+            Executable = "./duh"
+            WorkDir = "/usr/local/duh"
+        }
+        SubMenuItem SubTest2
+        {
+            Icon = "res/game2.png"
+            Name = "SubTest2"
+            Executable = "./duh"
+            WorkDir = "/usr/local/duh"
+        }
+    }
+
+Once the submenu is selected, press A to open it, and press B to close. Use 
+up/down to select the submenu items and press A to launch.
+
+One caveat though, dmenu.cfg included from SearchPath does not support submenu.
+dmenu will print a warning and ignore the menuitem if it's a submenu.
+
+
+
+UTF-8
+-----
+To display UTF8 characters, font file specified in theme.cfg should contain the 
+necessary characters. UTF8 chars in theme.cfg name strings, and filenames in 
+file selector will be displayed accordingly.
+
+
+
+Building dmenu
+--------------
+There are 2 makefiles in dmenu source distribution, Makefile.host and
+Makefile.dingoo.
+
+Makefile.host will build dmenu to run on host pc running linux. This is a 
+standard SDL application. You will need the SDL development libraries and
+libconfuse to build.
+
+Makefile.dingoo is the makefile for building dmenu to run in Dingux. You need
+booboo's Dingux toolchain to build this. All the required libraries are already
+included in the toolchain.
 
 
