@@ -1,8 +1,8 @@
 TARGET	:= dmenu-host
 BUILD	:= build-host
 TOOLCHAINDIR := /
-INCLS	:= src ../confuse-2.6 ../confuse-2.6/src ../dosd/include
-SOURCES	:= src ../confuse-2.6/src ../dosd/src
+INCLS	:= src ../dosd/include
+SOURCES	:= src ../dosd/src
 LIBPATH := $(TOOLCHAINDIR)/usr/lib
 
 ARCH	:= 
@@ -38,7 +38,7 @@ DEPENDS := $(OFILES:.o=.d)
 
 
 $(OUTPUT): $(OFILES) 
-	$(CC) $^ $(LIBDIRS) -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -o $@
+	$(CC) $^ $(LIBDIRS) -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -lconfuse -o $@
 
 %.o : %.c
 	$(CC) -MM $(CFLAGS) $(INCLUDE) -o $*.d $<
