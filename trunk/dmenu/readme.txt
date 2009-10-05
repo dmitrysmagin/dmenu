@@ -20,7 +20,10 @@ left, right key - select menu
 up, down key - select menu item
 A key - run the selected menu item
 Select key - exit dmenu
-
+R key - SoundVolume +5%
+L key - SoundVolume -5%
+X key - Brightness level up
+Y key - Brightness level down
 
 In file selector menu,
 

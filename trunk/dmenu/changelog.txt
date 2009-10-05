@@ -1,5 +1,4 @@
 [0.4]
-- Default theme created by 1@qbQD4T5Z0949
 - Change SearchPath to a string list to allow multiple search paths
 - Menu sound effect
 - Sub-menu support
@@ -15,6 +14,13 @@ respectively. Same for MenuItem (up/down).
 - Menuitem text overlapping problem should be fixed now.
 - Fixed problem of passing multiple args when launching a program 
 - Persist index of selected menu/menuitem
+by 1@qbQD4T5Z0949
+- Default theme created.
+- Added SoundVolume control ([L]:-5% / [R]:+5%)
+- Added Brightness control ([X]:LevelUp / [Y]:LevelDown)
+- Added SoundVolume & Brightness Icons.
+- Added configuration files for SoundVolume & Brightness settings.
+- Added resources directory for dmenu.(/usr/local/home/.dmenu/)
 
 [0.3]
 - Fixed a display bug where the menu items above the mainmenu are overlapping
