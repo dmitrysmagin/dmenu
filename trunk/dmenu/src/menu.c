@@ -21,6 +21,9 @@
 
 #include "dingoo.h"
 
+#include "brightness.h"
+#include "volume.h"
+
 extern cfg_t *cfg;
 cfg_t *m;
 cfg_t *mi;
@@ -49,6 +52,7 @@ int current_submenuitem_index;
 
 TTF_Font* menu_font;
 TTF_Font* menuitem_font;
+TTF_Font* status_font;
 
 void submenu_open();
 void submenu_close();
@@ -80,6 +84,7 @@ int menu_init()
     TTF_Init();
     menu_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 18);
     menuitem_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 14);
+status_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 12);
 
     // load menu
     number_of_menu = cfg_size(cfg, "Menu");
@@ -133,6 +138,10 @@ int menu_init()
 
     // Init sound
     SE_Init();
+
+//load volume and brightness
+	bright_init();
+	vol_init();
 
     return 0;
 }
@@ -346,7 +355,23 @@ enum MenuState menu_keypress(SDLKey keysym)
 {
     enum MenuState state = MAINMENU;
 
-    if (keysym == DINGOO_BUTTON_LEFT) {
+	if (keysym == DINGOO_BUTTON_R) {
+		vol_set(+5);
+	        SE_out( TEST );
+	}
+	else if (keysym == DINGOO_BUTTON_L) {
+		vol_set(-5);
+	        SE_out( TEST );
+	}
+	else if (keysym == DINGOO_BUTTON_X) {
+		bright_set(+1);
+	        SE_out( TEST );
+	}
+	else if (keysym == DINGOO_BUTTON_Y) {
+		bright_set(-1);
+	        SE_out( TEST );
+	}
+    else if (keysym == DINGOO_BUTTON_LEFT) {
         menu_previous();
     }
     else if (keysym== DINGOO_BUTTON_RIGHT) {

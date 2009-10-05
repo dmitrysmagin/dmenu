@@ -20,6 +20,9 @@
 #include "persistent.h"
 #include "dosd/dosd.h"
 
+#include "volume.h"
+#include "brightness.h"
+
 enum MenuState state;
 
 #define TICK_INTERVAL    100 // this is 1000/100 = 10 fps
@@ -156,7 +159,10 @@ int main ( int argc, char** argv )
             filelist_draw(screen);
 
         dosd_show(screen);
-        
+
+	vol_show(screen);
+	bright_show(screen);
+
         // DRAWING ENDS HERE
 
         // finally, update the screen :)
@@ -172,6 +178,9 @@ int main ( int argc, char** argv )
     filelist_deinit();
     conf_unload();
     dosd_deinit();
+
+	vol_deinit();
+	bright_deinit();
 
     // all is well ;)
     //printf("Exited cleanly\n");
