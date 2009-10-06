@@ -10,6 +10,7 @@
  */
 
 #include <unistd.h>
+#include <stdlib.h>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -61,6 +62,10 @@ int menu_init()
 {
     int i, j;
     SDL_Color color = {255,255,255,0};
+
+	color.r = (Uint8)atoi(cfg_getstr(cfg, "FontColor-R"));
+	color.g = (Uint8)atoi(cfg_getstr(cfg, "FontColor-G"));
+	color.b = (Uint8)atoi(cfg_getstr(cfg, "FontColor-B"));
 
     tmp_surface= IMG_Load(cfg_getstr(cfg, "Background"));
     if (!tmp_surface) {
@@ -473,6 +478,10 @@ void submenu_open()
     SE_out( DECIDE );
 
     SDL_Color color = {255,255,255,0};
+
+	color.r = (Uint8)atoi(cfg_getstr(cfg, "FontColor-R"));
+	color.g = (Uint8)atoi(cfg_getstr(cfg, "FontColor-G"));
+	color.b = (Uint8)atoi(cfg_getstr(cfg, "FontColor-B"));
 
     number_of_submenuitem = cfg_size(mi, "SubMenuItem");
     submenuitem_icons = (SDL_Surface**)malloc(sizeof(SDL_Surface*) * number_of_submenuitem);

@@ -1,7 +1,7 @@
 #include "brightness.h"
 
-#define ICON_x 240
-#define ICON_y 4
+#define ICON_x 236
+#define ICON_y 3
 #define ICON_w 9
 #define ICON_h 9
 

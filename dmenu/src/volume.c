@@ -1,12 +1,12 @@
 #include "volume.h"
 
-#define ICON_x 255
-#define ICON_y 4
+#define ICON_x 250
+#define ICON_y 3
 #define ICON_w 9
 #define ICON_h 9
 
-#define TEXT_x 268
-#define TEXT_y -1
+#define TEXT_x 258
+#define TEXT_y 0
 
 int base_volume;
 
@@ -73,7 +73,7 @@ void vol_show(SDL_Surface *surface) {
 	dst_text.y = TEXT_y;
 
 	SDL_BlitSurface( volume_status, NULL, surface, &dst_icon );
-	sprintf(buff, "%3d%%", base_volume);
+	sprintf(buff, "%4d%%", base_volume);
 	tmp_surface = TTF_RenderUTF8_Solid( status_font, buff, status_color);
 	volume_text = SDL_DisplayFormatAlpha(tmp_surface);
 	SDL_BlitSurface( volume_text, NULL, surface, &dst_text );
