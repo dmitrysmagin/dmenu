@@ -1,12 +1,12 @@
 #include "volume.h"
 
-#define ICON_x 250
+#define ICON_x 253
 #define ICON_y 3
 #define ICON_w 9
 #define ICON_h 9
 
 #define TEXT_x 258
-#define TEXT_y 0
+#define TEXT_y -1
 
 int base_volume;
 
@@ -32,6 +32,7 @@ void vol_init() {
 	}
 	volume_status = SDL_DisplayFormatAlpha(tmp_surface);
 	SDL_FreeSurface(tmp_surface);
+	vol_set(-100);
 	vol_set(0);
 
 }
@@ -40,24 +41,26 @@ void vol_set(int change) {
 	char *mixer_device = "/dev/mixer";
 	int mixer;
 	FILE *vol_fd;
+	int temp_volume;
 
-	base_volume += change;
+	temp_volume = base_volume + change;
 
-	if (base_volume >= 100) base_volume = 100;
-	if (base_volume <= 0) base_volume = 0;
+	if (temp_volume >= 100) temp_volume = 100;
+	if (temp_volume <= 0) temp_volume = 0;
 
-	int oss_volume = base_volume | (base_volume << 8); // set volume for both channels
+	int oss_volume = temp_volume | (temp_volume << 8); // set volume for both channels
 	mixer = open(mixer_device, O_WRONLY);
 	if (ioctl(mixer, SOUND_MIXER_WRITE_VOLUME, &oss_volume) == -1) {
 		fprintf(stderr, "Failed opening mixer for write - VOLUME\n");
 	}
 	close(mixer);
 
-// printf("Sound-Volume:%d\n",base_volume);
-
-	vol_fd = fopen("/usr/local/home/.dmenu/sound_volume.ini", "w");
-	fprintf(vol_fd, "%d", base_volume);
-	fclose(vol_fd);
+	if ( change != -100 ) {
+		base_volume = temp_volume;
+		vol_fd = fopen("/usr/local/home/.dmenu/sound_volume.ini", "w");
+		fprintf(vol_fd, "%d", base_volume);
+		fclose(vol_fd);
+	}
 }
 
 void vol_show(SDL_Surface *surface) {

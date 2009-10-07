@@ -89,7 +89,7 @@ int menu_init()
     TTF_Init();
     menu_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 18);
     menuitem_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 14);
-status_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 12);
+status_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 13);
 
     // load menu
     number_of_menu = cfg_size(cfg, "Menu");
