@@ -72,12 +72,11 @@ void bright_set(int change) {
 	brt_fd = fopen(backlight, "w");
 	fprintf(brt_fd, "%d", bright[bright_level] );
 
-// printf("Bright-Level:%d / %d\n",bright_level,bright[bright_level]);
-
 	fclose(brt_fd);
 
 	brt_fd = fopen("/usr/local/home/.dmenu/brightness_level.ini", "w");
 	fprintf(brt_fd, "%d", bright_level);
+	fsync(brt_fd);
 	fclose(brt_fd);
 }
 
