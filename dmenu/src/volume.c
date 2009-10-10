@@ -55,6 +55,7 @@ void vol_set(int change) {
 
 	vol_fd = fopen("/usr/local/home/.dmenu/sound_volume.ini", "w");
 	fprintf(vol_fd, "%d", base_volume);
+	fsync(vol_fd);
 	fclose(vol_fd);
 
 }
