@@ -63,7 +63,7 @@ void bright_init() {
 void bright_set(int change) {
 	char *backlight = "/proc/jz/lcd_backlight";
 	FILE *brt_fd;
-	int fd_no;
+	int file_no;
 
 	bright_level += change;
 
@@ -77,8 +77,8 @@ void bright_set(int change) {
 
 	brt_fd = fopen("/usr/local/home/.dmenu/brightness_level.ini", "w");
 	fprintf(brt_fd, "%d", bright_level);
-	fd_no = fileno(brt_fd);
-	fsync(fd_no);
+	file_no = fileno(brt_fd);
+	fsync(file_no);
 	fclose(brt_fd);
 }
 
