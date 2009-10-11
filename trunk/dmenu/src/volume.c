@@ -40,6 +40,7 @@ void vol_set(int change) {
 	char *mixer_device = "/dev/mixer";
 	int mixer;
 	FILE *vol_fd;
+	int fd_no;
 
 	base_volume += change;
 
@@ -55,7 +56,8 @@ void vol_set(int change) {
 
 	vol_fd = fopen("/usr/local/home/.dmenu/sound_volume.ini", "w");
 	fprintf(vol_fd, "%d", base_volume);
-	fsync(vol_fd);
+	fd_no = fileno(vol_fd);
+	fsync(fd_no);
 	fclose(vol_fd);
 
 }
