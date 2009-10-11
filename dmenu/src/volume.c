@@ -11,7 +11,6 @@
 int base_volume;
 
 SDL_Surface* volume_status;
-SDL_Surface* volume_text;
 SDL_Surface* tmp_surface;
 SDL_Color status_color = {255,255,255,0};
 
@@ -62,9 +61,10 @@ void vol_set(int change) {
 
 }
 
-void vol_show(SDL_Surface *surface) {
+void vol_show(SDL_Surface* surface) {
 
-	char buff[3];
+	char buff[10];
+	SDL_Surface* volume_text;
 
 	dst_icon.x = ICON_x;
 	dst_icon.y = ICON_y;
@@ -81,13 +81,13 @@ void vol_show(SDL_Surface *surface) {
 	SDL_BlitSurface( volume_text, NULL, surface, &dst_text );
 
 	SDL_FreeSurface(tmp_surface);
+	SDL_FreeSurface(volume_text);
 
 }
 
 void vol_deinit() {
 
 	SDL_FreeSurface(volume_status);
-	SDL_FreeSurface(volume_text);
 
 }
 
