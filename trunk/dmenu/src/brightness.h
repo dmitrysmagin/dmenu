@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <SDL.h>
 #include <SDL_image.h>
+#include <unistd.h>
 
 void bright_init();
 void bright_set(int bright);
