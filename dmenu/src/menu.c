@@ -63,9 +63,9 @@ int menu_init()
     int i, j;
     SDL_Color color = {255,255,255,0};
 
-	color.r = (Uint8)atoi(cfg_getstr(cfg, "FontColor-R"));
-	color.g = (Uint8)atoi(cfg_getstr(cfg, "FontColor-G"));
-	color.b = (Uint8)atoi(cfg_getstr(cfg, "FontColor-B"));
+	if (cfg_getstr(cfg, "FontColor-R")) color.r = (Uint8)atoi(cfg_getstr(cfg, "FontColor-R"));
+	if (cfg_getstr(cfg, "FontColor-G")) color.g = (Uint8)atoi(cfg_getstr(cfg, "FontColor-G"));
+	if (cfg_getstr(cfg, "FontColor-B")) color.b = (Uint8)atoi(cfg_getstr(cfg, "FontColor-B"));
 
     tmp_surface= IMG_Load(cfg_getstr(cfg, "Background"));
     if (!tmp_surface) {
