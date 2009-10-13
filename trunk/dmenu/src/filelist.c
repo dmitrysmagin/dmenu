@@ -58,10 +58,17 @@ void filelist_fill()
 {
     int i, j;
     SDL_Color color = {255,255,255,0};
+	int r = 0, g = 0, b = 0;
+	FILE *fontcolor_fd;
 
-	if (cfg_getstr(cfg, "FontColor-R")) color.r = (Uint8)atoi(cfg_getstr(cfg, "FontColor-R"));
-	if (cfg_getstr(cfg, "FontColor-G")) color.g = (Uint8)atoi(cfg_getstr(cfg, "FontColor-G"));
-	if (cfg_getstr(cfg, "FontColor-B")) color.b = (Uint8)atoi(cfg_getstr(cfg, "FontColor-B"));
+	fontcolor_fd = fopen("/usr/local/home/.dmenu/fontcolor.ini","r");
+	if ( fontcolor_fd != NULL ) {
+		fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
+		color.r = (Uint8)r;
+		color.g = (Uint8)g;
+		color.b = (Uint8)b;
+	}
+	fclose( fontcolor_fd);
 
     for (i=0,j=current_list_start; i<files_per_page; i++,j++) {
         list_filename[i] = NULL;
@@ -136,10 +143,17 @@ void clear_list()
 int filelist_init(char* title, char* executable, char* path)
 {
     SDL_Color color = {255,255,255,0};
+	int r = 0, g = 0, b = 0;
+	FILE *fontcolor_fd;
 
-	color.r = (Uint8)atoi(cfg_getstr(cfg, "FontColor-R"));
-	color.g = (Uint8)atoi(cfg_getstr(cfg, "FontColor-G"));
-	color.b = (Uint8)atoi(cfg_getstr(cfg, "FontColor-B"));
+	fontcolor_fd = fopen("/usr/local/home/.dmenu/fontcolor.ini","r");
+	if ( fontcolor_fd != NULL ) {
+		fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
+		color.r = (Uint8)r;
+		color.g = (Uint8)g;
+		color.b = (Uint8)b;
+	}
+	fclose( fontcolor_fd);
 
     tmp_surface = IMG_Load(cfg_getstr(cfg, "ListBackground"));
     if (!tmp_surface) {
@@ -269,10 +283,17 @@ void filelist_up()
 {
     int i;
     SDL_Color color = {255,255,255,0};
+	int r = 0, g = 0, b = 0;
+	FILE *fontcolor_fd;
 
-	color.r = (Uint8)atoi(cfg_getstr(cfg, "FontColor-R"));
-	color.g = (Uint8)atoi(cfg_getstr(cfg, "FontColor-G"));
-	color.b = (Uint8)atoi(cfg_getstr(cfg, "FontColor-B"));
+	fontcolor_fd = fopen("/usr/local/home/.dmenu/fontcolor.ini","r");
+	if ( fontcolor_fd != NULL ) {
+		fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
+		color.r = (Uint8)r;
+		color.g = (Uint8)g;
+		color.b = (Uint8)b;
+	}
+	fclose( fontcolor_fd);
 
     SE_out( MENUITEM_MOVE );
 
@@ -329,10 +350,17 @@ void filelist_down()
 {
     int i;
     SDL_Color color = {255,255,255,0};
+	int r = 0, g = 0, b = 0;
+	FILE *fontcolor_fd;
 
-	color.r = (Uint8)atoi(cfg_getstr(cfg, "FontColor-R"));
-	color.g = (Uint8)atoi(cfg_getstr(cfg, "FontColor-G"));
-	color.b = (Uint8)atoi(cfg_getstr(cfg, "FontColor-B"));
+	fontcolor_fd = fopen("/usr/local/home/.dmenu/fontcolor.ini","r");
+	if ( fontcolor_fd != NULL ) {
+		fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
+		color.r = (Uint8)r;
+		color.g = (Uint8)g;
+		color.b = (Uint8)b;
+	}
+	fclose( fontcolor_fd);
 
     SE_out( MENUITEM_MOVE );
 
