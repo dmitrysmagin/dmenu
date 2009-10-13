@@ -1,7 +1,7 @@
 #labels Phase-Deploy,Phase-Support
-= dmenu解説書 dmenu-0.4-r48以前 =
+= dmenu解説書 =
 
-　この解説書は、自力でdmenuに関するcfgファイルを書きたい方への支援として作成しました。
+　この解説書は、自力でdmenu（dmenu-0.4-r48以前）に関するcfgファイルを書きたい方への支援として作成しました。
 
 　cfgファイルの記述方法が理解できると、dmenuはかなり細かなカスタマイズが可能になります。
 
