@@ -50,19 +50,27 @@ cfg_opt_t opts[] = {
     CFG_STR("Background", 0, CFGF_NONE),
     CFG_STR("Cursor", 0, CFGF_NONE),
     CFG_STR("Font", 0, CFGF_NONE),
+
+    CFG_STR("VolDisp", 0, CFGF_NONE),
+    CFG_STR("BrightDisp", 0, CFGF_NONE),
+
     CFG_STR("ListBackground", 0, CFGF_NONE),
     CFG_STR("ListSelector", 0, CFGF_NONE),
     CFG_STR("ListDirIcon", 0, CFGF_NONE),
     CFG_STR("ListFileIcon", 0, CFGF_NONE),
     CFG_STR("LoadingScreen", 0, CFGF_NONE),
+
     CFG_STR("MenuSE", 0, CFGF_NONE),
     CFG_STR("MenuItemSE", 0, CFGF_NONE),
     CFG_STR("DecideSE", 0, CFGF_NONE),
     CFG_STR("CancelSE", 0, CFGF_NONE),
     CFG_STR("OutSE", 0, CFGF_NONE),
     CFG_STR("TestSE", 0, CFGF_NONE),
+
     CFG_SEC("Menu", menu_opts, CFGF_MULTI | CFGF_TITLE),
+
     CFG_FUNC("include", cfg_include),
+
     CFG_END()
 };
 
