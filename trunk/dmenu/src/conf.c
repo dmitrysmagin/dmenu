@@ -51,8 +51,8 @@ cfg_opt_t opts[] = {
     CFG_STR("Cursor", 0, CFGF_NONE),
     CFG_STR("Font", 0, CFGF_NONE),
 
-    CFG_STR("VolDisp", 0, CFGF_NONE),
-    CFG_STR("BrightDisp", 0, CFGF_NONE),
+    CFG_BOOL("VolDisp", cfg_false, CFGF_NONE),
+    CFG_BOOL("BrightDisp", cfg_false, CFGF_NONE),
 
     CFG_STR("ListBackground", 0, CFGF_NONE),
     CFG_STR("ListSelector", 0, CFGF_NONE),
