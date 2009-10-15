@@ -46,10 +46,6 @@ int main ( int argc, char** argv )
 {
     int rc=0;
 
-// sv_disp = Volume Display enable ( 0: disable / 1: enable) [enable]
-// br_disp = Brightness Display enable ( 0: disable / 1: enable) [enable]
-	int sv_disp=1, br_disp=1;
-
 #ifdef DINGOO_BUILD
     // Need to ignore SIGHUP if we are started by init.
     // In FB_CloseKeyboard() of SDL_fbevents.c , it does
@@ -119,10 +115,6 @@ int main ( int argc, char** argv )
         return 1;
     }
 
-// check VolDisp & BrightDisp
-	if (cfg_getstr(cfg,"VolDisp")) sv_disp = atoi(cfg_getstr(cfg, "VolDisp"));
-	if (cfg_getstr(cfg,"BrightDisp")) br_disp = atoi(cfg_getstr(cfg, "BrightDisp"));
-
     next_time = SDL_GetTicks() + TICK_INTERVAL;
 
     // program main loop
@@ -170,8 +162,9 @@ int main ( int argc, char** argv )
 
         dosd_show(screen);
 
-	if(sv_disp != 0) vol_show(screen);
-	if(br_disp != 0) bright_show(screen);
+// check VolDisp & BrightDisp
+	if (cfg_getbool(cfg,"VolDisp")) vol_show(screen);
+	if (cfg_getbool(cfg,"BrightDisp")) bright_show(screen);
 
         // DRAWING ENDS HERE
 
