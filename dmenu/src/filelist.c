@@ -61,13 +61,15 @@ void filelist_fill()
 	int r = 0, g = 0, b = 0;
 	FILE *fontcolor_fd;
 
-	fontcolor_fd = fopen("/usr/local/home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd != NULL ) {
-		fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-		color.r = (Uint8)r;
-		color.g = (Uint8)g;
-		color.b = (Uint8)b;
+	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
+	if ( fontcolor_fd == NULL ) {
+		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
+		exit(EXIT_FAILURE);
 	}
+	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
+	color.r = (Uint8)r;
+	color.g = (Uint8)g;
+	color.b = (Uint8)b;
 	fclose( fontcolor_fd);
 
     for (i=0,j=current_list_start; i<files_per_page; i++,j++) {
@@ -146,13 +148,15 @@ int filelist_init(char* title, char* executable, char* path)
 	int r = 0, g = 0, b = 0;
 	FILE *fontcolor_fd;
 
-	fontcolor_fd = fopen("/usr/local/home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd != NULL ) {
-		fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-		color.r = (Uint8)r;
-		color.g = (Uint8)g;
-		color.b = (Uint8)b;
+	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
+	if ( fontcolor_fd == NULL ) {
+		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
+		exit(EXIT_FAILURE);
 	}
+	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
+	color.r = (Uint8)r;
+	color.g = (Uint8)g;
+	color.b = (Uint8)b;
 	fclose( fontcolor_fd);
 
     tmp_surface = IMG_Load(cfg_getstr(cfg, "ListBackground"));
@@ -286,13 +290,15 @@ void filelist_up()
 	int r = 0, g = 0, b = 0;
 	FILE *fontcolor_fd;
 
-	fontcolor_fd = fopen("/usr/local/home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd != NULL ) {
-		fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-		color.r = (Uint8)r;
-		color.g = (Uint8)g;
-		color.b = (Uint8)b;
+	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
+	if ( fontcolor_fd == NULL ) {
+		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
+		exit(EXIT_FAILURE);
 	}
+	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
+	color.r = (Uint8)r;
+	color.g = (Uint8)g;
+	color.b = (Uint8)b;
 	fclose( fontcolor_fd);
 
     SE_out( MENUITEM_MOVE );
@@ -353,13 +359,15 @@ void filelist_down()
 	int r = 0, g = 0, b = 0;
 	FILE *fontcolor_fd;
 
-	fontcolor_fd = fopen("/usr/local/home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd != NULL ) {
-		fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-		color.r = (Uint8)r;
-		color.g = (Uint8)g;
-		color.b = (Uint8)b;
+	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
+	if ( fontcolor_fd == NULL ) {
+		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
+		exit(EXIT_FAILURE);
 	}
+	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
+	color.r = (Uint8)r;
+	color.g = (Uint8)g;
+	color.b = (Uint8)b;
 	fclose( fontcolor_fd);
 
     SE_out( MENUITEM_MOVE );

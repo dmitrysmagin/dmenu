@@ -65,13 +65,15 @@ int menu_init()
 	int r = 0, g = 0, b = 0;
 	FILE *fontcolor_fd;
 
-	fontcolor_fd = fopen("/usr/local/home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd != NULL ) {
-		fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-		color.r = (Uint8)r;
-		color.g = (Uint8)g;
-		color.b = (Uint8)b;
+	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
+	if ( fontcolor_fd == NULL ) {
+		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
+		exit(EXIT_FAILURE);
 	}
+	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
+	color.r = (Uint8)r;
+	color.g = (Uint8)g;
+	color.b = (Uint8)b;
 	fclose( fontcolor_fd);
 
     tmp_surface= IMG_Load(cfg_getstr(cfg, "Background"));
@@ -485,13 +487,15 @@ void submenu_open()
 	int r = 0, g = 0, b = 0;
 	FILE *fontcolor_fd;
 
-	fontcolor_fd = fopen("/usr/local/home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd != NULL ) {
-		fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-		color.r = (Uint8)r;
-		color.g = (Uint8)g;
-		color.b = (Uint8)b;
+	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
+	if ( fontcolor_fd == NULL ) {
+		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
+		exit(EXIT_FAILURE);
 	}
+	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
+	color.r = (Uint8)r;
+	color.g = (Uint8)g;
+	color.b = (Uint8)b;
 	fclose( fontcolor_fd);
 
     SE_out( DECIDE );
