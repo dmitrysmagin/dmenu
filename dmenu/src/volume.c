@@ -18,16 +18,11 @@ extern TTF_Font* status_font;
 
 SDL_Rect dst_icon, dst_text;
 
+extern cfg_t *cfg_value;
+
 void vol_init() {
 
-	FILE *vol_fd;
-	vol_fd = fopen("../../../home/.dmenu/sound_volume.ini", "r");
-	if (vol_fd == NULL) {
-		printf("Failed to load ../../../home/.dmenu/sound_volume.ini\n");
-		exit(EXIT_FAILURE);
-	}
-	fscanf(vol_fd,"%d", &base_volume);
-	fclose(vol_fd);
+	base_volume = (int)cfg_getint(cfg_value, "SndVol");
 
 	tmp_surface = IMG_Load("../../../home/.dmenu/STATspeaker.png");
 	if (tmp_surface == NULL) {
@@ -44,8 +39,6 @@ void vol_init() {
 void vol_set(int change) {
 	char *mixer_device = "/dev/mixer";
 	int mixer;
-	FILE *vol_fd;
-	int fd_no;
 
 	base_volume += change;
 
@@ -59,15 +52,7 @@ void vol_set(int change) {
 	}
 	close(mixer);
 
-	vol_fd = fopen("../../../home/.dmenu/sound_volume.ini", "w");
-	if (vol_fd == NULL) {
-		printf("Failed to open ../../../home/.dmenu/sound_volume.ini\n");
-		exit(EXIT_FAILURE);
-	}
-	fprintf(vol_fd, "%d", base_volume);
-	fd_no = fileno(vol_fd);
-	fsync(fd_no);
-	fclose(vol_fd);
+	cfg_setint( cfg_value, "SndVol", (long)base_volume );
 
 }
 

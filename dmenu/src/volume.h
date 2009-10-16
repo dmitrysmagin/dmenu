@@ -7,6 +7,8 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 
+#include "conf.h"
+
 void vol_init();
 void vol_set(int vol);
 void vol_show(SDL_Surface *surface);

@@ -10,6 +10,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <limits.h>
 #include <dirent.h>
@@ -39,6 +40,7 @@ cfg_opt_t menuitem_opts[] = {
 };
 
 cfg_opt_t menu_opts[] = {
+
     CFG_STR("Icon", 0, CFGF_NONE),
     CFG_STR("Name", 0, CFGF_NONE),
     CFG_SEC("MenuItem", menuitem_opts, CFGF_MULTI | CFGF_TITLE),
@@ -91,8 +93,15 @@ cfg_opt_t main_opts[] = {
     CFG_END()
 };
 
+cfg_opt_t value_opts[] = {
+    CFG_INT("SndVol", 50, CFGF_NONE),
+    CFG_INT("Bright", 3, CFGF_NONE),
+    CFG_END()
+};
+
 cfg_t *cfg;
 cfg_t *cfg_main;
+cfg_t *cfg_value;
 
 cfg_opt_t* conf_dupopts(cfg_opt_t* opts);
 int path_filter(const struct dirent *dptr);
@@ -111,6 +120,14 @@ int conf_load()
     rc = cfg_parse(cfg_main, "main.cfg");
     if (rc != CFG_SUCCESS) {
         printf( "Unable to load main config file. rc = %d\n", rc);
+        return rc;
+    }
+
+    // load dmenu.ini
+    cfg_value = cfg_init(value_opts, 0);
+    rc = cfg_parse(cfg_value, "../home/.dmenu/dmenu.ini");
+    if (rc != CFG_SUCCESS) {
+        printf( "Unable to load dmenu.ini file. rc = %d\n", rc);
         return rc;
     }
 
@@ -184,6 +201,20 @@ void conf_unload()
 {
     cfg_free(cfg);
     cfg_free(cfg_main);
+
+// Write to dmenu.ini
+	FILE *dmenu_ini;
+	int file_no;
+
+	dmenu_ini = fopen("../../../home/.dmenu/dmenu.ini","w");
+	if ( !dmenu_ini ) {
+		printf("Unable to open dmenu.ini\n");
+		exit(EXIT_FAILURE);
+	}
+	cfg_print(cfg_value, dmenu_ini);
+	file_no = fileno(dmenu_ini);
+	fsync(file_no);
+	fclose(dmenu_ini);
 
     if (chdir("../..")) { // go back to dmenu directory
         printf("Unable to change to dmenu directory\n");
