@@ -17,41 +17,50 @@ SDL_Rect dst_icon;
 void bright_init() {
 
 	FILE *brt_fd;
-	brt_fd = fopen("/usr/local/home/.dmenu/brightness_level.ini", "r");
+	brt_fd = fopen("../../../home/.dmenu/brightness_level.ini", "r");
+	if ( brt_fd == NULL) {
+		printf("Failed to load ../../../home/.dmenu/brightness_level.ini\n");
+		exit(EXIT_FAILURE);
+	}
 	fscanf(brt_fd,"%d", &bright_level);
 	fclose(brt_fd);
 
-	tmp_surface = IMG_Load("/usr/local/home/.dmenu/STATbright0.png");
-	if (!tmp_surface) {
-		printf("Failed to load .dmenu_ini/STATbright0.png: %s\n", IMG_GetError());
+	tmp_surface = IMG_Load("../../../home/.dmenu/STATbright0.png");
+	if (tmp_surface == NULL) {
+		printf("Failed to load ../../../home/.dmenu/STATbright0.png: %s\n", IMG_GetError());
+		exit(EXIT_FAILURE);
 	}
 	bright_status[0] = SDL_DisplayFormatAlpha(tmp_surface);
 	SDL_FreeSurface(tmp_surface);
 
-	tmp_surface = IMG_Load("/usr/local/home/.dmenu/STATbright1.png");
-	if (!tmp_surface) {
-		printf("Failed to load .dmenu_ini/STATbright1.png: %s\n", IMG_GetError());
+	tmp_surface = IMG_Load("../../../home/.dmenu/STATbright1.png");
+	if (tmp_surface == NULL) {
+		printf("Failed to load ../../../home/.dmenu/STATbright1.png: %s\n", IMG_GetError());
+		exit(EXIT_FAILURE);
 	}
 	bright_status[1] = SDL_DisplayFormatAlpha(tmp_surface);
 	SDL_FreeSurface(tmp_surface);
 
-	tmp_surface = IMG_Load("/usr/local/home/.dmenu/STATbright2.png");
-	if (!tmp_surface) {
-		printf("Failed to load .dmenu_ini/STATbright2.png: %s\n", IMG_GetError());
+	tmp_surface = IMG_Load("../../../home/.dmenu/STATbright2.png");
+	if (tmp_surface == NULL) {
+		printf("Failed to load ../../../home/.dmenu/STATbright2.png: %s\n", IMG_GetError());
+		exit(EXIT_FAILURE);
 	}
 	bright_status[2] = SDL_DisplayFormatAlpha(tmp_surface);
 	SDL_FreeSurface(tmp_surface);
 
-	tmp_surface = IMG_Load("/usr/local/home/.dmenu/STATbright3.png");
-	if (!tmp_surface) {
-		printf("Failed to load .dmenu_ini/STATbright3.png: %s\n", IMG_GetError());
+	tmp_surface = IMG_Load("../../../home/.dmenu/STATbright3.png");
+	if (tmp_surface == NULL) {
+		printf("Failed to load ../../../home/.dmenu/STATbright3.png: %s\n", IMG_GetError());
+		exit(EXIT_FAILURE);
 	}
 	bright_status[3] = SDL_DisplayFormatAlpha(tmp_surface);
 	SDL_FreeSurface(tmp_surface);
 
-	tmp_surface = IMG_Load("/usr/local/home/.dmenu/STATbright4.png");
-	if (!tmp_surface) {
-		printf("Failed to load .dmenu_ini/STATbright4.png: %s\n", IMG_GetError());
+	tmp_surface = IMG_Load("../../../home/.dmenu/STATbright4.png");
+	if (tmp_surface == NULL) {
+		printf("Failed to load ../../../home/.dmenu/STATbright4.png: %s\n", IMG_GetError());
+		exit(EXIT_FAILURE);
 	}
 	bright_status[4] = SDL_DisplayFormatAlpha(tmp_surface);
 	SDL_FreeSurface(tmp_surface);
@@ -61,7 +70,6 @@ void bright_init() {
 }
 
 void bright_set(int change) {
-	char *backlight = "/proc/jz/lcd_backlight";
 	FILE *brt_fd;
 	int file_no;
 
@@ -70,16 +78,29 @@ void bright_set(int change) {
 	if (bright_level >= 4) bright_level = 4;
 	if (bright_level <= 0) bright_level = 0;
 
+#ifdef DINGOO_BUILD
+	char *backlight = "/proc/jz/lcd_backlight";
 	brt_fd = fopen(backlight, "w");
+	if (brt_fd == NULL) {
+		printf("Failed to open /proc/jz/lcd_backlight\n");
+		exit(EXIT_FAILURE);
+	}
 	fprintf(brt_fd, "%d", bright[bright_level] );
-
+	file_no = fileno(brt_fd);
+	fsync(file_no);
 	fclose(brt_fd);
+#endif
 
-	brt_fd = fopen("/usr/local/home/.dmenu/brightness_level.ini", "w");
+	brt_fd = fopen("../../../home/.dmenu/brightness_level.ini", "w");
+	if (brt_fd == NULL) {
+		printf("Failed to open ../../../home/.dmenu/brightness_level.ini\n");
+		exit(EXIT_FAILURE);
+	}
 	fprintf(brt_fd, "%d", bright_level);
 	file_no = fileno(brt_fd);
 	fsync(file_no);
 	fclose(brt_fd);
+
 }
 
 void bright_show(SDL_Surface *surface) {
