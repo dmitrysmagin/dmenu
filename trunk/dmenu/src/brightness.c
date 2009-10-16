@@ -14,16 +14,11 @@ SDL_Surface* tmp_surface;
 
 SDL_Rect dst_icon;
 
+extern cfg_t *cfg_value;
+
 void bright_init() {
 
-	FILE *brt_fd;
-	brt_fd = fopen("../../../home/.dmenu/brightness_level.ini", "r");
-	if ( brt_fd == NULL) {
-		printf("Failed to load ../../../home/.dmenu/brightness_level.ini\n");
-		exit(EXIT_FAILURE);
-	}
-	fscanf(brt_fd,"%d", &bright_level);
-	fclose(brt_fd);
+	bright_level = (int)cfg_getint(cfg_value, "Bright");
 
 	tmp_surface = IMG_Load("../../../home/.dmenu/STATbright0.png");
 	if (tmp_surface == NULL) {
@@ -70,8 +65,6 @@ void bright_init() {
 }
 
 void bright_set(int change) {
-	FILE *brt_fd;
-	int file_no;
 
 	bright_level += change;
 
@@ -79,6 +72,9 @@ void bright_set(int change) {
 	if (bright_level <= 0) bright_level = 0;
 
 #ifdef DINGOO_BUILD
+	FILE *brt_fd;
+	int file_no;
+
 	char *backlight = "/proc/jz/lcd_backlight";
 	brt_fd = fopen(backlight, "w");
 	if (brt_fd == NULL) {
@@ -91,15 +87,7 @@ void bright_set(int change) {
 	fclose(brt_fd);
 #endif
 
-	brt_fd = fopen("../../../home/.dmenu/brightness_level.ini", "w");
-	if (brt_fd == NULL) {
-		printf("Failed to open ../../../home/.dmenu/brightness_level.ini\n");
-		exit(EXIT_FAILURE);
-	}
-	fprintf(brt_fd, "%d", bright_level);
-	file_no = fileno(brt_fd);
-	fsync(file_no);
-	fclose(brt_fd);
+	cfg_setint( cfg_value, "Bright", (long)bright_level );
 
 }
 
