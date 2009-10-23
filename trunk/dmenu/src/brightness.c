@@ -7,7 +7,7 @@
 
 int bright_level;
 
-int bright[5]={0,25,50,75,99};
+int bright[5]={10,25,50,75,99};
 
 SDL_Surface* bright_status[5];
 SDL_Surface* tmp_surface;
