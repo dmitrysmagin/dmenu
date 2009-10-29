@@ -18,6 +18,8 @@
 #include "conf.h"
 #include "menu.h"
 #include "dosd/dosd.h"
+#include "brightness.h"
+#include "volume.h"
 
 void run_internal_command(char* command, char* args, char* workdir);
 /*
@@ -123,6 +125,8 @@ void run_command(char* executable, char* args, char* workdir)
     filelist_deinit();
     conf_unload();
     dosd_deinit();
+	vol_deinit();
+	bright_deinit();
 
     rc = chdir(workdir_copy);
     if (rc != 0) {
