@@ -1,13 +1,16 @@
-TARGET	:= dmenu
-BUILD	:= build
+TARGET     := dmenu
+BUILD      := build
 TOOLCHAINDIR := /opt/mipsel-linux-uclibc
-INCLS	:= src ../dosd/include
-SOURCES	:= src ../dosd/src
-LIBPATH := $(TOOLCHAINDIR)/usr/lib
+INCLS      := src ../dosd/include
+SOURCES    := src ../dosd/src
+BINPATH    := ${TOOLCHAINDIR}/usr/bin
+LIBPATH    := $(TOOLCHAINDIR)/usr/lib
+HOME_PATH  := \"/usr/local/home/\"
+DMENU_PATH := \"/usr/local/dmenu/\"
 
 ARCH	:= mipsel-linux-
-CC	:= $(ARCH)gcc
-CFLAGS	:= -DDINGOO_BUILD -O3 -Wall -s -fomit-frame-pointer -funroll-loops -DHAVE_CONFIG_H -I$(TOOLCHAINDIR)/usr/include -I$(TOOLCHAINDIR)/usr/include/SDL
+CC	:= ${BINPATH}/$(ARCH)gcc
+CFLAGS	:= -DDMENU_PATH="$(DMENU_PATH)" -DHOME_PATH="$(HOME_PATH)" -DDINGOO_BUILD -Wall -s -fomit-frame-pointer -funroll-loops -DHAVE_CONFIG_H -I$(TOOLCHAINDIR)/usr/include -I$(TOOLCHAINDIR)/usr/include/SDL
 #CFLAGS	:= -DDINGOO_BUILD -O3 -Wall -g -fomit-frame-pointer -funroll-loops -DHAVE_CONFIG_H -I$(TOOLCHAINDIR)/usr/include -I$(TOOLCHAINDIR)/usr/include/SDL
 LDFLAG := -s -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -lconfuse
 #LDFLAG := -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lconfuse

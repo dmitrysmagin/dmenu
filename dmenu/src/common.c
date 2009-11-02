@@ -87,6 +87,7 @@ void run_command(char* executable, char* args, char* workdir)
     char** args_list = build_arg_list(executable, args);    
     change_dir(workdir);
     
+    //deinit();
     SDL_Quit();
     menu_deinit();
     filelist_deinit();
@@ -102,7 +103,8 @@ void run_command(char* executable, char* args, char* workdir)
     
     // it should not return, otherwise it means we are not able to execute the application
     free_arg_list(args_list);
-    quick_exit();
+    //quick_exit();
+    _exit(1);
 }
 
 void run_internal_command(char* command, char* args, char* workdir)

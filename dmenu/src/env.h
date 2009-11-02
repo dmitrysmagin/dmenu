@@ -1,3 +1,5 @@
+#include <limits.h>
+
 //Currently the hardcoded defaults are intended for Dingoo A320
 #ifndef DMENU_PATH
 #define DMENU_PATH           "/usr/local/dmenu/"
