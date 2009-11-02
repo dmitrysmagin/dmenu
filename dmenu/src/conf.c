@@ -128,7 +128,7 @@ int conf_to_file(cfg_t* cfg, char* file) {
     FILE *fp;
     int file_no;
 
-    log_message("Saving conf file: %s", file);
+    log_debug("Saving conf file: %s", file);
     
     fp = load_file(file, "w");
     if (fp == NULL) return 0;

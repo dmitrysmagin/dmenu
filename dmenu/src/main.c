@@ -134,9 +134,6 @@ void deinit() {
     imageviewer_deinit();
     conf_unload();
     dosd_deinit();
-    
-    vol_deinit();
-    bright_deinit();
 }
 
 void reload() {
