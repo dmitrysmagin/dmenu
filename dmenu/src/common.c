@@ -213,7 +213,7 @@ int change_dir(char* path)
     return rc;
 }
 
-FILE* open_file_and_handle_fail(char* file, char* mode, int die_on_fail) {
+FILE* load_file_and_handle_fail(char* file, char* mode, int die_on_fail) {
     log_message("Opening file: %s", file);
     
     FILE* out = fopen(file, mode);    
@@ -224,12 +224,12 @@ FILE* open_file_and_handle_fail(char* file, char* mode, int die_on_fail) {
     return out;
 }
 
-FILE* open_file_or_die(char* file, char* mode) {
-    return open_file_and_handle_fail(file,mode,1);
+FILE* load_file_or_die(char* file, char* mode) {
+    return load_file_and_handle_fail(file,mode,1);
 }
 
-FILE* open_file(char* file, char* mode) {
-    return open_file_and_handle_fail(file,mode,0);
+FILE* load_file(char* file, char* mode) {
+    return load_file_and_handle_fail(file,mode,0);
 }
 
 SDL_Surface* load_image_file_with_format( char* file , int alpha ) {
@@ -339,7 +339,7 @@ SDL_Color* parse_color_string(char* str) {
 
 SDL_Color* load_color_file(char* filename) {
     char color[12];
-    FILE* fd = open_file_or_die(filename,"r");
+    FILE* fd = load_file_or_die(filename,"r");
     int i = fscanf(fd, "%s", color);
     fclose(fd);
     return (i == 0 || i == EOF) ? NULL : parse_color_string(color);
