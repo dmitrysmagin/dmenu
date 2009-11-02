@@ -8,9 +8,10 @@
 #include <SDL_ttf.h>
 
 #include "conf.h"
+#include "common.h"
+#include "env.h"
 
 void vol_init();
 void vol_set(int vol);
 void vol_show(SDL_Surface *surface);
 void vol_deinit();
-
