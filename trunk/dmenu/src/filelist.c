@@ -41,8 +41,7 @@ int status_changed;
 
 struct dirent **namelist;
 struct stat *statlist;
-SDL_Surface* list_filename[FILES_PER_PAGE]; //todo - if FILES_PER_PAGE is in conf, need to
-                                           //dynamically allocate this
+SDL_Surface* list_filename[FILES_PER_PAGE]; 
 int num_of_files; // total number of files under current directory
 int current_list_start; // index of the file at top of current page
 int current_highlight; // index of the file being highlighted
@@ -431,7 +430,7 @@ enum MenuState filelist_keypress(SDLKey keysym)
         case DINGOO_BUTTON_A:
             return filelist_run();
         case DINGOO_BUTTON_START:
-            //conf_selectordir(mi, current_path);
+            conf_selectordir(mi, current_path);
             break;
         case DINGOO_BUTTON_R:
             filelist_move_page(DOWN);

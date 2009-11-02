@@ -15,16 +15,19 @@
 #include <limits.h>
 #include <dirent.h>
 #include <libgen.h>
+#include "common.h"
 #include "conf.h"
+#include "main.h"
+#include "menu.h"
 
 #define is_set(f, x) (((f) & (x)) == (f))
-
 cfg_opt_t submenuitem_opts[] = {
     CFG_STR("Icon", 0, CFGF_NONE),
     CFG_STR("Name", 0, CFGF_NONE),
     CFG_STR("Executable", 0, CFGF_NONE),
     CFG_STR("WorkDir", ".", CFGF_NONE),
     CFG_BOOL("Selector", cfg_false, CFGF_NONE),
+    CFG_STR("SelectorDir", 0, CFGF_NONE),
     CFG_END()
 };
 
@@ -34,6 +37,7 @@ cfg_opt_t menuitem_opts[] = {
     CFG_STR("Executable", 0, CFGF_NONE),
     CFG_STR("WorkDir", ".", CFGF_NONE),
     CFG_BOOL("Selector", cfg_false, CFGF_NONE),
+    CFG_STR("SelectorDir", 0, CFGF_NONE),
     CFG_SEC("SubMenuItem", submenuitem_opts, CFGF_MULTI | CFGF_TITLE),
     CFG_FUNC("include", cfg_include),
     CFG_END()
@@ -103,52 +107,91 @@ cfg_t *cfg;
 cfg_t *cfg_main;
 cfg_t *cfg_value;
 
+char* theme_path;
+
 cfg_opt_t* conf_dupopts(cfg_opt_t* opts);
 int path_filter(const struct dirent *dptr);
 
+cfg_t* conf_from_file(cfg_opt_t* opts, char* file)
+{
+    cfg_t* out = cfg_init(opts, 0);
+    int rc = cfg_parse(out, file);
+    if (rc != CFG_SUCCESS) {
+        char* action = rc == CFG_FILE_ERROR ? "load" : "parse";
+        log_error( "Unable to %s config file:%s . rc = %d", action, file, rc);
+        out = NULL;
+    }
+    return out;
+}
+
+int conf_to_file(cfg_t* cfg, char* file) {
+    FILE *fp;
+    int file_no;
+    
+    fp = open_file(file, "w");
+    if (fp == NULL) return 0;
+
+    cfg_print(cfg, fp);
+    file_no = fileno(fp);
+    fsync(file_no);
+    fclose(fp);
+
+    return 1;
+}
+
+char* THEME_CONF_FILE;
+
+int conf_load_theme() 
+{
+    int rc = 0;
+    
+    // build theme_dir
+    char theme_dir[PATH_MAX]; theme_dir[0] = '\0';
+    char* _theme_path = cfg_getstr(cfg_main, "Theme");
+    
+    if (_theme_path[0] != '/')  //If relative
+    {
+        strcat(theme_dir, DMENU_THEMES);
+    }
+    
+    strcat(theme_dir, _theme_path);
+    
+    rc = change_dir(theme_dir);
+    if (rc) return rc;
+
+    //Build theme path
+    strcpy(THEME_PATH, theme_dir);
+    strcat(THEME_PATH, "/");
+    
+    //Build theme conf file
+    THEME_CONF_FILE = theme_file("theme.cfg");
+
+    // load theme.cfg
+    change_dir(THEME_PATH);    
+    cfg = conf_from_file(opts, THEME_CONF_FILE);
+    if (cfg == NULL) return CFG_PARSE_ERROR;
+    change_dir(DMENU_PATH);
+    
+    return 0;
+}
 
 int conf_load()
 {
-    int rc;
     struct dirent **namelist;
-    int num_of_files;
-    int i, j;
-
+    int num_of_files, rc, i, j;
 
     // load main.cfg
-    cfg_main = cfg_init(main_opts, 0);
-    rc = cfg_parse(cfg_main, "main.cfg");
-    if (rc != CFG_SUCCESS) {
-        printf( "Unable to load main config file. rc = %d\n", rc);
-        return rc;
-    }
-
+    cfg_main = conf_from_file(main_opts, DMENU_CONF_FILE);
+    if (cfg_main == NULL) return CFG_PARSE_ERROR;
+    
     // load dmenu.ini
-    cfg_value = cfg_init(value_opts, 0);
-    rc = cfg_parse(cfg_value, "../home/.dmenu/dmenu.ini");
-    if (rc != CFG_SUCCESS) {
-        printf( "Unable to load dmenu.ini file. rc = %d\n", rc);
-        return rc;
-    }
+    cfg_value = conf_from_file(value_opts, USER_CONF_FILE);
+    if (cfg_value == NULL) return CFG_PARSE_ERROR;
 
-    // cd to theme directory
-    char theme_dir[PATH_MAX] = "themes/";
-    strcat(theme_dir, cfg_getstr(cfg_main, "Theme"));
-    rc = chdir(theme_dir);
-    if (rc != 0) {
-        printf("Unable to change to theme directory %s\n", theme_dir);
-        perror(0);
-        return rc;
-    }
-
-    // load theme.cfg
-    cfg = cfg_init(opts, 0);
-    rc = cfg_parse(cfg, "theme.cfg");
-    if (rc != CFG_SUCCESS) {
-        printf( "Unable to load theme config file. rc = %d\n", rc);
-        return rc;
-    }
-
+    //Find theme path
+    rc = conf_load_theme();
+    if (rc) return rc;
+    
     // load dmenu.cfg files from SearchPath
     char search_path[PATH_MAX];
     char work_path[PATH_MAX];
@@ -157,9 +200,9 @@ int conf_load()
         if (search_path_in_conf[0] == '/') { // SearchPath is absolute
             strcpy(search_path, search_path_in_conf);
         } else { // SearchPath is relative to dmenu directory
-            getcwd(search_path, PATH_MAX);
-            strcat(search_path, "/../../"); //cwd is the theme directory
-            strcat(search_path, search_path_in_conf);
+            char * tmp = dmenu_file(search_path_in_conf);
+            strcpy(search_path, tmp);
+            free(tmp);
         }
 
         num_of_files = scandir(search_path, &namelist, path_filter, alphasort);
@@ -174,52 +217,19 @@ int conf_load()
         }
     }
 
-    // for internal command themeselect, set
-    // Selector = Yes and
-    // WorkDir = ".."
-    int number_of_menu, number_of_menuitem;
-    cfg_t *m;
-    cfg_t *mi;
-    number_of_menu = cfg_size(cfg, "Menu");
-    for (i=0;i<number_of_menu;i++) {
-        m = cfg_getnsec(cfg, "Menu", i);
-        number_of_menuitem = cfg_size(m, "MenuItem");
-        for (j=0;j<number_of_menuitem;j++) {
-            mi = cfg_getnsec(m, "MenuItem", j);
-            if (cfg_getstr(mi, "Executable") &&
-                (strcmp(cfg_getstr(mi, "Executable"), COMMAND_THEMESELECT) == 0)) {
-                cfg_setbool(mi, "Selector", cfg_true);
-                cfg_setstr(mi, "WorkDir", "..");
-            }
-        }
-    }
-
     return CFG_SUCCESS;
 }
 
 void conf_unload()
 {
+    free(THEME_CONF_FILE);
+    
     cfg_free(cfg);
     cfg_free(cfg_main);
 
-// Write to dmenu.ini
-	FILE *dmenu_ini;
-	int file_no;
-
-	dmenu_ini = fopen("../../../home/.dmenu/dmenu.ini","w");
-	if ( !dmenu_ini ) {
-		printf("Unable to open dmenu.ini\n");
-		exit(EXIT_FAILURE);
-	}
-	cfg_print(cfg_value, dmenu_ini);
-	file_no = fileno(dmenu_ini);
-	fsync(file_no);
-	fclose(dmenu_ini);
-
-    if (chdir("../..")) { // go back to dmenu directory
-        printf("Unable to change to dmenu directory\n");
-        perror(0);
-    }
+    // Write to dmenu.ini
+    conf_to_file(cfg_value, USER_CONF_FILE);
+    change_dir(DMENU_PATH);
 }
 
 int path_filter(const struct dirent *dptr)
@@ -230,21 +240,14 @@ int path_filter(const struct dirent *dptr)
 
 void conf_merge_standalone(char *conf_file)
 {
-    int rc;
     int i, j, number_of_menu, number_of_standalone_menu;
     cfg_t *standalone_cfg;
     cfg_t* m;
     cfg_t* standalone_m;
     char* conf_file_dir;
 
-    standalone_cfg = cfg_init(standalone_opts, 0);
-    rc = cfg_parse(standalone_cfg, conf_file);
-    if (rc != CFG_SUCCESS) {
-        if (rc != CFG_FILE_ERROR) {
-            printf("Error parsing cfg file %s, rc=%d\n", conf_file, rc);
-        }
-        return;
-    }
+    standalone_cfg = conf_from_file(standalone_opts, conf_file);
+    if (standalone_cfg == NULL) return;
 
     conf_file_dir = dirname(conf_file);
 
@@ -262,8 +265,8 @@ void conf_merge_standalone(char *conf_file)
                 // Our dupopts routine does not handle sections, hence doesn't
                 // doesn't work for SubMenuItems
                 if (cfg_size(standalone_mi, "SubMenuItem") > 0) {
-                    printf("Not supported - dmenu.cfg contains SubMenuItems\n");
-                    printf("in directory %s\n", conf_file_dir);
+                    log_error("Not supported - dmenu.cfg contains SubMenuItems\
+                                \nin directory %s", conf_file_dir);
                 }
                 else {
                     char* icon_path = cfg_getstr(standalone_mi, "Icon");
@@ -279,7 +282,7 @@ void conf_merge_standalone(char *conf_file)
                     cfg_opt_t* mi_opt = cfg_getopt(m, "MenuItem");
                     mi_opt->values = realloc(mi_opt->values,
                                           (mi_opt->nvalues+1) * sizeof(cfg_value_t *));
-                    mi_opt->values[mi_opt->nvalues] = malloc(sizeof(cfg_value_t));
+                    mi_opt->values[mi_opt->nvalues] = (cfg_value_t*) malloc(sizeof(cfg_value_t));
                     mi_opt->values[mi_opt->nvalues]->section = calloc(1, sizeof(cfg_t));
                     cfg_t* mi_sec = mi_opt->values[mi_opt->nvalues]->section;
                     mi_opt->nvalues++;
@@ -350,27 +353,103 @@ cfg_opt_t* conf_dupopts(cfg_opt_t* opts)
     return dupopts;
 }
 
-extern void menu_deinit();
-extern void menu_init();
+int conf_root_item(cfg_t* menu_item, cfg_t* root_item, char* root_name) {
+
+    char *filename, *out_root_name = NULL;
+    int number_of_menu, number_of_menuitem, i, j;
+    cfg_t *m, *mi, *out_root_item = NULL;
+  
+    filename = menu_item->filename;
+
+    if (strcmp(cfg->filename, filename) == 0) {
+       out_root_item = cfg;
+       out_root_name = "";
+    } else {
+        number_of_menu = cfg_size(cfg, "Menu");
+        for (i=0;i<number_of_menu;i++) {
+            m = cfg_getnsec(cfg, "Menu", i);
+            if (strcmp(filename,m->filename)==0) {
+                out_root_name = "Menu";
+                out_root_item = m;
+                break;
+            } 
+          
+            number_of_menuitem = cfg_size(m, "MenuItem");
+            for (j=0;j<number_of_menuitem;j++) {
+                mi = cfg_getnsec(m, "MenuItem", j);
+                if (strcmp(filename, mi->filename)==0) {
+                    out_root_name = "MenuItem";
+                    out_root_item = mi;
+                    break;
+                }
+            }
+            if (out_root_item != NULL) break;
+        }
+    }
+
+    if (out_root_item != NULL) {
+        memcpy(root_item, out_root_item, sizeof(struct cfg_t));
+        strcpy(root_name, out_root_name);
+    }
+    return out_root_item!=NULL;
+}
+
+void conf_persist_item(cfg_t* menu_item) {
+
+    cfg_t *root_item = NULL;
+    char *root_name = NULL;
+    FILE *fp = open_file(menu_item->filename, "w");
+    if (fp == NULL) return;
+    
+    root_name = new_str(100);
+    root_item = new_item(cfg_t);
+    strcpy(root_name, "");
+
+    if (!conf_root_item(menu_item, root_item, root_name)) {
+        log_error("Unable to find config file for: %s", menu_item->name);
+        return;
+    }
+
+    if (strlen(root_name)>0) {
+        fprintf(fp, "%s %s {\n", root_name, root_item->title);
+    }
+        
+    cfg_print(root_item, fp);
+
+    if (strlen(root_name)>0) {
+        fprintf(fp, "}\n");
+    }
+ 
+    free(root_name);
+    free(root_item);
+    fclose(fp);
+}
+
+void conf_selectordir(cfg_t* menu_item, char* dir) 
+{
+    cfg_setstr(menu_item, "SelectorDir", dir);
+    conf_persist_item(menu_item);
+}
 
 void conf_themeselect(char* themedir)
 {
-    if (cfg_getbool(cfg_main, "AllowDynamicThemeChange")) {
-        FILE *fp;
-        fp = fopen("../../main.cfg", "w");
-        if(fp == 0) {
-            printf( "Unable to open main config file.\n");
-            perror(0);
-            return;
-        }
-
-        cfg_setstr(cfg_main, "Theme", themedir);
-        cfg_print(cfg_main, fp);
-        fclose(fp);
-    
-        menu_deinit();
-        conf_unload();
-        conf_load();
-        menu_init();
+    char* path = strrchr(themedir, '/'); 
+    if (path == NULL) path = themedir;
+    else {
+        path++;
     }
+    
+    if (cfg_getbool(cfg_main, "AllowDynamicThemeChange")) {
+        cfg_setstr(cfg_main, "Theme", path);
+        
+        if (!conf_to_file(cfg_main, DMENU_CONF_FILE)) return;
+        reload();
+    }
+}
+
+void conf_backgroundselect(char* bgimage)
+{
+    cfg_setstr(cfg, "Background", bgimage);
+    if (!conf_to_file(cfg, THEME_CONF_FILE)) return;
+    menu_reload_background();
 }
