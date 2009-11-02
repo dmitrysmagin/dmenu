@@ -425,12 +425,6 @@ void conf_persist_item(cfg_t* menu_item) {
     fclose(fp);
 }
 
-void conf_selectordir(cfg_t* menu_item, char* dir) 
-{
-    cfg_setstr(menu_item, "SelectorDir", dir);
-    conf_persist_item(menu_item);
-}
-
 void conf_themeselect(char* themedir)
 {
     char* path = strrchr(themedir, '/'); 
@@ -447,9 +441,15 @@ void conf_themeselect(char* themedir)
     }
 }
 
+void conf_selectordir(cfg_t* menu_item, char* dir) 
+{
+    cfg_setstr(menu_item, "SelectorDir", dir);
+    //conf_persist_item(menu_item);
+}
+
 void conf_backgroundselect(char* bgimage)
 {
     cfg_setstr(cfg, "Background", bgimage);
-    if (!conf_to_file(cfg, THEME_CONF_FILE)) return;
+    //if (!conf_to_file(cfg, THEME_CONF_FILE)) return;
     menu_reload_background();
 }
