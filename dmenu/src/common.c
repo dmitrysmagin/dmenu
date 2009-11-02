@@ -101,7 +101,7 @@ void run_internal_command(char* command, char* args, char* workdir)
             conf_themeselect(args);
             break;
         case BACKGROUNDSELECT:
-            //conf_backgroundselect(args);
+            conf_backgroundselect(args);
             break;
         default: break;
     }
