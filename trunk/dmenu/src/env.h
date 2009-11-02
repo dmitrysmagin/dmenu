@@ -4,6 +4,7 @@
 #endif 
 #define DMENU_THEMES         DMENU_PATH "themes/"
 #define DMENU_CONF_FILE      DMENU_PATH "main.cfg"
+char THEME_PATH[PATH_MAX];
 
 #ifndef HOME_PATH
 #define HOME_PATH            "/usr/local/home/"
