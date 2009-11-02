@@ -381,8 +381,8 @@ SDL_Surface* shrink_surface(SDL_Surface *src, double factor)
         src->format->Rmask, src->format->Gmask, 
         src->format->Bmask, src->format->Amask);
 
-    int src_pitch = src->pitch, dst_pitch = dst->pitch;
-    int src_y_off = 0, dst_y_off = 0, dst_x_off=0;
+    register int src_pitch = src->pitch, dst_pitch = dst->pitch;
+    register int src_y_off = 0, dst_y_off = 0, dst_x_off=0;
 
     y = h;
     while (y--) {
