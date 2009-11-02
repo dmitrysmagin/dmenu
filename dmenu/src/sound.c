@@ -1,45 +1,41 @@
 #include <SDL_mixer.h>
 #include "sound.h"
 #include "conf.h"
+#include "common.h"
 
 extern cfg_t *cfg;
 
 Mix_Music*	gSE[6];
 
+void load_sound(char* file, enum MenuSound snd) 
+{
+    gSE[snd] = load_theme_sound(cfg_getstr(cfg, file));
+}
+
 void SE_Init()
 {
 
-	if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY,MIX_DEFAULT_FORMAT,2,1024)<0) {
-		printf( "Can't initialize Sounds." );
-	}
-
-	gSE[0] = Mix_LoadMUS(cfg_getstr(cfg, "MenuSE"));
-	gSE[1] = Mix_LoadMUS(cfg_getstr(cfg, "MenuItemSE"));
-	gSE[2] = Mix_LoadMUS(cfg_getstr(cfg, "DecideSE"));
-	gSE[3] = Mix_LoadMUS(cfg_getstr(cfg, "CancelSE"));
-	gSE[4] = Mix_LoadMUS(cfg_getstr(cfg, "OutSE"));
-	gSE[5] = Mix_LoadMUS(cfg_getstr(cfg, "TestSE"));
+    if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY,MIX_DEFAULT_FORMAT,2,1024)<0) {
+        log_error( "Can't initialize Sounds." );
+    }
+ 
+    load_sound("MenuSE",     MENU_MOVE);
+    load_sound("MenuItemSE", MENUITEM_MOVE);
+    load_sound("DecideSE",   DECIDE);
+    load_sound("CancelSE",   CANCEL);
+    load_sound("OutSE",      OUT);
+    load_sound("TestSE",     TEST);
 
 }
 
-
-void SE_out(int se)
+void SE_out(enum MenuSound se)
 {
-
-	if ((se < 0) || (se > 5)) se = 4;
-	Mix_PlayMusic( gSE[se], 1 );
-
+    Mix_PlayMusic( gSE[se], 1 );
 }
 
 void SE_deInit()
 {
 	Mix_HaltMusic();
-	Mix_FreeMusic( gSE[0] );
-	Mix_FreeMusic( gSE[1] );
-	Mix_FreeMusic( gSE[2] );
-	Mix_FreeMusic( gSE[3] );
-	Mix_FreeMusic( gSE[4] );
-	Mix_FreeMusic( gSE[5] );
-
+    foreach(gSE, Mix_FreeMusic, 6);
 	Mix_CloseAudio();
 }
