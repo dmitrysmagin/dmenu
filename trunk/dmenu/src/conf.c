@@ -127,15 +127,17 @@ cfg_t* conf_from_file(cfg_opt_t* opts, char* file)
 int conf_to_file(cfg_t* cfg, char* file) {
     FILE *fp;
     int file_no;
+
+    log_message("Saving conf file: %s", file);
     
-    fp = open_file(file, "w");
+    fp = load_file(file, "w");
     if (fp == NULL) return 0;
 
     cfg_print(cfg, fp);
     file_no = fileno(fp);
     fsync(file_no);
     fclose(fp);
-
+    
     return 1;
 }
 
@@ -398,7 +400,7 @@ void conf_persist_item(cfg_t* menu_item) {
 
     cfg_t *root_item = NULL;
     char *root_name = NULL;
-    FILE *fp = open_file(menu_item->filename, "w");
+    FILE *fp = load_file(menu_item->filename, "w");
     if (fp == NULL) return;
     
     root_name = new_str(100);

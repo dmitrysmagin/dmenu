@@ -28,32 +28,30 @@ void bright_init()
 
 void bright_set(int change) {
 
-	bright_level = bound(bright_level + change, 0, 4);
+    bright_level = bound(bright_level + change, 0, 4);
 
-#ifdef DINGOO_BUILD
-	int file_no;
-    FILE *brt_fd = open_file_or_die(BACKLIGHT_DEVICE, "w");
-    fprintf(brt_fd, "%d", bright[bright_level] );
-    file_no = fileno(brt_fd);
-    fsync(file_no);
-    fclose(brt_fd);
-#endif
+    #ifdef DINGOO_BUILD
+        int file_no;
+        FILE *brt_fd = load_file_or_die(BACKLIGHT_DEVICE, "w");
+        fprintf(brt_fd, "%d", bright[bright_level] );
+        file_no = fileno(brt_fd);
+        fsync(file_no);
+        fclose(brt_fd);
+    #endif
 
-	cfg_setint( cfg_value, "Bright", (long)bright_level );
-
+    cfg_setint( cfg_value, "Bright", (long)bright_level );
 }
 
 void bright_show(SDL_Surface *surface) {
 
-	dst_icon.x = BRIGHTNESS_ICON_X;
+    dst_icon.x = BRIGHTNESS_ICON_X;
     dst_icon.y = BRIGHTNESS_ICON_Y;
     dst_icon.w = BRIGHTNESS_ICON_W;
     dst_icon.h = BRIGHTNESS_ICON_H;
     
     bright_level = bound(bright_level, 0, 4);
 
-	SDL_BlitSurface( bright_status[bright_level], NULL, surface, &dst_icon );
-
+    SDL_BlitSurface( bright_status[bright_level], NULL, surface, &dst_icon );
 }
 
 void bright_deinit() {
