@@ -104,12 +104,12 @@ int imageviewer_init(char* title, char* executable, char* path)
         imageviewer_font_color = load_user_color("fontcolor.ini");
         
         imageviewer_title     = render_imageviewer_text(title);
-        imageviewer_osd_highlight = create_alpha_surface(
+        imageviewer_osd_highlight = create_surface(
                 SCREEN_WIDTH, 20, 152,152,152, 152);
         
     }
     
-    imageviewer_highlight = create_alpha_surface(
+    imageviewer_highlight = create_surface(
                 IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT, 
                 255,255,255, 156);
                 

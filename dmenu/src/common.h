@@ -30,10 +30,6 @@
     lst = realloc(lst, len*sizeof(char*));\
     lst[len-1] = val;
     
-
-#define get_pixel(s,x,y) *(Uint16 *)(s->pixels + y * s->pitch + x*SCREEN_BPP)
-#define put_pixel(s,x,y,c) get_pixel(s,x,y) = c
-
 enum MenuState { MAINMENU, FILELIST, IMAGEVIEWER };
 enum InternalCommand { THEMESELECT, BACKGROUNDSELECT }; 
 enum Direction { PREV, NEXT, UP, DOWN, RIGHT, LEFT };
@@ -78,6 +74,6 @@ SDL_Color*   load_color_file( char* file );
 
 void  init_rect(SDL_Rect* rect, int x, int y, int w, int h);
 void  init_rect_pos(SDL_Rect* rect, int x, int y);
-SDL_Surface* create_alpha_surface(int w, int h, int r, int g, int b, int a);
+SDL_Surface* create_surface(int w, int h, int r, int g, int b, int a);
 SDL_Surface* shrink_surface(SDL_Surface *src, double factor);
 #endif
