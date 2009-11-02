@@ -4,6 +4,7 @@
 #include <SDL_image.h>
 #include <unistd.h>
 
+#include "env.h"
 #include "conf.h"
 
 void bright_init();
