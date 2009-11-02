@@ -366,30 +366,40 @@ void  init_rect(SDL_Rect* rect, int x, int y, int w, int h) {
 }
 
 
-inline Uint16* get_pixel(SDL_Surface* s, int x, int y) { 
-    return (Uint16 *)(s->pixels + y * s->pitch + x*SCREEN_BPP); 
-}
-
+/**
+ * Optimized for 16bit images.  Will not work any any others
+ */
 SDL_Surface* shrink_surface(SDL_Surface *src, double factor)
 {
     if(!src || factor > 1 || factor <= 0) return NULL;
     
     double fp = 1/factor;
-    int y,x,ty, w = (int)(src->w * factor), h = (int)(src->h * factor);
+    int y,x,w = (int)(src->w * factor), h = (int)(src->h * factor);
     
-    SDL_Surface *tmp = SDL_CreateRGBSurface(
+    SDL_Surface *dst = SDL_CreateRGBSurface(
         src->flags, w, h, SCREEN_COLOR_DEPTH,
-        src->format->Rmask, src->format->Gmask, src->format->Bmask, src->format->Amask);
-        
+        src->format->Rmask, src->format->Gmask, 
+        src->format->Bmask, src->format->Amask);
+
+    int src_pitch = src->pitch, dst_pitch = dst->pitch;
+    int src_y_off = 0, dst_y_off = 0, dst_x_off=0;
+
     y = h;
     while (y--) {
-        ty = (int)(y*fp); x = w;
+        
+        dst_y_off = dst_pitch*y;
+        src_y_off = src_pitch*(int)(y*fp);
+        dst_x_off = w*SCREEN_BPP;
+        
+        x= w;
         while (x--) {
-            *get_pixel(tmp,x,y) = *get_pixel(src, (int)(x*fp),ty);
+            dst_x_off -= SCREEN_BPP;
+            *((Uint16*)(dst->pixels+dst_y_off+dst_x_off)) = 
+                *((Uint16*)(src->pixels+src_y_off+(int)(x*fp)*SCREEN_BPP));
         }
     }
     
-    return tmp;
+    return dst;
 }
 
 SDL_Surface* create_surface(int w, int h, int r, int g, int b, int a)
@@ -400,15 +410,15 @@ SDL_Surface* create_surface(int w, int h, int r, int g, int b, int a)
     /* SDL interprets each pixel as a 32-bit number, so our masks must depend
     on the endianness (byte order) of the machine */
     #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    rmask = 0xff000000;
-    gmask = 0x00ff0000;
-    bmask = 0x0000ff00;
-    amask = 0x000000ff;
+        rmask = 0xff000000;
+        gmask = 0x00ff0000;
+        bmask = 0x0000ff00;
+        amask = 0x000000ff;
     #else
-    rmask = 0x000000ff;
-    gmask = 0x0000ff00;
-    bmask = 0x00ff0000;
-    amask = 0xff000000;
+        rmask = 0x000000ff;
+        gmask = 0x0000ff00;
+        bmask = 0x00ff0000;
+        amask = 0xff000000;
     #endif
     
     tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, rmask, gmask, bmask, a < 0 ? 0 : amask);
