@@ -22,9 +22,6 @@
 #include "conf.h"
 #include "main.h"
 #include "menu.h"
-#include "volume.h"
-#include "brightness.h"
-#include "dosd/dosd.h"
 
 extern char THEME_PATH[];
 SDL_Surface* tmp_surface;
@@ -87,24 +84,11 @@ void run_command(char* executable, char* args, char* workdir)
     char** args_list = build_arg_list(executable, args);    
     change_dir(workdir);
     
-    //deinit();
-    SDL_Quit();
-    menu_deinit();
-    filelist_deinit();
-    imageviewer_deinit();
-    conf_unload();
-    dosd_deinit();
-
-    vol_deinit();
-    bright_deinit();
-
-    // launch the program
-    execute_command(args_list);
+    deinit();
     
     // it should not return, otherwise it means we are not able to execute the application
     free_arg_list(args_list);
-    //quick_exit();
-    _exit(1);
+    quick_exit();
 }
 
 void run_internal_command(char* command, char* args, char* workdir)
