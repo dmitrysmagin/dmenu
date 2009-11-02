@@ -419,11 +419,11 @@ void menuitem_move(enum Direction dir )
     SE_out( MENUITEM_MOVE );    
 }
 
-enum MenuState menuitem_runiternal()
+enum MenuState menuitem_runinternal()
 {
     char* executable = cfg_getstr(mi, "Executable");
     char* name       = cfg_getstr(mi, "Name");
-    
+
     switch (get_command(executable))
     {
         case THEMESELECT:
@@ -451,7 +451,7 @@ enum MenuState menuitem_run()
 
     if (executable) {
         if (internal_command(executable)) {
-            return menuitem_runiternal();
+            return menuitem_runinternal();
         } 
         else {
             run_command(executable, NULL, cfg_getstr(mi, "WorkDir"));
