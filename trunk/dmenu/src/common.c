@@ -365,11 +365,16 @@ void  init_rect(SDL_Rect* rect, int x, int y, int w, int h) {
     if (h>=0) rect->h = h;
 }
 
-//Factor is n  in the equation 1/2**n, so 
+
+inline Uint16* get_pixel(SDL_Surface* s, int x, int y) { 
+    return (Uint16 *)(s->pixels + y * s->pitch + x*SCREEN_BPP); 
+}
+
 SDL_Surface* shrink_surface(SDL_Surface *src, double factor)
 {
     if(!src || factor > 1 || factor <= 0) return NULL;
     
+    double fp = 1/factor;
     int y,x,ty, w = (int)(src->w * factor), h = (int)(src->h * factor);
     
     SDL_Surface *tmp = SDL_CreateRGBSurface(
@@ -378,16 +383,16 @@ SDL_Surface* shrink_surface(SDL_Surface *src, double factor)
         
     y = h;
     while (y--) {
-        ty = (int)(y/factor); x = w;
+        ty = (int)(y*fp); x = w;
         while (x--) {
-            put_pixel(tmp, x, y, get_pixel(src, (int)(x / factor),ty));
+            *get_pixel(tmp,x,y) = *get_pixel(src, (int)(x*fp),ty);
         }
     }
     
     return tmp;
 }
 
-SDL_Surface* create_alpha_surface(int w, int h, int r, int g, int b, int a)
+SDL_Surface* create_surface(int w, int h, int r, int g, int b, int a)
 {
     SDL_Surface *tmp;
     Uint32 rmask, gmask, bmask, amask;
@@ -406,8 +411,16 @@ SDL_Surface* create_alpha_surface(int w, int h, int r, int g, int b, int a)
     amask = 0xff000000;
     #endif
     
-    tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, rmask, gmask, bmask, amask);
-    SDL_FillRect(tmp, 0, SDL_MapRGBA(tmp->format, r,g,b,a));
+    tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, rmask, gmask, bmask, a < 0 ? 0 : amask);
+    
+    if (a >= 0) 
+    {
+        SDL_FillRect(tmp, 0, SDL_MapRGBA(tmp->format, r,g,b,a));
+    } 
+    else 
+    {
+        SDL_FillRect(tmp, 0, SDL_MapRGB(tmp->format, r,g,b));
+    }
     return tmp;
 }
  
