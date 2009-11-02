@@ -16,6 +16,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include "env.h"
 #include "conf.h"
 #include "filelist.h"
 #include "menu.h"
@@ -23,8 +24,9 @@
 #include "sound.h"
 #include "dingoo.h"
 
+//Get access to the current menu item
+extern cfg_t* mi;
 extern cfg_t *cfg;
-
 extern SDL_Surface* background;
 SDL_Surface* list_bg;
 SDL_Surface* list_sel;
@@ -33,66 +35,78 @@ SDL_Surface* list_title;
 SDL_Surface* list_dir_icon;
 SDL_Surface* list_file_icon;
 
-SDL_Surface* tmp_surface;
-
 TTF_Font* list_font;
-
+SDL_Color* list_font_color;
 int status_changed;
 
 struct dirent **namelist;
 struct stat *statlist;
-#define files_per_page 8 //todo - this should be in the conf file
-SDL_Surface* list_filename[files_per_page]; //todo - if files_per_page is in conf, need to
+SDL_Surface* list_filename[FILES_PER_PAGE]; //todo - if FILES_PER_PAGE is in conf, need to
                                            //dynamically allocate this
 int num_of_files; // total number of files under current directory
 int current_list_start; // index of the file at top of current page
 int current_highlight; // index of the file being highlighted
+int at_root; //Whether or not the listing is at the root of the file system
+int can_change_dir = 0;
 
 char current_path[PATH_MAX];
 char work_path[PATH_MAX];
 char current_executable[PATH_MAX];
 
-int filelist_theme; // indicate whether filelist is used to select theme
- 
+SDL_Surface* render_list_text(char* text) {
+    return draw_text(text, list_font, list_font_color);
+}
+
 void filelist_fill()
 {
     int i, j;
-    SDL_Color color = {255,255,255,0};
-	int r = 0, g = 0, b = 0;
-	FILE *fontcolor_fd;
-
-	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd == NULL ) {
-		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
-		exit(EXIT_FAILURE);
-	}
-	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-	color.r = (Uint8)r;
-	color.g = (Uint8)g;
-	color.b = (Uint8)b;
-	fclose( fontcolor_fd);
-
-    for (i=0,j=current_list_start; i<files_per_page; i++,j++) {
-        list_filename[i] = NULL;
+    //Clear old entries
+    for (i=0;i<FILES_PER_PAGE;i++) {
+        if (list_filename[i]) {
+            SDL_FreeSurface(list_filename[i]);
+            list_filename[i] = NULL;
+        }
+    }
+    
+    //Write new entries
+    for (i=0,j=current_list_start; i<FILES_PER_PAGE; i++,j++) {
         if (j < num_of_files) {
-            tmp_surface = TTF_RenderUTF8_Blended(list_font, namelist[j]->d_name, color);
-            list_filename[i] = SDL_DisplayFormatAlpha(tmp_surface);
-            SDL_FreeSurface(tmp_surface);
+            list_filename[i] = render_list_text(namelist[j]->d_name);
         }
     }
 }
 
+// Determines if entry references the parent dir as ".."
+int is_back_dir(const struct dirent *dr) {
+    return !strcmp(dr->d_name, "..");
+}
+
 int list_filter(const struct dirent *dptr)
 {
-    if (dptr->d_name[0] == '.') return 0;
-    else return 1;
+    return (can_change_dir && !at_root && is_back_dir(dptr)) 
+            || dptr->d_name[0] != '.';
+}
+
+int sort_files(const struct dirent **a, const struct dirent **b) 
+{
+    //Note this fails for symlinks of dirs, but because the dingux runs on a Fat32 drive, this
+    // shouldn't be an issue.
+    if ((*a)->d_name[0] == '.' || (*b)->d_name[0] == '.') 
+    {
+        return is_back_dir(*a) ? -1 : 1;
+    }
+
+    int c = (*a)->d_type==DT_DIR, d=(*b)->d_type==DT_DIR;
+    return c==d ? alphasort(a,b) : 
+                  c ? -1 : 1;
 }
 
 int get_list(char* path)
 {
-    int i;
+    int i = 0;
 
-    num_of_files = scandir(path, &namelist, list_filter, alphasort);
+    at_root = !strcmp(path,"/");
+    num_of_files = scandir(path, &namelist, list_filter, (void*)sort_files);
     current_list_start = current_highlight = 0;
 
     if (num_of_files < 0) {
@@ -100,10 +114,9 @@ int get_list(char* path)
         return -1;
     }
     else {
-        statlist = malloc(sizeof(struct stat) * num_of_files);
+        statlist = new_array(struct stat, num_of_files);
         for (i=0;i<num_of_files;i++) {
-            char *filename = (char*)malloc((strlen(path) + strlen(namelist[i]->d_name) + 2)
-                              * sizeof(char));
+            char *filename = new_str(strlen(path) + strlen(namelist[i]->d_name) + 2);
             strcpy(filename, path);
             strcat(filename, "/");
             strcat(filename, namelist[i]->d_name);
@@ -112,112 +125,75 @@ int get_list(char* path)
         }
 
         strcpy(current_path, path);
-
         filelist_fill();
-
         return 0;
     }
 }
 
 void clear_list()
 {
-    int i, j;
-    for (i=0;i<num_of_files;i++) {
-        free(namelist[i]);
+    if (statlist) {
+        free(statlist);
+        statlist = NULL;
     }
-    free(namelist);
-    namelist = NULL;
-    free(statlist);
-    statlist = NULL;
-
-    for (i=0, j=current_list_start;
-         (i < files_per_page) && (j < num_of_files);
-         i++, j++) {
-        SDL_FreeSurface(list_filename[i]);
-        list_filename[i] = NULL;
+    
+    if (namelist) {
+        int i, j;
+        for (i=0;i<num_of_files;i++) {
+            free(namelist[i]);
+        }
+        free(namelist);
+        namelist = NULL;
+    
+        for (i=0, j=current_list_start;
+            (i < FILES_PER_PAGE) && (j < num_of_files);
+            i++, j++) {
+            SDL_FreeSurface(list_filename[i]);
+            list_filename[i] = NULL;
+        }
     }
-
+    
     current_list_start = current_highlight = num_of_files = 0;
 }
 
 
 
-int filelist_init(char* title, char* executable, char* path)
+int filelist_init(char* title, char* executable, char* path, int can_change_dirs)
 {
-    SDL_Color color = {255,255,255,0};
-	int r = 0, g = 0, b = 0;
-	FILE *fontcolor_fd;
-
-	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd == NULL ) {
-		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
-		exit(EXIT_FAILURE);
-	}
-	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-	color.r = (Uint8)r;
-	color.g = (Uint8)g;
-	color.b = (Uint8)b;
-	fclose( fontcolor_fd);
-
-    tmp_surface = IMG_Load(cfg_getstr(cfg, "ListBackground"));
-    if (!tmp_surface) {
-        printf("Failed to load %s: %s\n", cfg_getstr(cfg, "ListBackground"), IMG_GetError());
-        return 1;
-    }
-    list_bg = SDL_DisplayFormatAlpha(tmp_surface);
-    SDL_FreeSurface(tmp_surface);
-
-    tmp_surface = IMG_Load(cfg_getstr(cfg, "ListSelector"));
-    if (!tmp_surface) {
-        printf("Failed to load %s: %s\n", cfg_getstr(cfg, "ListSelector"), IMG_GetError());
-        return 1;
-    }
-    list_sel = SDL_DisplayFormatAlpha(tmp_surface);
-    SDL_FreeSurface(tmp_surface);
-
-    tmp_surface = IMG_Load(cfg_getstr(cfg, "ListDirIcon"));
-    if (!tmp_surface) {
-        printf("Failed to load %s: %s\n", cfg_getstr(cfg, "ListDirIcon"), IMG_GetError());
-        return 1;
-    }
-    list_dir_icon = SDL_DisplayFormatAlpha(tmp_surface);
-    SDL_FreeSurface(tmp_surface);
-
-    tmp_surface = IMG_Load(cfg_getstr(cfg, "ListFileIcon"));
-    if (!tmp_surface) {
-        printf("Failed to load %s: %s\n", cfg_getstr(cfg, "ListFileIcon"), IMG_GetError());
-        return 1;
-    }
-    list_file_icon = SDL_DisplayFormatAlpha(tmp_surface);
-    SDL_FreeSurface(tmp_surface);
-
+    //Make sure it is something
+    if (executable == 0) executable = "";
+    
     // load font
     TTF_Init();
-    list_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 18);
+    list_font = load_theme_font(cfg_getstr(cfg, "Font"), 18);
+    list_font_color = load_user_color("fontcolor.ini");
 
-    tmp_surface = TTF_RenderUTF8_Blended(list_font, title, color);
-    list_title = SDL_DisplayFormatAlpha(tmp_surface);
-    SDL_FreeSurface(tmp_surface);
+    //Setup UI
+    list_bg        = load_theme_image(cfg_getstr(cfg, "ListBackground"));
+    list_sel       = load_theme_image(cfg_getstr(cfg, "ListSelector"));
+    list_dir_icon  = load_theme_image(cfg_getstr(cfg, "ListDirIcon"));
+    list_file_icon = load_theme_image(cfg_getstr(cfg, "ListFileIcon"));
+    list_title     = render_list_text(title);
 
     status_changed = 1;
 
-    // read files
-    char real_path[PATH_MAX];
-    if (!realpath(path, real_path)) {
-        printf("Failed to get real path of directory %s\n", path);
-        return 1;
-    }
-    if (get_list(real_path)) {
-        printf("Failed to read directory %s\n", real_path);
-        return 1;
-    }
-
+    // Prep path/executable vars, determine filelist_theme status
     strcpy(current_executable, executable);
     strcpy(work_path, path);
 
-    if (strcmp(executable, COMMAND_THEMESELECT) == 0) filelist_theme = 1;
-    else filelist_theme = 0;
-
+    can_change_dir = can_change_dirs;
+    
+    // read files
+    char real_path[PATH_MAX];
+    if (!realpath(path, real_path)) {
+        log_error("Failed to get real path of directory %s", path);
+        return 1;
+    }
+    if (get_list(real_path)) {
+        log_error("Failed to read directory %s", real_path);
+        return 1;
+    }
+    
     return 0;
 }
 
@@ -240,7 +216,12 @@ void filelist_deinit()
         TTF_Quit();
     }
 
-    if (namelist) clear_list();
+    if (list_font_color) {
+        free(list_font_color);
+        list_font_color = NULL;
+    }
+
+    clear_list();
 }
 
 void filelist_draw(SDL_Surface* screen)
@@ -249,22 +230,18 @@ void filelist_draw(SDL_Surface* screen)
     SDL_Rect dstrect, txtrect;
 
     if (!status_changed) return;
-
-    dstrect.x = 0;
-    dstrect.y = 0;
-    txtrect.x = 0;
-    txtrect.y = 0;
+    init_rect_pos(&dstrect, 0,0);
+    init_rect_pos(&txtrect, 0,0);
 
     // clear screen
     //SDL_FillRect(screen, 0, SDL_MapRGB(screen->format, 0, 0, 0));
 
     SDL_BlitSurface(background, 0, screen, &dstrect);
-    SDL_BlitSurface(list_bg, 0, screen, &dstrect);
-
+    SDL_BlitSurface(list_bg,    0, screen, &dstrect);
     SDL_BlitSurface(list_title, 0, screen, &txtrect);
 
-    txtrect.y = 24;
-    for (i=0; i<files_per_page; i++) {
+    txtrect.y = FILE_LIST_OFFSET;
+    for (i=0; i<FILES_PER_PAGE; i++) {
         if (list_filename[i]) {
             if (i == current_highlight) SDL_BlitSurface(list_sel, 0, screen, &txtrect);
             if (S_ISDIR(statlist[current_list_start+i].st_mode)) {
@@ -276,144 +253,94 @@ void filelist_draw(SDL_Surface* screen)
             }
             SDL_BlitSurface(list_filename[i], 0, screen, &txtrect);
             txtrect.x = 0;
-            txtrect.y += 27;
+            txtrect.y += FILE_ENTRY_HEIGHT;
         }
     }
 
     status_changed = 0;
 }
 
-void filelist_up()
+void shift_highlight(enum Direction dir) 
 {
-    int i;
-    SDL_Color color = {255,255,255,0};
-	int r = 0, g = 0, b = 0;
-	FILE *fontcolor_fd;
-
-	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd == NULL ) {
-		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
-		exit(EXIT_FAILURE);
-	}
-	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-	color.r = (Uint8)r;
-	color.g = (Uint8)g;
-	color.b = (Uint8)b;
-	fclose( fontcolor_fd);
-
-    SE_out( MENUITEM_MOVE );
-
-    if (current_highlight > 0) {
-        current_highlight--;
-    } else if (current_list_start > 0) {
-        SDL_FreeSurface(list_filename[files_per_page-1]);
-
-        for (i=(files_per_page-1);i>0;i--) {
-            list_filename[i] = list_filename[i-1];
-        }
-
-        current_list_start--;
-
-        tmp_surface = TTF_RenderUTF8_Blended(list_font,
-                      namelist[current_list_start]->d_name, color);
-        list_filename[0] = SDL_DisplayFormatAlpha(tmp_surface);
-        SDL_FreeSurface(tmp_surface);
-    } else {
-        for (i=0;i<files_per_page;i++) {
-            if (list_filename[i]) SDL_FreeSurface(list_filename[i]);
-        }
-        current_list_start = num_of_files - files_per_page;
-        if (current_list_start < 0) current_list_start = 0;
-        if (num_of_files > files_per_page)
-            current_highlight = files_per_page - 1;
-        else
-            current_highlight = num_of_files - 1;
-        filelist_fill();
-    }
-
-    status_changed = 1;
+    current_highlight += (UP==dir ? -1 : 1);
 }
 
-void filelist_page_up()
+void shift_page_surfaces(enum Direction dir) 
 {
-    int i;
+    int i, 
+        start = 0, 
+        end = FILES_PER_PAGE-1, 
+        delta = 1;
 
-    SE_out( MENU_MOVE );
-
-    for (i=0;i<files_per_page;i++) {
-        if (list_filename[i]) SDL_FreeSurface(list_filename[i]);
+    if (dir == UP) 
+    {
+        start = FILES_PER_PAGE-1;
+        end = 0;
+        delta = -1;
     }
+        
+    SDL_FreeSurface(list_filename[start]);
+    for (i=start;i!=end;i+=delta) 
+    {
+        list_filename[i] = list_filename[i+delta];
+    }
+    
+    current_list_start += delta;
+    list_filename[end] = render_list_text(namelist[current_list_start+end]->d_name);
+}
 
-    current_list_start -= files_per_page;
-    if (current_list_start < 0) current_list_start = 0;
-    current_highlight = 0;
+void wrap_page_surfaces(enum Direction dir) 
+{
+    int size = FILES_PER_PAGE;
+
+    if (dir != UP) 
+    { //start at top
+        current_list_start = 0; 
+        current_highlight  = 0;
+    } 
+    else {
+        current_list_start = max(num_of_files - size, 0);
+        current_highlight  = min(num_of_files - 1, size - 1); 
+    }
     filelist_fill();
+}
+
+void filelist_move_single(enum Direction dir) 
+{
+    int delta    = (dir == UP) ? -1 : 1;
+    int size     = FILES_PER_PAGE;
+    int max      = num_of_files;
+    int next_pos = current_highlight + delta;
+    int next_abs_pos = current_list_start + next_pos; 
+    
+    SE_out( MENUITEM_MOVE );
+    
+    if (in_bounds(next_pos,0,size) && next_pos < max) //If moving within page
+    {
+        shift_highlight(dir);
+    } 
+    else if (in_bounds(next_abs_pos, 0, max)) //Slide page
+    {
+        shift_page_surfaces(dir);
+    }
+    else  //Wrap Around
+    {
+        wrap_page_surfaces(dir);
+    }    
     
     status_changed = 1;
 }
 
-void filelist_down()
+
+void filelist_move_page(enum Direction dir)
 {
-    int i;
-    SDL_Color color = {255,255,255,0};
-	int r = 0, g = 0, b = 0;
-	FILE *fontcolor_fd;
-
-	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd == NULL ) {
-		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
-		exit(EXIT_FAILURE);
-	}
-	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-	color.r = (Uint8)r;
-	color.g = (Uint8)g;
-	color.b = (Uint8)b;
-	fclose( fontcolor_fd);
-
-    SE_out( MENUITEM_MOVE );
-
-    if (current_highlight < (files_per_page - 1) &&
-        (current_list_start + current_highlight) < (num_of_files - 1)) {
-        current_highlight++;
-    } else if ((current_list_start + files_per_page) < num_of_files) {
-        SDL_FreeSurface(list_filename[0]);
-
-        for (i=0;i<(files_per_page-1);i++) {
-            list_filename[i] = list_filename[i+1];
-        }
-
-        current_list_start++;
-
-        tmp_surface = TTF_RenderUTF8_Blended(list_font,
-                      namelist[current_list_start + files_per_page - 1]->d_name,
-                      color);
-        list_filename[files_per_page-1] = SDL_DisplayFormatAlpha(tmp_surface);
-        SDL_FreeSurface(tmp_surface);
-    } else {
-        for (i=0;i<files_per_page;i++) {
-            if (list_filename[i]) SDL_FreeSurface(list_filename[i]);
-        }
-        current_list_start = 0;
-        current_highlight = 0;
-        filelist_fill();
-    }
-
-    status_changed = 1;
-}
-
-void filelist_page_down()
-{
-    int i;
-
+    int size = FILES_PER_PAGE, delta = (dir==UP?-size:size);;
+    int start = current_list_start;
+    int next = start + delta;
     SE_out( MENU_MOVE );
-
-    for (i=0;i<files_per_page;i++) {
-        if (list_filename[i]) SDL_FreeSurface(list_filename[i]);
-    }
-
-    current_list_start += files_per_page;
-    if (current_list_start > (num_of_files - 1)) current_list_start = num_of_files - 1;
+    current_list_start =  bound(next, 0, max(num_of_files-size, 0));
     current_highlight = 0;
+    
     filelist_fill();
     
     status_changed = 1;
@@ -426,7 +353,7 @@ void filelist_right()
 
     SE_out( DECIDE );
 
-    if (S_ISDIR(statlist[i].st_mode)) {
+    if (S_ISDIR(statlist[i].st_mode) && !is_back_dir(namelist[i])) {
         strcpy(temp_path, current_path);
         strcat(temp_path, "/");
         strcat(temp_path, namelist[i]->d_name);
@@ -439,16 +366,14 @@ void filelist_right()
 
 void filelist_left()
 {
-    int i = strlen(current_path);
-
     SE_out( CANCEL );
 
-    if ((i == 1) && (current_path[0] == '/')) {
+    if (at_root) {
         return;
     } else {
         char* last_separator = strrchr(current_path, '/');
         if (!last_separator) {
-            printf("Unable to find path separator - %s\n", current_path);
+            log_error("Unable to find path separator - %s", current_path);
             return;
         } else if (last_separator == current_path) {
             current_path[1] = '\0';
@@ -469,54 +394,67 @@ enum MenuState filelist_run()
     char file_name[PATH_MAX];
     int i = current_list_start+current_highlight;
 
-    if (S_ISDIR(statlist[i].st_mode) && (!filelist_theme)) {
-        filelist_right();
-        return FILELIST;
+    if (can_change_dir) {
+        if (S_ISDIR(statlist[i].st_mode)) {
+            if (is_back_dir(namelist[i])) {
+                filelist_left();
+            } else { 	 
+                filelist_right();
+            }
+            return FILELIST;
+        }
     }
-
-    if (filelist_theme) {
-        strcpy(file_name, namelist[i]->d_name);
-    } else {
-        strcpy(file_name, current_path);
-        strcat(file_name, "/");
-        strcat(file_name, namelist[i]->d_name);
-    }
-
-    if (current_executable[0] != '\0')
+    
+    strcpy(file_name, current_path);
+    strcat(file_name, "/");
+    strcat(file_name, namelist[i]->d_name);
+    
+    // If this is theme selection, we will return here from run_command();
+    // If it's running a program, it will not return.
+    if (current_executable[0] != '\0') 
         run_command(current_executable, file_name, work_path);
     else
         run_command(file_name, NULL, current_path);
 
-    // If this is theme selection, we will return here from
-    // run_command();
-    // If it's running a program, it will not return.
     return MAINMENU;
 }
 
 enum MenuState filelist_keypress(SDLKey keysym)
 {
     Uint8 *keystate = SDL_GetKeyState(NULL);
+ 
+    switch (keysym) {
 
-    if (keysym == DINGOO_BUTTON_B) {
-        filelist_deinit();
-        return MAINMENU;
-    }
-    else if (keysym == DINGOO_BUTTON_UP) {
-        if (keystate[DINGOO_BUTTON_Y]) filelist_page_up();
-        else filelist_up();
-    }
-    else if (keysym == DINGOO_BUTTON_DOWN) {
-        if (keystate[DINGOO_BUTTON_Y]) filelist_page_down();
-        else filelist_down();
-    }
-    else if (keysym == DINGOO_BUTTON_RIGHT) {
-        if (!filelist_theme) filelist_right();
-    }
-    else if (keysym == DINGOO_BUTTON_LEFT) {
-        if (!filelist_theme) filelist_left();
-    }
-    else if (keysym == DINGOO_BUTTON_A) {
-        return filelist_run();
+        case DINGOO_BUTTON_B:
+            filelist_deinit();
+            return MAINMENU;
+        case DINGOO_BUTTON_A:
+            return filelist_run();
+        case DINGOO_BUTTON_START:
+            //conf_selectordir(mi, current_path);
+            break;
+        case DINGOO_BUTTON_R:
+            filelist_move_page(DOWN);
+            break;
+        case DINGOO_BUTTON_L:
+            filelist_move_page(UP);
+            break;
+        case DINGOO_BUTTON_UP:
+            if (keystate[DINGOO_BUTTON_Y]) filelist_move_page(UP);
+            else filelist_move_single(UP);
+            break;
+        case DINGOO_BUTTON_DOWN:
+            if (keystate[DINGOO_BUTTON_Y]) filelist_move_page(DOWN);
+            else filelist_move_single(DOWN);
+            break;
+        case DINGOO_BUTTON_RIGHT:
+            if (can_change_dir) filelist_right();
+            break;
+        case DINGOO_BUTTON_LEFT:
+            if (can_change_dir) filelist_left();
+            break;
+
+        default: break;
     }
 
     return FILELIST;

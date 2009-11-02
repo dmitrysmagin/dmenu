@@ -4,16 +4,13 @@
 #include "common.h"
 
 int menu_init();
+void menu_reload_background();
 void menu_deinit();
 void menu_draw(SDL_Surface*);
-
-void menu_next();
-void menu_previous();
-void menuitem_next();
-void menuitem_previous();
+void menu_move( enum Direction dir);
+void menuitem_move( enum Direction dir);
 
 enum MenuState menu_keypress(SDLKey);
-
-void menuitem_run();
+enum MenuState menuitem_run();
 
 #endif
