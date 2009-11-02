@@ -13,23 +13,24 @@
 #include <signal.h>
 #include <SDL.h>
 #include <SDL_image.h>
+#include "env.h" 
 #include "common.h"
+
 #include "menu.h"
 #include "filelist.h"
+#include "imageviewer.h"
+
 #include "conf.h"
 #include "persistent.h"
 #include "dosd/dosd.h"
-
 #include "volume.h"
 #include "brightness.h"
 
-enum MenuState state;
-
-#define TICK_INTERVAL    100 // this is 1000/100 = 10 fps
+extern cfg_t *cfg;
 
 static Uint32 next_time;
-
-extern cfg_t *cfg;
+SDL_Surface* screen;
+enum MenuState state = MAINMENU;
 
 Uint32 time_left(void)
 {
@@ -42,150 +43,207 @@ Uint32 time_left(void)
         return next_time - now;
 }
 
-int main ( int argc, char** argv )
-{
+int init_env() {
     int rc=0;
-
-#ifdef DINGOO_BUILD
+    
+    #ifdef DINGOO_BUILD
     // Need to ignore SIGHUP if we are started by init.
     // In FB_CloseKeyboard() of SDL_fbevents.c , it does
     // ioctl(tty0_fd, TIOCNOTTY, 0) to detach the process from tty,
     // this will send a SIGHUP to us and dmenu will quit at 
     // SDL_Init() below if it's not ignored.
     if (signal(SIGHUP, SIG_IGN) == SIG_ERR) {
-        printf("Unable to ignore SIGHUP\n");
-        perror(0);
+        log_error("Unable to ignore SIGHUP");
     }
+    #endif
 
-    // cd to dmenu directory - hardcode to /usr/local/dmenu on dingux
-    rc = chdir("/usr/local/dmenu");
-    if (rc != 0) {
-        printf("Unable to change to /usr/local/dmenu\n");
-        perror(0);
-        return rc;
-    }
-#endif
-
+    //Move to dmenu root dir
+    change_dir(DMENU_PATH);
+    
     // load config
     rc = conf_load();
-    if (rc != CFG_SUCCESS) {
-        return rc;
+    if (rc) return rc;
+    
+    // Read saved persistent state
+    if (!persistent_init())
+    {
+        log_error("Unable to initialize persistent memory");
     }
+    
+    return 0;
+}
 
+int init_display() {
+    
     // initialize SDL video
     if ( SDL_Init( SDL_INIT_VIDEO ) < 0 )
     {
-        printf( "Unable to init SDL: %s\n", SDL_GetError() );
+        log_error( "Unable to init SDL: %s", SDL_GetError() );
         return 1;
     }
-
+    
     // make sure SDL cleans up before exit
     atexit(SDL_Quit);
     
     // create a new window
-    SDL_Surface* screen = SDL_SetVideoMode(320, 240, 16, SDL_SWSURFACE);
+    screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_COLOR_DEPTH, SDL_SWSURFACE);
     if ( !screen )
     {
-        printf("Unable to set 320x240 video: %s\n", SDL_GetError());
+        log_error("Unable to set %dx%d video: %s", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_GetError());
         return 1;
     }
-
+    
     // disable mouse pointer
     SDL_ShowCursor(SDL_DISABLE);
-
-    // Read saved persistent state
-    if (!persistent_init())
-    {
-        printf("Unable to initialize persistent memory\n");
-    }
-
+        
     // init menu config
     if (menu_init())
     {
-        printf("Unable to load menu\n");
+        log_error("Unable to load menu");
         return 1;
     }
-
-    state = MAINMENU;
     
     // Init OSD
     if (!dosd_init(0xFFFFFF))
     {
-        printf("Unable to initialize OSD\n");
+        log_error("Unable to initialize OSD");
         return 1;
     }
-
+    
     next_time = SDL_GetTicks() + TICK_INTERVAL;
+    
+    return 0;
+}
 
+int init() {
+    return init_env() || init_display();
+}
+
+void deinit() {
+    /* Call destructors, otherwise open FDs will be leaked to the
+    exec()'ed process.
+    Yes, this is ugly. If another situation like this arises we should write
+    a custom atexit implementation.
+    */ 
+    
+    // de-init everything
+    menu_deinit();
+    filelist_deinit();
+    imageviewer_deinit();
+    conf_unload();
+    dosd_deinit();
+    
+    vol_deinit();
+    bright_deinit();
+}
+
+void reload() {
+    deinit();
+    conf_load();
+    menu_init();
+    dosd_init(0xFFFFFF);
+}
+
+void quick_exit() {
+    // Exit without calling any atexit() functions
+    _exit(1);
+}
+
+/**
+ * Draw Screen
+ */
+void update_display() {
+
+    // DRAWING STARTS HERE
+    switch (state) {
+        case MAINMENU:
+            menu_draw(screen);
+            break;
+        case FILELIST:
+            filelist_draw(screen);
+            break;
+        case IMAGEVIEWER:
+            imageviewer_draw(screen);
+            break;
+    }
+    
+    dosd_show(screen);
+    
+    // check VolDisp & BrightDisp
+    if (cfg_getbool(cfg,"VolDisp"))    vol_show(screen);
+    if (cfg_getbool(cfg,"BrightDisp")) bright_show(screen);
+    
+    // finally, update the screen :)
+    SDL_Flip(screen);
+    
+    // wait for remaining time of the frame
+    SDL_Delay(time_left());
+    next_time += TICK_INTERVAL;    
+}
+
+void listen() {
+    
     // program main loop
     int done = 0;
+    SDLKey key;
+    SDL_Event event;
+    
     while (!done)
     {
         // message processing loop
-        SDL_Event event;
         while (SDL_PollEvent(&event))
-        {
+        {            
             // check for messages
             switch (event.type)
             {
                 // exit if the window is closed
-            case SDL_QUIT:
-                done = 1;
-                break;
-
+                case SDL_QUIT:
+                    done = 1;
+                    break;
+                    
                 // check for keypresses
-            case SDL_KEYDOWN:
-                {
+                case SDL_KEYDOWN:
+                    key = event.key.keysym.sym;
+                    
                     // exit if ESCAPE is pressed
-                    if (event.key.keysym.sym == SDLK_ESCAPE)
+                    if (key == SDLK_ESCAPE) {
                         done = 1;
+                        break;
+                    }
                     
                     if (dosd_is_locked())
-                        continue;
-
-                    if (state == MAINMENU)
-                        state = menu_keypress(event.key.keysym.sym);
-                    else if (state == FILELIST)
-                        state = filelist_keypress(event.key.keysym.sym);
-                    //printf("key pressed - %d\n", event.key.keysym.sym);
-
+                        break;
+                    
+                    switch (state) {
+                        case MAINMENU:
+                            state = menu_keypress(key);
+                            break;
+                        case FILELIST:
+                            state = filelist_keypress(key);
+                            break;
+                        case IMAGEVIEWER:
+                            state = imageviewer_keypress(key);
+                            break;
+                    }
                     break;
-                }
             } // end switch
         } // end of message processing
-
-        // DRAWING STARTS HERE
-        if (state == MAINMENU)
-            menu_draw(screen);
-        else if (state == FILELIST)
-            filelist_draw(screen);
-
-        dosd_show(screen);
-
-// check VolDisp & BrightDisp
-	if (cfg_getbool(cfg,"VolDisp")) vol_show(screen);
-	if (cfg_getbool(cfg,"BrightDisp")) bright_show(screen);
-
-        // DRAWING ENDS HERE
-
-        // finally, update the screen :)
-        SDL_Flip(screen);
-
-        // wait for remaining time of the frame
-        SDL_Delay(time_left());
-        next_time += TICK_INTERVAL;
+        
+        update_display(screen, state);
+        
     } // end main loop
+}
 
-    // de-init everything
-    menu_deinit();
-    filelist_deinit();
-    conf_unload();
-    dosd_deinit();
+int main ( int argc, char** argv )
+{
+    int rc = init();
 
-	vol_deinit();
-	bright_deinit();
-
+    if (rc==0) {
+        listen(); //main loop
+        deinit();
+    }
+    
     // all is well ;)
     //printf("Exited cleanly\n");
-    return 0;
+    return rc;
 }
