@@ -81,14 +81,17 @@ void run_command(char* executable, char* args, char* workdir)
         run_internal_command(executable, args, workdir);
         return;
     }
- 
-    //Must act upon before executable/args/workdir are destroyed by deinit
-    char** args_list = build_arg_list(executable, args);    
-    change_dir(workdir);
 
-    SDL_Quit();
-    deinit();
+    char** args_list = build_arg_list(executable, args);
+    //Make local copy of work dir
+    char tmp_work[PATH_MAX];
+    if (workdir != NULL) strcpy(tmp_work, workdir);
     
+    deinit();
+    SDL_Quit();
+    
+    change_dir(tmp_work);
+   
     // launch the program
     execute_command(args_list);
     
@@ -157,9 +160,9 @@ void execute_command(char** args)
     // otherwise it means we are not able to execute the application
     execvp(args[0], args);
     
-    log_message("Unable to execute.  Command line - ");
-    for (i=0;*(args+i);i++) printf("%s ", *(args+i));
-    printf("\n");
+    log_message("Unable to execute command - ");
+    for (i=0;*(args+i);i++) printf("%s ", *(args+i)); printf("\n");
+    
 }
 
 #define IF_CMD_THEN(c, k) if (strcmp(c, COMMAND_##k)==0) return k;
