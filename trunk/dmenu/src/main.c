@@ -240,8 +240,6 @@ int main ( int argc, char** argv )
 {
     int rc = init();
 
-    log_message("Successfully initialized?%d", rc ==0);
-
     if (rc==0) {
         listen(); //main loop
         deinit();
