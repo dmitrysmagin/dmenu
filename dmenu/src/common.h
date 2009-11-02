@@ -58,9 +58,9 @@ char** build_arg_list(char* commandline, char* args);
 void free_arg_list(char** args);
 int change_dir(char* path);
 
-FILE* open_file_and_handle_fail ( char* file, char* mode, int die_on_fail );
-FILE* open_file( char* file, char* mode );
-FILE* open_file_or_die( char* file, char* mode );
+FILE* load_file_and_handle_fail ( char* file, char* mode, int die_on_fail );
+FILE* load_file( char* file, char* mode );
+FILE* load_file_or_die( char* file, char* mode );
 
 SDL_Surface* load_image_file( char* file );
 SDL_Surface* load_image_file_no_alpha( char* file );
