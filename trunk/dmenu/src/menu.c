@@ -135,6 +135,9 @@ void menu_deinit()
 {
     int i, j;
 
+    bright_init();
+    vol_init();
+    
     // Save current menu state
     g_persistent->current_menu     = current_menu_index;
     g_persistent->current_menuitem = current_menuitem_index;

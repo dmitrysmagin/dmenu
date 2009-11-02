@@ -38,7 +38,8 @@ typedef struct Paginate {
     int total_size;
     int set_size;
     int page;
-
+    int is_ready;
+    
     int absolute_pos;
     int relative_pos;
     int new;
@@ -80,7 +81,7 @@ int get_imagelist(char* path)
 void reset_pagination()
 {
     iv_paginate.set_size = IMAGE_THUMBS_PER_PAGE;
-    iv_paginate.new = 1;
+    iv_paginate.is_ready = 0;
     iv_paginate.total_size = 0;
     iv_paginate.relative_pos = 0;
     iv_paginate.absolute_pos = 0;
@@ -92,6 +93,18 @@ void reset_pagination()
 int imageviewer_init(char* title, char* executable, char* path)
 {
     reset_pagination();
+    
+    // try to read files before we do anything else
+    if (!realpath(path, iv_paginate.root)) {
+        log_error("Failed to get real path of directory %s", path);
+        return 1;
+    }
+    
+    if (get_imagelist(iv_paginate.root)) {
+        log_error("Failed to read directory %s", iv_paginate.root);
+        return 1;
+    }
+    
     if (title != NULL) strcpy(iv_paginate.title, title);
     if (executable != NULL) strcpy(iv_paginate.executable, executable);
     
@@ -112,24 +125,13 @@ int imageviewer_init(char* title, char* executable, char* path)
     imageviewer_highlight = create_surface(
                 IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT, 
                 255,255,255, 156);
-                
-    // read files
-    if (!realpath(path, iv_paginate.root)) {
-        log_error("Failed to get real path of directory %s", path);
-        return 1;
-    }
-    
-    if (get_imagelist(iv_paginate.root)) {
-        log_error("Failed to read directory %s", iv_paginate.root);
-        return 1;
-    }
-    
+                    
     iv_paginate.entries = new_array(SDL_Surface*, iv_paginate.total_size);
     imageviewer_update_list();
     imageviewer_update_preview();
     
-    iv_paginate.new = 0;
     iv_paginate.state_changed = 1;
+    iv_paginate.is_ready = 1;
 
     return 0;
 }
@@ -137,6 +139,7 @@ int imageviewer_init(char* title, char* executable, char* path)
 void imageviewer_deinit()
 {
     int i = 0;
+    if (!iv_paginate.is_ready) return;
     
     SDL_FreeSurface(image_preview);              image_preview = NULL;
     SDL_FreeSurface(imageviewer_highlight);      imageviewer_highlight = NULL;
@@ -166,6 +169,7 @@ void imageviewer_deinit()
     free(iv_paginate.entries); iv_paginate.entries = NULL;
 
     reset_pagination();
+    iv_paginate.is_ready = 0;
 }
 
 void imageviewer_draw(SDL_Surface* screen)
@@ -212,7 +216,7 @@ void imageviewer_update_list()
     
     for (i=0;i<size;i++)
     {
-        if (iv_paginate.entries[i] && !iv_paginate.new)
+        if (iv_paginate.entries[i] && iv_paginate.is_ready)
         {
             SDL_FreeSurface(iv_paginate.entries[i]);
         }

@@ -75,7 +75,7 @@ void run_command(char* executable, char* args, char* workdir)
 /* this is a simplified version when init is used to spawn dmenu */
 void run_command(char* executable, char* args, char* workdir)
 {   
-    log_message("Running Command: %s, %s, %s", executable, args, workdir);
+    log_debug("Running Command: %s, %s, %s", executable, args, workdir);
     
     if (internal_command(executable)) {
         run_internal_command(executable, args, workdir);
@@ -223,7 +223,7 @@ int change_dir(char* path)
 }
 
 FILE* load_file_and_handle_fail(char* file, char* mode, int die_on_fail) {
-    log_message("Opening file: %s", file);
+    log_debug("Opening file: %s", file);
     
     FILE* out = fopen(file, mode);    
     if (out == NULL) {
