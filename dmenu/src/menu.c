@@ -15,13 +15,15 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include "menu.h"
+
+#include "env.h"
+#include "common.h"
 #include "conf.h"
 #include "filelist.h"
+#include "imageviewer.h"
 #include "persistent.h"
 #include "sound.h"
-
 #include "dingoo.h"
-
 #include "brightness.h"
 #include "volume.h"
 
@@ -58,104 +60,73 @@ TTF_Font* status_font;
 void submenu_open();
 void submenu_close();
 
+void menu_reload_background() 
+{
+    if (background) 
+    {
+        SDL_FreeSurface(background);
+        background = load_theme_background(cfg_getstr(cfg, "Background"));
+    }
+}
+
 int menu_init()
 {
     int i, j;
-    SDL_Color color = {255,255,255,0};
-	int r = 0, g = 0, b = 0;
-	FILE *fontcolor_fd;
-
-	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd == NULL ) {
-		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
-		exit(EXIT_FAILURE);
-	}
-	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-	color.r = (Uint8)r;
-	color.g = (Uint8)g;
-	color.b = (Uint8)b;
-	fclose( fontcolor_fd);
-
-    tmp_surface= IMG_Load(cfg_getstr(cfg, "Background"));
-    if (!tmp_surface) {
-        printf("Failed to load %s: %s\n", cfg_getstr(cfg, "Background"), IMG_GetError());
-        return 1;
-    }
-    background = SDL_DisplayFormat(tmp_surface);
-    SDL_FreeSurface(tmp_surface);
+    SDL_Color* color = load_user_color("fontcolor.ini");
+    background = load_theme_background(cfg_getstr(cfg, "Background")); 
 
     /*fill_fb(background->pixels);*/
-
-    tmp_surface = IMG_Load(cfg_getstr(cfg, "Cursor"));
-    if (!tmp_surface) {
-        printf("Failed to load %s: %s\n", cfg_getstr(cfg, "Cursor"), IMG_GetError());
-        return 1;
-    }
-    cursor = SDL_DisplayFormatAlpha(tmp_surface);
-    SDL_FreeSurface(tmp_surface);
+    cursor = load_theme_image(cfg_getstr(cfg, "Cursor"));
 
     // load font
     TTF_Init();
-    menu_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 18);
-    menuitem_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 14);
-status_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 13);
+    menu_font     = load_theme_font(cfg_getstr(cfg, "Font"), 18);
+    menuitem_font = load_theme_font(cfg_getstr(cfg, "Font"), 14);
+    status_font   = load_theme_font(cfg_getstr(cfg, "Font"), 13);
 
     // load menu
-    number_of_menu = cfg_size(cfg, "Menu");
-    menu_icons = (SDL_Surface**)malloc(sizeof(SDL_Surface*) * number_of_menu);
-    menu_text = (SDL_Surface**)malloc(sizeof(SDL_Surface*) * number_of_menu);
-    number_of_menuitem = (int*)malloc(sizeof(int) * number_of_menu);
-    menuitem_icons = (SDL_Surface***)malloc(sizeof(SDL_Surface**) * number_of_menu);
-    menuitem_text = (SDL_Surface***)malloc(sizeof(SDL_Surface**) * number_of_menu);
+    number_of_menu     = cfg_size(cfg, "Menu");
+    number_of_menuitem = new_array(int, number_of_menu);
+    menu_icons         = new_array(SDL_Surface*, number_of_menu);
+    menu_text          = new_array(SDL_Surface*, number_of_menu);
+    menuitem_icons     = new_array(SDL_Surface**, number_of_menu);
+    menuitem_text      = new_array(SDL_Surface**, number_of_menu);
 
     for (i=0;i<number_of_menu;i++) {
         m = cfg_getnsec(cfg, "Menu", i);
-
-        tmp_surface = IMG_Load(cfg_getstr(m, "Icon"));
-        menu_icons[i] = SDL_DisplayFormatAlpha(tmp_surface);
-        SDL_FreeSurface(tmp_surface);
-
-        tmp_surface = TTF_RenderUTF8_Blended(menu_font, cfg_getstr(m, "Name"), color);
-        menu_text[i] = SDL_DisplayFormatAlpha(tmp_surface);
-        SDL_FreeSurface(tmp_surface);
+        menu_icons[i] = load_theme_image(cfg_getstr(m, "Icon"));
+        menu_text[i]  = draw_text(cfg_getstr(m, "Name"), menu_font, color);
 
         number_of_menuitem[i] = cfg_size(m, "MenuItem");
-        menuitem_icons[i] = (SDL_Surface**)malloc(sizeof(SDL_Surface*) * number_of_menuitem[i]);
-        menuitem_text[i] = (SDL_Surface**)malloc(sizeof(SDL_Surface*) * number_of_menuitem[i]);
+        menuitem_icons[i] = new_array(SDL_Surface*, number_of_menuitem[i]);
+        menuitem_text[i]  = new_array(SDL_Surface*, number_of_menuitem[i]);
+        
         for (j=0;j<number_of_menuitem[i];j++) {
             mi = cfg_getnsec(m, "MenuItem", j);
-
-            tmp_surface = IMG_Load(cfg_getstr(mi, "Icon"));
-            if (!tmp_surface) {
-                printf("Failed to load %s: %s\n", cfg_getstr(mi, "Icon"), IMG_GetError());
-                return 1;
-            }
-            menuitem_icons[i][j] = SDL_DisplayFormatAlpha(tmp_surface);
-            SDL_FreeSurface(tmp_surface);
-
-            tmp_surface = TTF_RenderUTF8_Blended(menuitem_font, cfg_getstr(mi, "Name"), color);
-            menuitem_text[i][j] = SDL_DisplayFormatAlpha(tmp_surface);
-            SDL_FreeSurface(tmp_surface);
+            menuitem_icons[i][j] = load_theme_image(cfg_getstr(mi, "Icon")); 
+            menuitem_text[i][j]  = draw_text(cfg_getstr(mi, "Name"), menuitem_font, color);
         }
     }
-
+    
+    free(color);
+    
     // Restore menu position
     current_menu_index     = g_persistent->current_menu;
     current_menuitem_index = g_persistent->current_menuitem;
 
-    if (current_menu_index < 0 || current_menu_index >= number_of_menu) {
+    if (!in_bounds(current_menu_index, 0, number_of_menu)) {
         current_menu_index     = 0;
         current_menuitem_index = 0;
-    } else if (current_menuitem_index < 0 || current_menuitem_index >= number_of_menuitem[current_menu_index]) {
+    } else if (!in_bounds(current_menuitem_index, 0, number_of_menuitem[current_menu_index])) {
         current_menuitem_index = 0;
     }
 
     // Init sound
     SE_Init();
 
-//load volume and brightness
-	bright_init();
-	vol_init();
+    //load volume and brightness
+    bright_init();
+    vol_init();
 
     return 0;
 }
@@ -190,6 +161,7 @@ void menu_deinit()
 
     TTF_CloseFont(menu_font);
     TTF_CloseFont(menuitem_font);
+    TTF_CloseFont(status_font);
     TTF_Quit();
 
     if (number_of_submenuitem > 0) submenu_close();
@@ -199,327 +171,315 @@ void menu_deinit()
 
 }
 
+//Draw single menu item
+void menu_draw_single_item(SDL_Surface* screen, SDL_Rect* dstrect, SDL_Rect* txtrect,
+                           int alpha,  SDL_Surface* icon, SDL_Surface* text, 
+                           int hide_text, int text_below) 
+{
+    if (!text_below) {
+        txtrect->x = dstrect->x + icon->w;
+    } else {
+        txtrect->x = dstrect->x + icon->w/2 - text->w/2;
+    }
+    
+    if (!hide_text) {
+        if (!text_below) {
+            txtrect->y = dstrect->y + icon->h/2 - text->h/2;
+        } else {
+            txtrect->y = dstrect->y + icon->h; 
+        }
+        SDL_SetAlpha(text, SDL_SRCALPHA, alpha);
+        SDL_BlitSurface(text, 0, screen, txtrect);
+    }
+    SDL_SetAlpha(icon, SDL_SRCALPHA, alpha);
+    SDL_BlitSurface(icon, 0, screen, dstrect);
+}
+
+
+//Draw vertical menu items
+void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset, SDL_Rect* dstrect, SDL_Rect* txtrect, 
+                     int current_item, int number_of_items, SDL_Surface** icons, SDL_Surface** text,
+                     int is_parent, int child_showing, int lower_offset) {
+  
+    int draw_item = 0;
+    dstrect->x = offset->x;
+
+    if (number_of_items > 0 ) {
+
+        // draw upper items 
+        draw_item = current_item - 1;
+        
+        if (current_item > 0 && !child_showing) {
+
+            while (1) {
+                dstrect->y = offset->y - (current_item - draw_item)*icons[draw_item]->h;
+     
+                menu_draw_single_item(screen, dstrect, txtrect, 128,  
+                                      icons[draw_item], text[draw_item], 
+                                      child_showing, 0);
+                --draw_item; 
+                if (dstrect->y < 0 || draw_item < 0) break;
+            }
+        }
+
+        // draw lower items 
+        draw_item = current_item;
+        dstrect->y = offset->y + lower_offset;
+
+        while (1) { 
+
+            if (is_parent && draw_item == current_item) {
+                SDL_BlitSurface(cursor, 0, screen, dstrect);
+            }
+
+            int alpha = (draw_item==current_item)?SDL_ALPHA_OPAQUE:SDL_ALPHA_TRANSPARENT; 
+            menu_draw_single_item(screen, dstrect, txtrect, alpha, 
+                                  icons[draw_item], text[draw_item],
+                                  child_showing, 0); 
+            dstrect->y += icons[draw_item]->h;
+            draw_item++;
+
+            if (child_showing || dstrect->y > screen->h || draw_item >= number_of_items) {
+                break; //Only draw first item if child showing
+            }
+        }
+    }
+}
+
+//Draw horizontal menu items
+void menu_draw_hitems(SDL_Surface* screen, SDL_Rect* child_offset, 
+                      SDL_Rect* dstrect, SDL_Rect* txtrect, 
+                      int current_item, int number_of_items,
+                      SDL_Surface** icons, SDL_Surface** text,
+                      int showing_submenu)
+{
+    int draw_item = current_item - 1;
+
+    //While there are empty slots to the left of the menu
+    //   create a gap that is a single icon wide
+    while (draw_item<0) {
+        dstrect->x += icons[0]->w; 
+        draw_item++;
+    }
+
+    while (1) {
+        menu_draw_single_item(screen, dstrect, txtrect, SDL_ALPHA_OPAQUE, 
+                              icons[draw_item], text[draw_item], 
+                              draw_item != current_item, 1);
+   
+        //Store calculated position for current menu items
+        if (draw_item == current_item) { 
+            init_rect_pos(child_offset, dstrect->x, dstrect->y);
+        }
+
+        dstrect->x += icons[draw_item]->w;
+
+        draw_item++;
+        if ((dstrect->x >= screen->w) || 
+           (draw_item >= number_of_items) ||
+           (showing_submenu && draw_item > current_menu_index)) 
+        {
+            break;
+        }
+    }
+}
+
 void menu_draw(SDL_Surface* screen)
 {
-    int x, y;
-    SDL_Rect dstrect, txtrect;
-    int done;
+    SDL_Rect dstrect, txtrect, offset;
 
-    x = 0;
-    y = 0;
-    dstrect.x = 0;
-    dstrect.y = 0;
-
+    init_rect_pos(&dstrect, 0,0);
+    init_rect_pos(&txtrect, 0,0);
+    
     // clear screen
     //SDL_FillRect(screen, 0, SDL_MapRGB(screen->format, 0, 0, 0));
-
     SDL_BlitSurface(background, 0, screen, &dstrect);
-
-    // draw menu
+    
+    //Set menu offset
     dstrect.y = (screen->h - menu_icons[0]->h - 20) / 3; // assuming the font height for menu name is 20
 
-    done = 0;
-    int currently_drawing_menu = current_menu_index - 1;
-    while (!done) {
-        if (currently_drawing_menu >= 0) {
-            SDL_BlitSurface(menu_icons[currently_drawing_menu], 0, screen, &dstrect);
-            if (currently_drawing_menu == current_menu_index) { // used for drawing menu items
-                x = dstrect.x;
-                y = dstrect.y;
-                txtrect.x = dstrect.x + menu_icons[currently_drawing_menu]->w / 2 -
-                            menu_text[currently_drawing_menu]->w / 2;
-                txtrect.y = dstrect.y + menu_icons[currently_drawing_menu]->h;
-                SDL_BlitSurface(menu_text[currently_drawing_menu], 0, screen, &txtrect);
-            }
-            dstrect.x += menu_icons[currently_drawing_menu]->w;
-        }
-        else {
-            dstrect.x += menu_icons[0]->w;
-        }
-        currently_drawing_menu++;
-        if (dstrect.x >= screen->w) done = 1;
-        if (currently_drawing_menu >= number_of_menu) done = 1;
-        if (number_of_submenuitem > 0 && 
-            currently_drawing_menu > current_menu_index) done = 1; // if submenu is open 
-    }
+    //Draw main menu items
+    menu_draw_hitems(screen, &offset, &dstrect, &txtrect, current_menu_index, 
+                     number_of_menu, menu_icons, menu_text, number_of_submenuitem > 0); 
 
-    if (number_of_menuitem[current_menu_index] == 0) return; // exit if no menuitem for this menu
+    //Draw menu items, starting at (x,y)
+    menu_draw_vitems(screen, &offset, &dstrect, &txtrect, 
+                     current_menuitem_index, number_of_menuitem[current_menu_index], 
+                     menuitem_icons[current_menu_index], menuitem_text[current_menu_index], 
+                     1, number_of_submenuitem > 0, menu_icons[current_menu_index]->h + 20); 
 
-    // draw upper menu items
-    int currently_drawing_menuitem = current_menuitem_index - 1;
-    dstrect.x = x;
-
-    // will not draw upper menu items if there is none, or we have opened a submenu
-    if (current_menuitem_index > 0 && number_of_submenuitem == 0) {
-
-        dstrect.y = y - menuitem_icons[current_menu_index][currently_drawing_menuitem]->h;
-        done = 0;
-
-        while (!done) {
-            txtrect.x = dstrect.x + menuitem_icons[current_menu_index][currently_drawing_menuitem]->w;
-            txtrect.y = dstrect.y +
-                        (menuitem_icons[current_menu_index][currently_drawing_menuitem]->h -
-                         menuitem_text[current_menu_index][currently_drawing_menuitem]->h) / 2;
-            SDL_SetAlpha(menuitem_icons[current_menu_index][currently_drawing_menuitem], SDL_SRCALPHA, 128);
-            SDL_BlitSurface(menuitem_icons[current_menu_index][currently_drawing_menuitem], 0, screen, &dstrect);
-            SDL_SetAlpha(menuitem_text[current_menu_index][currently_drawing_menuitem], SDL_SRCALPHA, 128);
-            SDL_BlitSurface(menuitem_text[current_menu_index][currently_drawing_menuitem], 0, screen, &txtrect);
-            if (dstrect.y <= 0) done = 1;
-            currently_drawing_menuitem--;
-            if (currently_drawing_menuitem < 0) {
-                done = 1;
-            } else {
-                dstrect.y -= menuitem_icons[current_menu_index][currently_drawing_menuitem]->h;
-            }
-        }
-    }
-
-    // draw lower menu items
-    currently_drawing_menuitem = current_menuitem_index;
-    dstrect.y = y + menu_icons[current_menu_index]->h + 20;
-    done = 0;
-
-    while (!done) {
-        if (currently_drawing_menuitem == current_menuitem_index) {
-            SDL_BlitSurface(cursor, 0, screen, &dstrect);
-            SDL_SetAlpha(menuitem_icons[current_menu_index][currently_drawing_menuitem], SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
-            SDL_SetAlpha(menuitem_text[current_menu_index][currently_drawing_menuitem], SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
-        } else {
-            SDL_SetAlpha(menuitem_icons[current_menu_index][currently_drawing_menuitem], SDL_SRCALPHA, SDL_ALPHA_TRANSPARENT);
-            SDL_SetAlpha(menuitem_text[current_menu_index][currently_drawing_menuitem], SDL_SRCALPHA, SDL_ALPHA_TRANSPARENT);
-        }
-
-        SDL_BlitSurface(menuitem_icons[current_menu_index][currently_drawing_menuitem], 0, screen, &dstrect);
-        txtrect.x = dstrect.x + menuitem_icons[current_menu_index][currently_drawing_menuitem]->w;
-        if (number_of_submenuitem == 0) {
-            txtrect.y = dstrect.y +
-                        (menuitem_icons[current_menu_index][currently_drawing_menuitem]->h -
-                         menuitem_text[current_menu_index][currently_drawing_menuitem]->h) / 2;
-            SDL_BlitSurface(menuitem_text[current_menu_index][currently_drawing_menuitem], 0, screen, &txtrect);
-        }
-        dstrect.y += menuitem_icons[current_menu_index][currently_drawing_menuitem]->h;
-        if (dstrect.y >= screen->h) done = 1;
-        currently_drawing_menuitem++;
-        if (currently_drawing_menuitem >= number_of_menuitem[current_menu_index]) done = 1;
-        if (number_of_submenuitem > 0) done = 1; // we only draw the current menuitem if submenu is open
-    }
-
-    // draw sub menu if it's open
+    //Draw submenu (will only show if it is active)
     // at this point, txtrect.x and txtrect.y should be at the position where we want to draw the current
-    // submenuitem
-    x = txtrect.x;
-    y = txtrect.y;
-    dstrect.x = x;
-    if (number_of_submenuitem > 0) {
-        // draw upper submenuitems
-        currently_drawing_menuitem = current_submenuitem_index - 1;
-        if (current_submenuitem_index > 0) {
-            dstrect.y = y - submenuitem_icons[currently_drawing_menuitem]->h;
-            done = 0;
-            while (!done) {
-                txtrect.x = dstrect.x + submenuitem_icons[currently_drawing_menuitem]->w;
-                txtrect.y = dstrect.y +
-                            (submenuitem_icons[currently_drawing_menuitem]->h -
-                             submenuitem_text[currently_drawing_menuitem]->h) / 2;
-                SDL_SetAlpha(submenuitem_icons[currently_drawing_menuitem], SDL_SRCALPHA, 128);
-                SDL_BlitSurface(submenuitem_icons[currently_drawing_menuitem], 0, screen, &dstrect);
-                SDL_SetAlpha(submenuitem_text[currently_drawing_menuitem], SDL_SRCALPHA, 128);
-                SDL_BlitSurface(submenuitem_text[currently_drawing_menuitem], 0, screen, &txtrect);
-                if (dstrect.y <= 0) done = 1;
-                currently_drawing_menuitem--;
-                if (currently_drawing_menuitem < 0) {
-                    done = 1;
-                } else {
-                    dstrect.y -= submenuitem_icons[currently_drawing_menuitem]->h;
-                }
-            }
-        }
 
-        // draw lower submenuitems
-        currently_drawing_menuitem = current_submenuitem_index;
-        dstrect.y = y;
-        done = 0;
-        while (!done) {
-            if (currently_drawing_menuitem == current_submenuitem_index) {
-                SDL_BlitSurface(cursor, 0, screen, &dstrect);
-                SDL_SetAlpha(submenuitem_icons[currently_drawing_menuitem], SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
-                SDL_SetAlpha(submenuitem_text[currently_drawing_menuitem], SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
-            } else {
-                SDL_SetAlpha(submenuitem_icons[currently_drawing_menuitem], SDL_SRCALPHA, SDL_ALPHA_TRANSPARENT);
-                SDL_SetAlpha(submenuitem_text[currently_drawing_menuitem], SDL_SRCALPHA, SDL_ALPHA_TRANSPARENT);
-            }
-
-            SDL_BlitSurface(submenuitem_icons[currently_drawing_menuitem], 0, screen, &dstrect);
-            txtrect.x = dstrect.x + submenuitem_icons[currently_drawing_menuitem]->w;
-            txtrect.y = dstrect.y +
-                            (submenuitem_icons[currently_drawing_menuitem]->h -
-                             submenuitem_text[currently_drawing_menuitem]->h) / 2;
-            SDL_BlitSurface(submenuitem_text[currently_drawing_menuitem], 0, screen, &txtrect);
-
-            dstrect.y += submenuitem_icons[currently_drawing_menuitem]->h;
-            if (dstrect.y >= screen->h) done = 1;
-            currently_drawing_menuitem++;
-            if (currently_drawing_menuitem >= number_of_submenuitem) done = 1;
-        }
-    }
-
+    //-1 is a hack to push the text above the OSD info
+    init_rect_pos(&offset, txtrect.x, txtrect.y-1); 
+        
+    menu_draw_vitems(screen, &offset, &dstrect, &txtrect, 
+                     current_submenuitem_index, number_of_submenuitem, 
+                     submenuitem_icons, submenuitem_text, 0, 0, 0); 
 }
 
 enum MenuState menu_keypress(SDLKey keysym)
 {
     enum MenuState state = MAINMENU;
 
-	if (keysym == DINGOO_BUTTON_R) {
-		vol_set(+5);
-	        SE_out( TEST );
-	}
-	else if (keysym == DINGOO_BUTTON_L) {
-		vol_set(-5);
-	        SE_out( TEST );
-	}
-	else if (keysym == DINGOO_BUTTON_X) {
-		bright_set(+1);
-	        SE_out( TEST );
-	}
-	else if (keysym == DINGOO_BUTTON_Y) {
-		bright_set(-1);
-	        SE_out( TEST );
-	}
-    else if (keysym == DINGOO_BUTTON_LEFT) {
-        menu_previous();
-    }
-    else if (keysym== DINGOO_BUTTON_RIGHT) {
-        menu_next();
-    }
-    else if (keysym == DINGOO_BUTTON_UP) {
-        menuitem_previous();
-    }
-    else if (keysym == DINGOO_BUTTON_DOWN) {
-        menuitem_next();
-    }
-    else if (keysym == DINGOO_BUTTON_A) {
-        m = cfg_getnsec(cfg, "Menu", current_menu_index);
-        mi = cfg_getnsec(m, "MenuItem", current_menuitem_index);
-        if (number_of_submenuitem > 0) {
-            mi = cfg_getnsec(mi, "SubMenuItem", current_submenuitem_index);
-        }
-        if (cfg_getbool(mi, "Selector")) {
-            if (!filelist_init(cfg_getstr(mi, "Name"),
-                               cfg_getstr(mi, "Executable"),
-                               cfg_getstr(mi, "WorkDir"))) {
-                state = FILELIST;
-            } // else we are not able to initialise the filelist display
-        } else {
-            menuitem_run();
-        }
-    }
-    else if (keysym == DINGOO_BUTTON_B) {
-        if (number_of_submenuitem > 0) submenu_close();
-    }
+    switch (keysym) {
+        case DINGOO_BUTTON_L:
+            vol_set(-5);
+            SE_out( TEST );
+            break;
+        case DINGOO_BUTTON_R:
+            vol_set(+5);
+            SE_out( TEST );
+            break;
+        case DINGOO_BUTTON_X:
+            bright_set(+1);
+            SE_out( TEST );
+            break;
+        case DINGOO_BUTTON_Y:
+            bright_set(-1);
+            SE_out( TEST );
+            break;
+        case DINGOO_BUTTON_LEFT:
+            menu_move( PREV );
+            break;
+        case DINGOO_BUTTON_RIGHT:
+            menu_move( NEXT );
+            break;
+        case DINGOO_BUTTON_UP:
+            menuitem_move( PREV );
+            break;
+        case DINGOO_BUTTON_DOWN:
+            menuitem_move( NEXT ); 
+            break;
+        case DINGOO_BUTTON_A:
+            m  = cfg_getnsec(cfg, "Menu", current_menu_index);
+            mi = cfg_getnsec(m, "MenuItem", current_menuitem_index);
 
+            if (number_of_submenuitem > 0) 
+            {
+                mi = cfg_getnsec(mi, "SubMenuItem", current_submenuitem_index);
+            }
+
+            if (cfg_getbool(mi, "Selector")) 
+            {
+                char* listdir = NULL; //cfg_getstr(mi, "SelectorDir");
+                if (!listdir ) listdir = cfg_getstr(mi, "WorkDir");
+                if (!filelist_init(cfg_getstr(mi, "Name"),
+                                   cfg_getstr(mi, "Executable"),
+                                   listdir, 1))
+                {
+                    state = FILELIST;
+                } // else we are not able to initialise the filelist display
+            } 
+            else {
+                state = menuitem_run();
+            }
+            break;
+        case DINGOO_BUTTON_B:
+            if (number_of_submenuitem > 0) submenu_close();
+            break;
+
+        default: break;
+    }
     return state;
 }
 
-void menu_next()
+void menu_move(enum Direction dir) 
 {
+    int delta =  dir==PREV ? -1 : 1;
+    
     if (number_of_submenuitem > 0) {
-        SE_out( OUT );
+        if (dir == PREV) {
+            submenu_close();
+        } else {
+            SE_out( OUT );
+        }
         return;
-    } // need to close submenu before go to another menu
-    current_menu_index++;
+    }
+    current_menu_index = wrap(current_menu_index+ delta, 0, number_of_menu-1);
     SE_out( MENU_MOVE );
-    if (current_menu_index == number_of_menu) current_menu_index = 0;
     current_menuitem_index = 0;
 }
 
-void menu_previous()
+void menuitem_move(enum Direction dir ) 
 {
-    if (number_of_submenuitem > 0) {
-        SE_out( OUT );
-        return;
-    } // need to close submenu before go to another menu
-    current_menu_index--;
-    SE_out( MENU_MOVE );
-    if (current_menu_index < 0) current_menu_index = number_of_menu - 1; 
-    current_menuitem_index = 0;
-}
-
-void menuitem_next()
-{
-    if (number_of_submenuitem == 0) {
-        current_menuitem_index++;
-        if (current_menuitem_index == number_of_menuitem[current_menu_index]) current_menuitem_index = 0;
+    int delta = dir == PREV ? -1 : 1;
+    int nosi = number_of_submenuitem;
+    int nomi = number_of_menuitem[current_menu_index];
+    int next_mi = current_menuitem_index + delta;
+    int next_si = current_submenuitem_index + delta;
+    
+    if (!nosi) {
+        current_menuitem_index = wrap(next_mi, 0, nomi-1);
     }
     else {
-        current_submenuitem_index++;
-        if (current_submenuitem_index == number_of_submenuitem) current_submenuitem_index = 0;
+        current_submenuitem_index = wrap(next_si, 0, nosi-1);
     }
-    SE_out( MENUITEM_MOVE );
+    SE_out( MENUITEM_MOVE );    
 }
 
-void menuitem_previous()
-{
-    if (number_of_submenuitem == 0) {
-        current_menuitem_index--;
-        if (current_menuitem_index < 0) current_menuitem_index = number_of_menuitem[current_menu_index] - 1;
-    }
-    else {
-        current_submenuitem_index--;
-        if (current_submenuitem_index < 0) current_submenuitem_index = number_of_submenuitem - 1;
-    }
-    SE_out( MENUITEM_MOVE );
-}
-
-void menuitem_run()
+enum MenuState menuitem_runiternal()
 {
     char* executable = cfg_getstr(mi, "Executable");
+    char* name       = cfg_getstr(mi, "Name");
+    
+    switch (get_command(executable))
+    {
+        case THEMESELECT:
+            if (!filelist_init(name, executable, DMENU_THEMES, 0)) 
+            {
+                return FILELIST;
+            } // else we are not able to initialise the filelist display
+            break;
+            
+        case BACKGROUNDSELECT:
+            if (!imageviewer_init(name, executable, USER_BACKGROUNDS))
+            {
+                return IMAGEVIEWER;
+            }
+            break;
+        default: break;
+    }
+    
+    return MAINMENU;
+}
+
+enum MenuState menuitem_run()
+{
+    char* executable = cfg_getstr(mi, "Executable");
+
     if (executable) {
-        run_command(executable, NULL, cfg_getstr(mi, "WorkDir"));
+        if (internal_command(executable)) {
+            return menuitem_runiternal();
+        } 
+        else {
+            run_command(executable, NULL, cfg_getstr(mi, "WorkDir"));
+        }
     } else {
         submenu_open();
     }
+    
+    return MAINMENU;
 }
 
 void submenu_open()
 {
     int i;
-    SDL_Color color = {255,255,255,0};
-	int r = 0, g = 0, b = 0;
-	FILE *fontcolor_fd;
-
-	fontcolor_fd = fopen("../../../home/.dmenu/fontcolor.ini","r");
-	if ( fontcolor_fd == NULL ) {
-		printf("Failed to load ../../../home/.dmenu/fontcolor.ini\n");
-		exit(EXIT_FAILURE);
-	}
-	fscanf(fontcolor_fd, "%d,%d,%d", &r, &g, &b);
-	color.r = (Uint8)r;
-	color.g = (Uint8)g;
-	color.b = (Uint8)b;
-	fclose( fontcolor_fd);
-
+    SDL_Color* color = load_user_color("fontcolor.ini");
     SE_out( DECIDE );
 
     number_of_submenuitem = cfg_size(mi, "SubMenuItem");
-    submenuitem_icons = (SDL_Surface**)malloc(sizeof(SDL_Surface*) * number_of_submenuitem);
-    submenuitem_text = (SDL_Surface**)malloc(sizeof(SDL_Surface*) * number_of_submenuitem);
+    submenuitem_icons = new_array(SDL_Surface*, number_of_submenuitem);
+    submenuitem_text  = new_array(SDL_Surface*, number_of_submenuitem);
     
     for (i=0;i<number_of_submenuitem;i++) {
         smi = cfg_getnsec(mi, "SubMenuItem", i);
-
-        tmp_surface = IMG_Load(cfg_getstr(smi, "Icon"));
-        if (!tmp_surface) {
-            printf("Failed to load %s: %s\n", cfg_getstr(smi, "Icon"), IMG_GetError());
-        } else {
-            submenuitem_icons[i] = SDL_DisplayFormatAlpha(tmp_surface);
-            SDL_FreeSurface(tmp_surface);
-        }
-
-        tmp_surface = TTF_RenderUTF8_Blended(menuitem_font, cfg_getstr(smi, "Name"), color);
-        submenuitem_text[i] = SDL_DisplayFormatAlpha(tmp_surface);
-        SDL_FreeSurface(tmp_surface);
+        submenuitem_icons[i] = load_theme_image(cfg_getstr(smi, "Icon"));
+        submenuitem_text[i]  = draw_text(cfg_getstr(smi, "Name"), menuitem_font, color);
     }    
-
+    
+    free(color);
     current_submenuitem_index = 0;
 }
 
