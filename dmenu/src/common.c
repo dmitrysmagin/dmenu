@@ -75,6 +75,8 @@ void run_command(char* executable, char* args, char* workdir)
 /* this is a simplified version when init is used to spawn dmenu */
 void run_command(char* executable, char* args, char* workdir)
 {   
+    log_message("Running Command: %s, %s, %s", executable, args, workdir);
+    
     if (internal_command(executable)) {
         run_internal_command(executable, args, workdir);
         return;
@@ -83,8 +85,12 @@ void run_command(char* executable, char* args, char* workdir)
     //Must act upon before executable/args/workdir are destroyed by deinit
     char** args_list = build_arg_list(executable, args);    
     change_dir(workdir);
-    
+
+    SDL_Quit();
     deinit();
+    
+    // launch the program
+    execute_command(args_list);
     
     // it should not return, otherwise it means we are not able to execute the application
     free_arg_list(args_list);
