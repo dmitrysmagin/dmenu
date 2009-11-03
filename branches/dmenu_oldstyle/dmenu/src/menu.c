@@ -190,6 +190,7 @@ void menu_deinit()
 
     TTF_CloseFont(menu_font);
     TTF_CloseFont(menuitem_font);
+    TTF_CloseFont(status_font);
     TTF_Quit();
 
     if (number_of_submenuitem > 0) submenu_close();

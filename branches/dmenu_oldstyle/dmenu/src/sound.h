@@ -1,3 +1,5 @@
+#include <SDL_mixer.h>
+
 #define MENU_MOVE	0
 #define MENUITEM_MOVE	1
 #define DECIDE		2
