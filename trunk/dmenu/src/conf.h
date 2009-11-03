@@ -14,4 +14,5 @@ void conf_themeselect(char* themedir);
 void conf_backgroundselect(char* bgimage);
 int  conf_to_file(cfg_t* cfg, char* file);
 cfg_t* conf_from_file(cfg_opt_t* opts, char* file);
+
 #endif
