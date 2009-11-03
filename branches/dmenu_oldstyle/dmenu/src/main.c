@@ -19,7 +19,6 @@
 #include "conf.h"
 #include "persistent.h"
 #include "dosd/dosd.h"
-
 #include "volume.h"
 #include "brightness.h"
 
@@ -181,9 +180,10 @@ int main ( int argc, char** argv )
     filelist_deinit();
     conf_unload();
     dosd_deinit();
-
 	vol_deinit();
 	bright_deinit();
+
+	SDL_Quit();
 
     // all is well ;)
     //printf("Exited cleanly\n");

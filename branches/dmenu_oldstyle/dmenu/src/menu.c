@@ -18,10 +18,7 @@
 #include "conf.h"
 #include "filelist.h"
 #include "persistent.h"
-#include "sound.h"
-
 #include "dingoo.h"
-
 #include "brightness.h"
 #include "volume.h"
 
@@ -98,7 +95,7 @@ int menu_init()
     TTF_Init();
     menu_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 18);
     menuitem_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 14);
-status_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 13);
+	status_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 13);
 
     // load menu
     number_of_menu = cfg_size(cfg, "Menu");
@@ -150,10 +147,7 @@ status_font = TTF_OpenFont(cfg_getstr(cfg, "Font"), 13);
         current_menuitem_index = 0;
     }
 
-    // Init sound
-    SE_Init();
-
-//load volume and brightness
+	//load volume and brightness
 	bright_init();
 	vol_init();
 
@@ -194,9 +188,6 @@ void menu_deinit()
     TTF_Quit();
 
     if (number_of_submenuitem > 0) submenu_close();
-
-    // De-init sound
-    SE_deInit();
 
 }
 
@@ -372,19 +363,15 @@ enum MenuState menu_keypress(SDLKey keysym)
 
 	if (keysym == DINGOO_BUTTON_R) {
 		vol_set(+5);
-	        SE_out( TEST );
 	}
 	else if (keysym == DINGOO_BUTTON_L) {
 		vol_set(-5);
-	        SE_out( TEST );
 	}
 	else if (keysym == DINGOO_BUTTON_X) {
 		bright_set(+1);
-	        SE_out( TEST );
 	}
 	else if (keysym == DINGOO_BUTTON_Y) {
 		bright_set(-1);
-	        SE_out( TEST );
 	}
     else if (keysym == DINGOO_BUTTON_LEFT) {
         menu_previous();
@@ -423,24 +410,20 @@ enum MenuState menu_keypress(SDLKey keysym)
 
 void menu_next()
 {
-    if (number_of_submenuitem > 0) {
-        SE_out( OUT );
-        return;
-    } // need to close submenu before go to another menu
+    if (number_of_submenuitem > 0) return;
+
+	// need to close submenu before go to another menu
     current_menu_index++;
-    SE_out( MENU_MOVE );
     if (current_menu_index == number_of_menu) current_menu_index = 0;
     current_menuitem_index = 0;
 }
 
 void menu_previous()
 {
-    if (number_of_submenuitem > 0) {
-        SE_out( OUT );
-        return;
-    } // need to close submenu before go to another menu
+    if (number_of_submenuitem > 0) return;
+
+	// need to close submenu before go to another menu
     current_menu_index--;
-    SE_out( MENU_MOVE );
     if (current_menu_index < 0) current_menu_index = number_of_menu - 1; 
     current_menuitem_index = 0;
 }
@@ -455,7 +438,6 @@ void menuitem_next()
         current_submenuitem_index++;
         if (current_submenuitem_index == number_of_submenuitem) current_submenuitem_index = 0;
     }
-    SE_out( MENUITEM_MOVE );
 }
 
 void menuitem_previous()
@@ -468,7 +450,7 @@ void menuitem_previous()
         current_submenuitem_index--;
         if (current_submenuitem_index < 0) current_submenuitem_index = number_of_submenuitem - 1;
     }
-    SE_out( MENUITEM_MOVE );
+
 }
 
 void menuitem_run()
@@ -499,8 +481,6 @@ void submenu_open()
 	color.b = (Uint8)b;
 	fclose( fontcolor_fd);
 
-    SE_out( DECIDE );
-
     number_of_submenuitem = cfg_size(mi, "SubMenuItem");
     submenuitem_icons = (SDL_Surface**)malloc(sizeof(SDL_Surface*) * number_of_submenuitem);
     submenuitem_text = (SDL_Surface**)malloc(sizeof(SDL_Surface*) * number_of_submenuitem);
@@ -528,7 +508,6 @@ void submenu_close()
 {
     int i;
 
-    SE_out( CANCEL );
     for (i=0;i<number_of_submenuitem;i++) {
         SDL_FreeSurface(submenuitem_icons[i]);
         SDL_FreeSurface(submenuitem_text[i]);

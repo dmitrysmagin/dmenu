@@ -19,8 +19,6 @@
 #include "conf.h"
 #include "filelist.h"
 #include "menu.h"
-
-#include "sound.h"
 #include "dingoo.h"
 
 extern cfg_t *cfg;
@@ -301,8 +299,6 @@ void filelist_up()
 	color.b = (Uint8)b;
 	fclose( fontcolor_fd);
 
-    SE_out( MENUITEM_MOVE );
-
     if (current_highlight > 0) {
         current_highlight--;
     } else if (current_list_start > 0) {
@@ -338,8 +334,6 @@ void filelist_page_up()
 {
     int i;
 
-    SE_out( MENU_MOVE );
-
     for (i=0;i<files_per_page;i++) {
         if (list_filename[i]) SDL_FreeSurface(list_filename[i]);
     }
@@ -369,8 +363,6 @@ void filelist_down()
 	color.g = (Uint8)g;
 	color.b = (Uint8)b;
 	fclose( fontcolor_fd);
-
-    SE_out( MENUITEM_MOVE );
 
     if (current_highlight < (files_per_page - 1) &&
         (current_list_start + current_highlight) < (num_of_files - 1)) {
@@ -405,8 +397,6 @@ void filelist_page_down()
 {
     int i;
 
-    SE_out( MENU_MOVE );
-
     for (i=0;i<files_per_page;i++) {
         if (list_filename[i]) SDL_FreeSurface(list_filename[i]);
     }
@@ -424,8 +414,6 @@ void filelist_right()
     char temp_path[PATH_MAX];
     int i = current_list_start+current_highlight;
 
-    SE_out( DECIDE );
-
     if (S_ISDIR(statlist[i].st_mode)) {
         strcpy(temp_path, current_path);
         strcat(temp_path, "/");
@@ -440,8 +428,6 @@ void filelist_right()
 void filelist_left()
 {
     int i = strlen(current_path);
-
-    SE_out( CANCEL );
 
     if ((i == 1) && (current_path[0] == '/')) {
         return;

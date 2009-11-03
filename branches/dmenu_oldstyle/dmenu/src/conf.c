@@ -62,13 +62,6 @@ cfg_opt_t opts[] = {
     CFG_STR("ListFileIcon", 0, CFGF_NONE),
     CFG_STR("LoadingScreen", 0, CFGF_NONE),
 
-    CFG_STR("MenuSE", 0, CFGF_NONE),
-    CFG_STR("MenuItemSE", 0, CFGF_NONE),
-    CFG_STR("DecideSE", 0, CFGF_NONE),
-    CFG_STR("CancelSE", 0, CFGF_NONE),
-    CFG_STR("OutSE", 0, CFGF_NONE),
-    CFG_STR("TestSE", 0, CFGF_NONE),
-
     CFG_SEC("Menu", menu_opts, CFGF_MULTI | CFGF_TITLE),
 
     CFG_FUNC("include", cfg_include),

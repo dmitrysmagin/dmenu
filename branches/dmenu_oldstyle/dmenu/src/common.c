@@ -77,8 +77,6 @@ void run_command(char* executable, char* args, char* workdir)
         return;
     }
 
-    SDL_Quit();
-
     // the system ARG_MAX might be too large. just use a fixed
     // value here.
 #define MAX_CMD_LEN 4096
@@ -127,6 +125,8 @@ void run_command(char* executable, char* args, char* workdir)
     dosd_deinit();
 	vol_deinit();
 	bright_deinit();
+
+    SDL_Quit();
 
     rc = chdir(workdir_copy);
     if (rc != 0) {
