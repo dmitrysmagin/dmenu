@@ -1,11 +1,9 @@
-#include <SDL_mixer.h>
 #include "sound.h"
 #include "conf.h"
 #include "common.h"
 
 extern cfg_t *cfg;
-
-Mix_Music*	gSE[6];
+Mix_Music* gSE[6];
 
 void load_sound(char* file, enum MenuSound snd) 
 {
@@ -34,8 +32,12 @@ void SE_out(enum MenuSound se)
 }
 
 void SE_deInit()
-{
-	Mix_HaltMusic();
-    foreach(gSE, Mix_FreeMusic, 6);
-	Mix_CloseAudio();
+{	
+    int i = 0;
+    Mix_HaltMusic();
+    for(;i<6;i++){
+         Mix_FreeMusic(gSE[i]);
+         gSE[i] = NULL;
+    }
+    Mix_CloseAudio();
 }

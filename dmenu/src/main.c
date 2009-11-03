@@ -64,8 +64,6 @@ int init_env() {
     rc = conf_load();
     if (rc) return rc;
     
-         
-
     // Read saved persistent state
     if (!persistent_init())
     {
