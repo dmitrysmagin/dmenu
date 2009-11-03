@@ -1,0 +1,38 @@
+[0.4]
+- Change SearchPath to a string list to allow multiple search paths
+- Menu sound effect
+- Sub-menu support
+- Fix parsing of multiple args
+- Added UTF8 support. UTF8 chars in theme.cfg name strings, and file selector
+will display the UTF8 chars accordingly. Font file specified by the theme need
+to contain the necessary chars.
+- Menu wrapping when left or right key pressed at begining or end of Menu
+respectively. Same for MenuItem (up/down).
+- File selector wrapping at begining and end of file list.
+- Easier file selection. Use Y + up/down to scroll 1 page at a time
+- Added OSD.
+- Menuitem text overlapping problem should be fixed now.
+- Fixed problem of passing multiple args when launching a program 
+- Persist index of selected menu/menuitem
+by 1@qbQD4T5Z0949
+- Default theme created.
+- Added SoundVolume control ([L]:-5% / [R]:+5%)
+- Added Brightness control ([X]:LevelUp / [Y]:LevelDown)
+- Added SoundVolume & Brightness Icons.
+- Added configuration files for SoundVolume & Brightness settings.
+- Added resources directory for dmenu.(/usr/local/home/.dmenu/)
+
+[0.3]
+- Fixed a display bug where the menu items above the mainmenu are overlapping
+- Execute programs directly instead of via '/bin/sh' to reduce memory usage
+- Re-structured config files to add theme support and reading config from
+application directories. See readme.txt for details.
+
+[0.2a]
+- Dynamically link against libconfuse since it's provided by the rootfs.
+- Remove the mechanism to restart dmenu after the executed program has finished.
+Not required since dmenu is respawn by init.
+- Added script local/sbin/main to run dmenu at system startup
+
+[0.1]
+Initial release
