@@ -24,6 +24,8 @@
 #include "sound.h"
 #include "dingoo.h"
 
+#define ends_with_slash(str) (str[strlen(str)-1] == '/')
+
 //Get access to the current menu item
 extern cfg_t* mi;
 extern cfg_t *cfg;
@@ -356,7 +358,10 @@ void filelist_right()
 
     if (S_ISDIR(statlist[i].st_mode) && !is_back_dir(namelist[i])) {
         strcpy(temp_path, current_path);
-        if (!at_root) strcat(temp_path, "/");
+        if (!ends_with_slash(current_path)) 
+        {
+            strcat(temp_path, "/");
+        }
         strcat(temp_path, namelist[i]->d_name);
         clear_list();
         if (get_list(temp_path) != 0)
@@ -407,7 +412,7 @@ enum MenuState filelist_run()
     }
     
     strcpy(file_name, current_path);
-    if (strcmp(current_path, "/") != 0) 
+    if (!ends_with_slash(current_path)) 
     {
         strcat(file_name, "/");
     }
