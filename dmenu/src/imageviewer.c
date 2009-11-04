@@ -118,8 +118,7 @@ int imageviewer_init(char* title, char* executable, char* path)
     if (strlen(iv_paginate.title) > 0) 
     {
         // load font
-        TTF_Init();
-        imageviewer_font = load_theme_font(cfg_getstr(cfg, "Font"), 14);
+        imageviewer_font       = load_theme_font(cfg_getstr(cfg, "Font"), 14);
         imageviewer_font_color = load_user_color("fontcolor.ini");
         
         imageviewer_title     = render_imageviewer_text(title);
@@ -157,7 +156,7 @@ void imageviewer_deinit()
         SDL_FreeSurface(imageviewer_osd_highlight);  imageviewer_osd_highlight = NULL;
         SDL_FreeSurface(imageviewer_title);          imageviewer_title = NULL;
         free(imageviewer_font_color);                imageviewer_font_color = NULL;
-        TTF_CloseFont(imageviewer_font);             imageviewer_font = NULL; TTF_Quit();    
+        TTF_CloseFont(imageviewer_font);             imageviewer_font = NULL;
     }
     
     for (i=0;i<iv_paginate.total_size;i++) 

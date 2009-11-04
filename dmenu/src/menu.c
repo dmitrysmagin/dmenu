@@ -135,15 +135,15 @@ void menu_deinit()
 {
     int i, j;
 
-    bright_init();
-    vol_init();
+    bright_deinit();
+    vol_deinit();
     
     // Save current menu state
     g_persistent->current_menu     = current_menu_index;
     g_persistent->current_menuitem = current_menuitem_index;
 
-    SDL_FreeSurface(background);
-    SDL_FreeSurface(cursor);
+    if (background) SDL_FreeSurface(background);
+    if (cursor) SDL_FreeSurface(cursor);
 
     for (i=0;i<number_of_menu;i++) {
         SDL_FreeSurface(menu_icons[i]);

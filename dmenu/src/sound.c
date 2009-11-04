@@ -12,7 +12,6 @@ void load_sound(char* file, enum MenuSound snd)
 
 void SE_Init()
 {
-
     if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY,MIX_DEFAULT_FORMAT,2,1024)<0) {
         log_error( "Can't initialize Sounds." );
     }
@@ -23,7 +22,6 @@ void SE_Init()
     load_sound("CancelSE",   CANCEL);
     load_sound("OutSE",      OUT);
     load_sound("TestSE",     TEST);
-
 }
 
 void SE_out(enum MenuSound se)

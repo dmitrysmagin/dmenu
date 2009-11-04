@@ -47,6 +47,7 @@ int current_list_start; // index of the file at top of current page
 int current_highlight; // index of the file being highlighted
 int at_root; //Whether or not the listing is at the root of the file system
 int can_change_dir = 0;
+int is_initted = 0;
 
 char current_path[PATH_MAX];
 char work_path[PATH_MAX];
@@ -147,8 +148,11 @@ void clear_list()
         for (i=0, j=current_list_start;
             (i < FILES_PER_PAGE) && (j < num_of_files);
             i++, j++) {
-            SDL_FreeSurface(list_filename[i]);
-            list_filename[i] = NULL;
+            if (list_filename[i]) 
+            {
+                SDL_FreeSurface(list_filename[i]);
+                list_filename[i] = NULL;
+            }
         }
     }
     
@@ -163,8 +167,7 @@ int filelist_init(char* title, char* executable, char* path, int can_change_dirs
     if (executable == 0) executable = "";
     
     // load font
-    TTF_Init();
-    list_font = load_theme_font(cfg_getstr(cfg, "Font"), 18);
+    list_font       = load_theme_font(cfg_getstr(cfg, "Font"), 18);
     list_font_color = load_user_color("fontcolor.ini");
 
     //Setup UI
@@ -192,27 +195,26 @@ int filelist_init(char* title, char* executable, char* path, int can_change_dirs
         log_error("Failed to read directory %s", real_path);
         return 1;
     }
+
+    is_initted = 1;
     
     return 0;
 }
 
 void filelist_deinit()
 {
-    SDL_FreeSurface(list_bg);
-    list_bg = NULL;
-    SDL_FreeSurface(list_sel);
-    list_sel = NULL;
-    SDL_FreeSurface(list_title);
-    list_title = NULL;
-    SDL_FreeSurface(list_dir_icon);
-    list_dir_icon= NULL;
-    SDL_FreeSurface(list_file_icon);
-    list_file_icon= NULL;
+    if (!is_initted) return;
+    is_initted = 0;
 
+    SDL_FreeSurface(list_bg);        list_bg = NULL;
+    SDL_FreeSurface(list_sel);       list_sel = NULL;
+    SDL_FreeSurface(list_title);     list_title = NULL;
+    SDL_FreeSurface(list_dir_icon);  list_dir_icon= NULL;
+    SDL_FreeSurface(list_file_icon); list_file_icon= NULL;
+    
     if (list_font) {
         TTF_CloseFont(list_font);
         list_font = NULL;
-        TTF_Quit();
     }
 
     if (list_font_color) {
@@ -354,7 +356,7 @@ void filelist_right()
 
     if (S_ISDIR(statlist[i].st_mode) && !is_back_dir(namelist[i])) {
         strcpy(temp_path, current_path);
-        strcat(temp_path, "/");
+        if (!at_root) strcat(temp_path, "/");
         strcat(temp_path, namelist[i]->d_name);
         clear_list();
         if (get_list(temp_path) != 0)
@@ -405,16 +407,22 @@ enum MenuState filelist_run()
     }
     
     strcpy(file_name, current_path);
-    strcat(file_name, "/");
+    if (strcmp(current_path, "/") != 0) 
+    {
+        strcat(file_name, "/");
+    }
     strcat(file_name, namelist[i]->d_name);
     
     // If this is theme selection, we will return here from run_command();
     // If it's running a program, it will not return.
     if (current_executable[0] != '\0') 
+    {
         run_command(current_executable, file_name, work_path);
-    else
+    }
+    else {
         run_command(file_name, NULL, current_path);
-
+    }
+        
     return MAINMENU;
 }
 

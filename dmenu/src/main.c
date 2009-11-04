@@ -127,9 +127,9 @@ void deinit() {
     */ 
     
     // de-init everything
-    menu_deinit();
     filelist_deinit();
     imageviewer_deinit();
+    menu_deinit();
     conf_unload();
     dosd_deinit();
 }
