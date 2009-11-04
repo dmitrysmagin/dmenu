@@ -23,6 +23,12 @@
 #include "sound.h"
 #include "dingoo.h"
 
+#define IMAGE_VIEWER_TITLE_COLOR 152,152,152
+#define IMAGE_VIEWER_SELECT_COLOR 255,255,255
+#define IMAGE_VIEWER_BACKGROUND_COLOR 48,48,48
+#define IMAGE_VIEWER_TITLE_ALPHA 152
+#define IMAGE_VIEWER_SELECT_ALPHA 64
+
 extern SDL_Surface* background;
 extern cfg_t *cfg;
 
@@ -118,13 +124,15 @@ int imageviewer_init(char* title, char* executable, char* path)
         
         imageviewer_title     = render_imageviewer_text(title);
         imageviewer_osd_highlight = create_surface(
-                SCREEN_WIDTH, 20, 152,152,152, 152);
-        
+                SCREEN_WIDTH, 20, 
+                IMAGE_VIEWER_TITLE_COLOR, 
+                IMAGE_VIEWER_TITLE_ALPHA);
     }
     
     imageviewer_highlight = create_surface(
                 IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT, 
-                255,255,255, 156);
+                IMAGE_VIEWER_SELECT_COLOR,
+                IMAGE_VIEWER_SELECT_ALPHA);
                     
     iv_paginate.entries = new_array(SDL_Surface*, iv_paginate.total_size);
     imageviewer_update_list();
@@ -180,7 +188,7 @@ void imageviewer_draw(SDL_Surface* screen)
     SDL_Rect dstrect, txtrect;
 
     // clear screen
-    SDL_FillRect(screen, 0, SDL_MapRGB(screen->format, 196,196,196));
+    SDL_FillRect(screen, 0, SDL_MapRGB(screen->format, IMAGE_VIEWER_BACKGROUND_COLOR));
     
     //Draw thumbnails
     init_rect_pos(&dstrect, IMAGE_THUMB_PAD_X,IMAGE_THUMB_TOP+IMAGE_THUMB_PAD_Y);
