@@ -1,4 +1,4 @@
-TARGET	   := dmenu-host
+TARGET	   := dmenu-host.bin
 BUILD	   := build-host
 TOOLCHAINDIR := /
 INCLS	   := src ../dosd/include
