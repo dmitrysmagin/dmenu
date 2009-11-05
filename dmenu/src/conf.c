@@ -15,6 +15,7 @@
 #include <limits.h>
 #include <dirent.h>
 #include <libgen.h>
+#include "resource.h"
 #include "common.h"
 #include "conf.h"
 #include "main.h"
@@ -56,6 +57,7 @@ cfg_opt_t opts[] = {
     CFG_STR("Background", 0, CFGF_NONE),
     CFG_STR("Cursor", 0, CFGF_NONE),
     CFG_STR("Font", 0, CFGF_NONE),
+    CFG_STR("FontColor", 0, CFGF_NONE),
 
     CFG_BOOL("VolDisp", cfg_false, CFGF_NONE),
     CFG_BOOL("BrightDisp", cfg_false, CFGF_NONE),
@@ -100,6 +102,9 @@ cfg_opt_t main_opts[] = {
 cfg_opt_t value_opts[] = {
     CFG_INT("SndVol", 50, CFGF_NONE),
     CFG_INT("Bright", 3, CFGF_NONE),
+    CFG_STR("Background", 0, CFGF_NONE),
+    CFG_STR("FontColor", 0, CFGF_NONE),
+    CFG_STR("Font", 0, CFGF_NONE),
     CFG_END()
 };
 
@@ -455,7 +460,7 @@ void conf_selectordir(cfg_t* menu_item, char* dir)
 
 void conf_backgroundselect(char* bgimage)
 {
-    cfg_setstr(cfg, "Background", bgimage);
-    //if (!conf_to_file(cfg, THEME_CONF_FILE)) return;
+    cfg_setstr(cfg_value, "Background", bgimage);
+    if (!conf_to_file(cfg_value, USER_CONF_FILE)) return;
     menu_reload_background();
 }

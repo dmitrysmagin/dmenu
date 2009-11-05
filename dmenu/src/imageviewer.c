@@ -19,6 +19,7 @@
 #include "conf.h"
 #include "env.h"
 #include "imageviewer.h"
+#include "resource.h"
 #include "menu.h"
 #include "sound.h"
 #include "dingoo.h"
@@ -120,8 +121,8 @@ int imageviewer_init(char* title, char* executable, char* path)
     if (strlen(iv_paginate.title) > 0) 
     {
         // load font
-        imageviewer_font       = load_theme_font(cfg_getstr(cfg, "Font"), 14);
-        imageviewer_font_color = load_user_color("fontcolor.ini");
+        imageviewer_font       = get_theme_font(14);
+        imageviewer_font_color = get_theme_font_color();
         
         imageviewer_title     = render_imageviewer_text(title);
         imageviewer_osd_highlight = create_surface(

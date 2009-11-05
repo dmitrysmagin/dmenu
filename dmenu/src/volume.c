@@ -1,4 +1,5 @@
 #include "volume.h"
+#include "resource.h"
 
 extern TTF_Font* status_font;
 extern cfg_t *cfg_value, *cfg;

@@ -1,6 +1,7 @@
 #include "sound.h"
 #include "conf.h"
 #include "common.h"
+#include "resource.h"
 
 extern cfg_t *cfg;
 Mix_Music* gSE[6];

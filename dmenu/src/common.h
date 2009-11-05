@@ -51,11 +51,6 @@ enum InternalCommand get_command(char* cmd);
 int bound(int val, int low, int high);
 int wrap(int val, int low, int high);
 
-char* relative_file(char* path, char* file);
-char* dmenu_file(char* file);
-char* home_file(char* file);
-char* user_file(char* file);
-char* theme_file(char* file);
 void _foreach(void** array, void* (f)(void*), int len);
 
 void run_command (char* cmd, char* args, char* workdir);
@@ -70,15 +65,7 @@ int change_dir(char* path);
 FILE* load_file_and_handle_fail ( char* file, char* mode, int die_on_fail );
 FILE* load_file( char* file, char* mode );
 FILE* load_file_or_die( char* file, char* mode );
-
-SDL_Surface* load_image_file( char* file );
-SDL_Surface* load_image_file_no_alpha( char* file );
-SDL_Surface* load_user_image( char* file );
-SDL_Color*   load_user_color( char* file );
-SDL_Surface* load_theme_image( char* file );
-SDL_Surface* load_theme_background( char* file );
-TTF_Font*    load_theme_font( char* file, int size );
-Mix_Music*   load_theme_sound( char* file );
+char* relative_file(char* path, char* file);
 
 SDL_Surface* render_text( char* text, TTF_Font* font, SDL_Color* color, int solid );
 SDL_Surface* draw_text( char* text, TTF_Font* font, SDL_Color* color);

@@ -1,5 +1,6 @@
 #include "brightness.h"
 #include "common.h"
+#include "resource.h"
 
 int bright_level;
 
