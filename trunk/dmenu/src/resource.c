@@ -39,10 +39,12 @@ char* dmenu_file(char* file)
     return relative_file(DMENU_PATH, file);    
 }
 
+/*
 char* home_file(char* file) 
 {
     return relative_file(HOME_PATH, file);    
 }
+*/
 
 char* user_file(char* file) 
 {

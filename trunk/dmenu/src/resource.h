@@ -11,7 +11,7 @@ TTF_Font* get_theme_font(int size);
 SDL_Color* get_theme_font_color();
 
 char* dmenu_file(char* file);
-char* home_file(char* file);
+//	char* home_file(char* file);
 char* user_file(char* file);
 char* theme_file(char* file);
 
