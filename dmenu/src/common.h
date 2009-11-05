@@ -36,6 +36,9 @@
 #endif
 
 #define foreach(arr, fn, len) _foreach((void*)arr, (void*)fn, len)
+
+#define new_str_arr(l) new_array(char*, l)
+void free_str_arr(char** arr);
 #define append_str(lst, len, val)\
     len++;\
     lst = realloc(lst, len*sizeof(char*));\

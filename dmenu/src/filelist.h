@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-int filelist_init(char* title, char* executable, char* path, int can_change_dirs);
+int filelist_init(char* title, char* executable, char* exec_path, char* file_path, int can_change_dirs);
 void filelist_deinit();
 void filelist_draw(SDL_Surface* screen);
 
