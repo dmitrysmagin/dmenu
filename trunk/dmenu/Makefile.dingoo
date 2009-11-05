@@ -1,4 +1,4 @@
-TARGET     := dmenu
+TARGET     := dmenu.bin
 BUILD      := build
 TOOLCHAINDIR := /opt/mipsel-linux-uclibc
 INCLS      := src ../dosd/include
