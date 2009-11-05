@@ -26,10 +26,14 @@
 #define max(a,b) (a>b?a:b)
 #define internal_command(s) (s[0] == '!')
 
-#define _log(dst, pre, fmt, args...) fprintf(dst, "%-15s(%4d)[%s]: "fmt "\n", strstr(__FILE__, "src"), __LINE__, pre, ##args)
+#define _log(dst, pre, fmt, args...) fprintf(dst, "%-20s(%4d)[%s]: "fmt "\n", strstr(__FILE__, "src"), __LINE__, pre, ##args)
 #define log_error(fmt, args...)      _log(stderr, "err", fmt, ##args); perror(0)
 #define log_message(fmt, args...)    _log(stdout, "msg", fmt, ##args)
-#define log_debug(fmt, args...)      _log(stdout, "dbg", fmt, ##args)
+#if DEBUG==1
+    #define log_debug(fmt, args...) _log(stdout, "dbg", fmt, ##args)
+#else
+    #define log_debug(args...)
+#endif
 
 #define foreach(arr, fn, len) _foreach((void*)arr, (void*)fn, len)
 #define append_str(lst, len, val)\

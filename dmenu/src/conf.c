@@ -179,6 +179,8 @@ int conf_load_theme()
 
 int conf_load()
 {
+    log_debug("Initializing");
+
     struct dirent **namelist;
     int num_of_files, rc, i, j;
 
@@ -224,6 +226,8 @@ int conf_load()
 
 void conf_unload()
 {
+    log_debug("De-initializing");
+    
     free(THEME_CONF_FILE);
     
     cfg_free(cfg);
@@ -267,8 +271,8 @@ void conf_merge_standalone(char *conf_file)
                 // Our dupopts routine does not handle sections, hence doesn't
                 // doesn't work for SubMenuItems
                 if (cfg_size(standalone_mi, "SubMenuItem") > 0) {
-                    log_error("Not supported - dmenu.cfg contains SubMenuItems\
-                                \nin directory %s", conf_file_dir);
+                    log_error("Not supported - dmenu.cfg contains SubMenuItems " 
+                                "in directory %s", conf_file_dir);
                 }
                 else {
                     char* icon_path = cfg_getstr(standalone_mi, "Icon");

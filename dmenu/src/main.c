@@ -107,7 +107,7 @@ int init_display() {
     }
     
     // Init OSD
-    if (!dosd_init(0xFFFFFF))
+    if (!dosd_init(OSD_COLOR))
     {
         log_error("Unable to initialize OSD");
         return 1;
@@ -119,11 +119,12 @@ int init_display() {
 }
 
 int init() {
+    log_debug("Initializing");
     return init_env() || init_display();
 }
 
 void deinit() {
-    log_message("De-initializing");
+    log_debug("De-initializing");
     /* Call destructors, otherwise open FDs will be leaked to the
     exec()'ed process.
     Yes, this is ugly. If another situation like this arises we should write
@@ -142,10 +143,10 @@ void reload() {
     deinit();
     conf_load();
     menu_init();
-    dosd_init(0xFFFFFF);
+    dosd_init(OSD_COLOR);
 }
 
-void quick_exit() {
+void quick_quit() {
     // Exit without calling any atexit() functions
     _exit(1);
 }
@@ -170,9 +171,8 @@ void update_display() {
     
     dosd_show(screen);
     
-    // check VolDisp & BrightDisp
-    if (cfg_getbool(cfg,"VolDisp"))    vol_show(screen);
-    if (cfg_getbool(cfg,"BrightDisp")) bright_show(screen);
+    if (vol_enabled())    vol_show(screen);
+    if (bright_enabled()) bright_show(screen);
     
     // finally, update the screen :)
     SDL_Flip(screen);
@@ -246,9 +246,9 @@ int main ( int argc, char** argv )
     if (rc==0) {
         listen(); //main loop
         deinit();
+        // all is well ;)
+        log_debug("Exited cleanly");
     }
     
-    // all is well ;)
-    //printf("Exited cleanly\n");
     return rc;
 }

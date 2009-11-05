@@ -1,2 +1,2 @@
 #! /bin/bash
-./build.sh && svn ci "$1" -m "$2"
+./scripts/build.sh && svn ci "$1" -m "$2"

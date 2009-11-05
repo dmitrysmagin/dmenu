@@ -156,6 +156,8 @@ void clear_list()
 
 int filelist_init(char* title, char* executable, char* path, int can_change_dirs)
 {
+    log_debug("Initializing");
+    
     //Make sure it is something
     if (executable == 0) executable = "";
     
@@ -197,7 +199,7 @@ int filelist_init(char* title, char* executable, char* path, int can_change_dirs
 void filelist_deinit()
 {
     if (!is_initted) return;
-    log_message("De-initializing");
+    log_debug("De-initializing");
     
     is_initted = 0;
 

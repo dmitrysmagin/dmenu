@@ -62,15 +62,14 @@ void submenu_close();
 
 void menu_reload_background() 
 {
-    if (background) 
-    {
-        SDL_FreeSurface(background);
-        background = load_theme_background(cfg_getstr(cfg, "Background"));
-    }
+    free_surface(background);
+    background = load_theme_background(cfg_getstr(cfg, "Background"));
 }
 
 int menu_init()
 {
+    log_debug("Initializing");
+    
     int i, j;
     SDL_Color* color = load_user_color("fontcolor.ini");
     background = load_theme_background(cfg_getstr(cfg, "Background")); 
@@ -87,8 +86,8 @@ int menu_init()
     // load menu
     number_of_menu     = cfg_size(cfg, "Menu");
     number_of_menuitem = new_array(int, number_of_menu);
-    menu_icons         = new_array(SDL_Surface*, number_of_menu);
-    menu_text          = new_array(SDL_Surface*, number_of_menu);
+    menu_icons         = new_array(SDL_Surface*,  number_of_menu);
+    menu_text          = new_array(SDL_Surface*,  number_of_menu);
     menuitem_icons     = new_array(SDL_Surface**, number_of_menu);
     menuitem_text      = new_array(SDL_Surface**, number_of_menu);
 
@@ -133,11 +132,15 @@ int menu_init()
 
 void menu_deinit()
 {
-    log_message("De-initializing");
+    log_debug("De-initializing");
+    
     int i, j;
 
     bright_deinit();
     vol_deinit();
+
+    // De-init sound
+    SE_deInit();
     
     // Save current menu state
     g_persistent->current_menu     = current_menu_index;
@@ -170,9 +173,6 @@ void menu_deinit()
     TTF_Quit();
 
     if (number_of_submenuitem > 0) submenu_close();
-
-    // De-init sound
-    SE_deInit();
 }
 
 //Draw single menu item
