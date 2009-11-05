@@ -147,34 +147,21 @@ void imageviewer_deinit()
 {
     int i = 0;
     if (!iv_paginate.is_ready) return;
+    log_message("De-initializing");
     
-    SDL_FreeSurface(image_preview);              image_preview = NULL;
-    SDL_FreeSurface(imageviewer_highlight);      imageviewer_highlight = NULL;
-
-    if (strlen(iv_paginate.title) > 0) 
-    {
-        SDL_FreeSurface(imageviewer_osd_highlight);  imageviewer_osd_highlight = NULL;
-        SDL_FreeSurface(imageviewer_title);          imageviewer_title = NULL;
-        free(imageviewer_font_color);                imageviewer_font_color = NULL;
-        TTF_CloseFont(imageviewer_font);             imageviewer_font = NULL;
-    }
+    free_surface(image_preview);
+    free_surface(imageviewer_highlight);
+    free_surface(imageviewer_osd_highlight);
+    free_surface(imageviewer_title);
+    free_color(imageviewer_font_color);
+    free_font(imageviewer_font);
     
-    for (i=0;i<iv_paginate.total_size;i++) 
-    {
-        free(iv_paginate.files[i]); iv_paginate.files[i] = NULL;
-    }
+    for (i=0;i<iv_paginate.total_size;i++) free_erase(iv_paginate.files[i]);
+    for (i=0;i<iv_paginate.set_size;i++) free_surface(iv_paginate.entries[i]);
     
-    for (i=0;i<iv_paginate.set_size;i++)
-    {
-        if (iv_paginate.entries[i])
-        {
-            SDL_FreeSurface(iv_paginate.entries[i]); iv_paginate.entries[i] = NULL;
-        }
-    }
-
-    free(iv_paginate.files); iv_paginate.files = NULL;
-    free(iv_paginate.entries); iv_paginate.entries = NULL;
-
+    free_erase(iv_paginate.files);
+    free_erase(iv_paginate.entries);
+    
     reset_pagination();
     iv_paginate.is_ready = 0;
 }
@@ -305,8 +292,9 @@ enum MenuState imageviewer_select()
     if (strlen(iv_paginate.executable) > 0) 
     {
         run_command(iv_paginate.executable, tmp, iv_paginate.root);
-        
     }
+    
+    imageviewer_deinit();
     
     return MAINMENU;
 }

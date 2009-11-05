@@ -31,6 +31,7 @@ extern cfg_t *cfg;
 static Uint32 next_time;
 SDL_Surface* screen;
 enum MenuState state = MAINMENU;
+int program_done;
 
 Uint32 time_left(void)
 {
@@ -122,6 +123,7 @@ int init() {
 }
 
 void deinit() {
+    log_message("De-initializing");
     /* Call destructors, otherwise open FDs will be leaked to the
     exec()'ed process.
     Yes, this is ugly. If another situation like this arises we should write
@@ -180,14 +182,18 @@ void update_display() {
     next_time += TICK_INTERVAL;    
 }
 
+void quit() {
+    program_done = 1;
+}
+
 void listen() {
     
     // program main loop
-    int done = 0;
+    program_done = 0;
     SDLKey key;
     SDL_Event event;
     
-    while (!done)
+    while (!program_done)
     {
         // message processing loop
         while (SDL_PollEvent(&event))
@@ -197,7 +203,7 @@ void listen() {
             {
                 // exit if the window is closed
                 case SDL_QUIT:
-                    done = 1;
+                    quit();
                     break;
                     
                 // check for keypresses
@@ -206,7 +212,7 @@ void listen() {
                     
                     // exit if ESCAPE is pressed
                     if (key == SDLK_ESCAPE) {
-                        done = 1;
+                        quit();
                         break;
                     }
                     

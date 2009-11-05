@@ -86,10 +86,11 @@ void run_command(char* executable, char* args, char* workdir)
         run_internal_command(executable, args, workdir);
         return;
     }
-
+    
     char** args_list = build_arg_list(executable, args);
     //Make local copy of work dir
-    char tmp_work[PATH_MAX];
+    
+    char tmp_work[PATH_MAX]; strcpy(tmp_work, "");
     if (workdir != NULL) strcpy(tmp_work, workdir);
     
     // launch the program
@@ -113,7 +114,7 @@ void run_internal_command(char* command, char* args, char* workdir)
     }
 }
 
-void free_arg_list(char** args) 
+void free_arg_list(char** args)
 {
     int i =0;
     while (*(args + i)) i++;
@@ -143,7 +144,7 @@ char** build_arg_list(char* commandline, char* args)
         append_str(args_list, len, filename);
     }
     
-    // add null poiner as the last arg
+    // add null pointer as the last arg
     append_str(args_list, len, NULL);
     
     return args_list;
@@ -155,7 +156,10 @@ void execute_next_command(char* dir, char** args)
     FILE* out = load_file(DMENU_COMMAND_FILE, "w");
     
     //Write change dir
-    fprintf(out, "cd %s\n", dir);
+    if (dir!=NULL && strlen(dir) > 0)
+    {
+        fprintf(out, "cd %s\n", dir);
+    }
     
     //Write command
     int i = 0;
@@ -169,8 +173,7 @@ void execute_next_command(char* dir, char** args)
     free_arg_list(args);
     
     //Exit program, and let shell script call DMENU_COMMAND_FILE
-    deinit();
-    exit(0);    
+    quit();
 }
 
 void execute_command(char* dir, char** args) 
@@ -180,7 +183,10 @@ void execute_command(char* dir, char** args)
     
     int i = 0;
     
-    change_dir(dir);
+    if (dir!=NULL && strlen(dir) > 0)
+    {
+        change_dir(dir);
+    }
     
     // launch the program and it should not return, 
     // otherwise it means we are not able to execute the application
@@ -191,7 +197,7 @@ void execute_command(char* dir, char** args)
 
     // it should not return, otherwise it means we are not able to execute the application
     free_arg_list(args);
-        
+    
     quick_exit();
 }
 

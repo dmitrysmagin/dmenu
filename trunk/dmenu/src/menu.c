@@ -133,6 +133,7 @@ int menu_init()
 
 void menu_deinit()
 {
+    log_message("De-initializing");
     int i, j;
 
     bright_deinit();
@@ -142,9 +143,9 @@ void menu_deinit()
     g_persistent->current_menu     = current_menu_index;
     g_persistent->current_menuitem = current_menuitem_index;
 
-    if (background) SDL_FreeSurface(background);
-    if (cursor) SDL_FreeSurface(cursor);
-
+    free_surface(background);
+    free_surface(cursor);
+    
     for (i=0;i<number_of_menu;i++) {
         SDL_FreeSurface(menu_icons[i]);
         SDL_FreeSurface(menu_text[i]);
@@ -156,22 +157,22 @@ void menu_deinit()
         free(menuitem_text[i]);
     }
 
-    free(menuitem_icons);
-    free(menuitem_text);
-    free(number_of_menuitem);
-    free(menu_icons);
-    free(menu_text);
+    free_erase(menuitem_icons);
+    free_erase(menuitem_text);
+    free_erase(number_of_menuitem);
+    free_erase(menu_icons);
+    free_erase(menu_text);
 
-    TTF_CloseFont(menu_font);
-    TTF_CloseFont(menuitem_font);
-    TTF_CloseFont(status_font);
+    free_font(menu_font);
+    free_font(menuitem_font);
+    free_font(status_font);
+    
     TTF_Quit();
 
     if (number_of_submenuitem > 0) submenu_close();
 
     // De-init sound
     SE_deInit();
-
 }
 
 //Draw single menu item
