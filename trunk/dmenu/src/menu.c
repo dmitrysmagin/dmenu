@@ -19,6 +19,7 @@
 #include "env.h"
 #include "common.h"
 #include "conf.h"
+#include "resource.h"
 #include "filelist.h"
 #include "imageviewer.h"
 #include "persistent.h"
@@ -63,7 +64,7 @@ void submenu_close();
 void menu_reload_background() 
 {
     free_surface(background);
-    background = load_theme_background(cfg_getstr(cfg, "Background"));
+    background = load_theme_background(get_user_attr("Background"));
 }
 
 int menu_init()
@@ -71,17 +72,17 @@ int menu_init()
     log_debug("Initializing");
     
     int i, j;
-    SDL_Color* color = load_user_color("fontcolor.ini");
-    background = load_theme_background(cfg_getstr(cfg, "Background")); 
-
+    SDL_Color* color = get_theme_font_color();
+    menu_reload_background();
+    
     /*fill_fb(background->pixels);*/
     cursor = load_theme_image(cfg_getstr(cfg, "Cursor"));
 
     // load font
     TTF_Init();
-    menu_font     = load_theme_font(cfg_getstr(cfg, "Font"), 18);
-    menuitem_font = load_theme_font(cfg_getstr(cfg, "Font"), 14);
-    status_font   = load_theme_font(cfg_getstr(cfg, "Font"), 13);
+    menu_font     = get_theme_font(18);
+    menuitem_font = get_theme_font(14);
+    status_font   = get_theme_font(13);
 
     // load menu
     number_of_menu     = cfg_size(cfg, "Menu");
@@ -367,7 +368,7 @@ enum MenuState menu_keypress(SDLKey keysym)
 
             if (cfg_getbool(mi, "Selector")) 
             {
-                char* listdir = NULL; //cfg_getstr(mi, "SelectorDir");
+                char* listdir = cfg_getstr(mi, "SelectorDir");
                 if (!listdir ) listdir = cfg_getstr(mi, "WorkDir");
                 if (!filelist_init(cfg_getstr(mi, "Name"),
                                    cfg_getstr(mi, "Executable"),
@@ -470,7 +471,7 @@ enum MenuState menuitem_run()
 void submenu_open()
 {
     int i;
-    SDL_Color* color = load_user_color("fontcolor.ini");
+    SDL_Color* color = get_theme_font_color();
     SE_out( DECIDE );
 
     number_of_submenuitem = cfg_size(mi, "SubMenuItem");

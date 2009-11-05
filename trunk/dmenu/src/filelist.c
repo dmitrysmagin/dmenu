@@ -19,6 +19,7 @@
 #include "env.h"
 #include "conf.h"
 #include "filelist.h"
+#include "resource.h"
 #include "menu.h"
 
 #include "sound.h"
@@ -162,8 +163,8 @@ int filelist_init(char* title, char* executable, char* path, int can_change_dirs
     if (executable == 0) executable = "";
     
     // load font
-    list_font       = load_theme_font(cfg_getstr(cfg, "Font"), 18);
-    list_font_color = load_user_color("fontcolor.ini");
+    list_font       = get_theme_font(18);
+    list_font_color = get_theme_font_color();
 
     //Setup UI
     list_bg        = load_theme_image(cfg_getstr(cfg, "ListBackground"));
@@ -171,7 +172,6 @@ int filelist_init(char* title, char* executable, char* path, int can_change_dirs
     list_dir_icon  = load_theme_image(cfg_getstr(cfg, "ListDirIcon"));
     list_file_icon = load_theme_image(cfg_getstr(cfg, "ListFileIcon"));
     list_title     = render_list_text(title);
-
     status_changed = 1;
 
     // Prep path/executable vars, determine filelist_theme status
@@ -227,8 +227,8 @@ void filelist_draw(SDL_Surface* screen)
     //SDL_FillRect(screen, 0, SDL_MapRGB(screen->format, 0, 0, 0));
 
     SDL_BlitSurface(background, 0, screen, &dstrect);
-    SDL_BlitSurface(list_bg,    0, screen, &dstrect);
     SDL_BlitSurface(list_title, 0, screen, &txtrect);
+    SDL_BlitSurface(list_bg,    0, screen, &dstrect);
 
     txtrect.y = FILE_LIST_OFFSET;
     for (i=0; i<FILES_PER_PAGE; i++) {
@@ -417,11 +417,11 @@ enum MenuState filelist_run()
     return MAINMENU;
 }
 
-enum MenuState filelist_keypress(SDLKey keysym)
+enum MenuState filelist_keypress(SDLKey key)
 {
     Uint8 *keystate = SDL_GetKeyState(NULL);
  
-    switch (keysym) {
+    switch (key) {
 
         case DINGOO_BUTTON_B:
             filelist_deinit();
@@ -452,7 +452,7 @@ enum MenuState filelist_keypress(SDLKey keysym)
             if (can_change_dir) filelist_left();
             break;
 
-        default: break;
+        default:break;
     }
 
     return FILELIST;

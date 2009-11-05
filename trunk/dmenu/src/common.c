@@ -23,7 +23,6 @@
 #include "main.h"
 #include "menu.h"
 
-extern char THEME_PATH[];
 SDL_Surface* tmp_surface;
 
 void run_internal_command(char* command, char* args, char* workdir);
@@ -230,26 +229,6 @@ char* relative_file(char* root, char* file)
     return out;
 }
 
-char* dmenu_file(char* file) 
-{
-    return relative_file(DMENU_PATH, file);    
-}
-
-char* home_file(char* file) 
-{
-    return relative_file(HOME_PATH, file);    
-}
-
-char* user_file(char* file) 
-{
-    return relative_file(USER_PATH, file);
-}
-
-char* theme_file(char* file) 
-{
-    return relative_file(THEME_PATH, file);
-}
-
 int change_dir(char* path) 
 {
     int rc = chdir(path);
@@ -303,48 +282,6 @@ SDL_Surface* load_image_file( char* file ) {
 
 SDL_Surface* load_image_file_no_alpha( char* file ) {
     return load_image_file_with_format(file, 0);
-}
-
-SDL_Surface* load_user_image( char* file ) {
-    char* tmp = user_file(file);
-    SDL_Surface* out = load_image_file(tmp);
-    free(tmp); 
-    return out;
-}
-
-SDL_Color* load_user_color ( char* file ) {
-    char* tmp = user_file(file);
-    SDL_Color* out = load_color_file(tmp);
-    free(tmp);
-    return out;
-}
-
-SDL_Surface* load_theme_background( char* file ) {
-    char* tmp = theme_file(file);
-    SDL_Surface* out = load_image_file_no_alpha(tmp);
-    free(tmp); 
-    return out;
-}
-
-SDL_Surface* load_theme_image( char* file ) {
-    char* tmp = theme_file(file);
-    SDL_Surface* out = load_image_file(tmp);
-    free(tmp); 
-    return out;
-}
-
-Mix_Music* load_theme_sound( char* file ) {
-    char* tmp = theme_file(file);
-    Mix_Music* out = Mix_LoadMUS(tmp);
-    free(tmp); 
-    return out;
-}
-
-TTF_Font* load_theme_font( char* file, int size ) {
-    char* tmp = theme_file(file);
-    TTF_Font* out = TTF_OpenFont(tmp, size);
-    free(tmp); 
-    return out;
 }
 
 SDL_Surface* render_text(char* text, TTF_Font* font, SDL_Color* color, int solid) {
@@ -476,4 +413,3 @@ SDL_Surface* create_surface(int w, int h, int r, int g, int b, int a)
     }
     return tmp;
 }
- 

@@ -85,6 +85,9 @@ int init_display() {
         return 1;
     }
     
+    //Allow for easier menu nav
+    SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
+    
     // make sure SDL cleans up before exit
     atexit(SDL_Quit);
     
@@ -209,7 +212,6 @@ void listen() {
                 // check for keypresses
                 case SDL_KEYDOWN:
                     key = event.key.keysym.sym;
-                    
                     // exit if ESCAPE is pressed
                     if (key == SDLK_ESCAPE) {
                         quit();
