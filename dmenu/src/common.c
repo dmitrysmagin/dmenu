@@ -72,6 +72,11 @@ void run_command(char* executable, char* args, char* workdir)
    }
 */
 
+void clear_last_command()
+{
+    remove(DMENU_COMMAND_FILE);
+}
+
 /* this is a simplified version when init is used to spawn dmenu */
 void run_command(char* executable, char* args, char* workdir)
 {   
@@ -87,17 +92,9 @@ void run_command(char* executable, char* args, char* workdir)
     char tmp_work[PATH_MAX];
     if (workdir != NULL) strcpy(tmp_work, workdir);
     
-    deinit();
-    SDL_Quit();
-    
-    change_dir(tmp_work);
-   
     // launch the program
-    execute_command(args_list);
-    
-    // it should not return, otherwise it means we are not able to execute the application
-    free_arg_list(args_list);
-    quick_exit();
+    //execute_next_command(tmp_work, args_list);
+    execute_command(tmp_work, args_list);
 }
 
 void run_internal_command(char* command, char* args, char* workdir)
@@ -152,17 +149,50 @@ char** build_arg_list(char* commandline, char* args)
     return args_list;
 }
 
-void execute_command(char** args) 
-{    
+void execute_next_command(char* dir, char** args) 
+{   
+    //Write next command to commandfile
+    FILE* out = load_file(DMENU_COMMAND_FILE, "w");
+    
+    //Write change dir
+    fprintf(out, "cd %s\n", dir);
+    
+    //Write command
     int i = 0;
+    for (i=0;*(args+i);i++) 
+    {
+        fprintf(out, "\"%s\" ", *(args+i)); 
+    }    
+    fprintf(out, "\n");
+    fclose(out);
+
+    free_arg_list(args);
+    
+    //Exit program, and let shell script call DMENU_COMMAND_FILE
+    deinit();
+    exit(0);    
+}
+
+void execute_command(char* dir, char** args) 
+{    
+    deinit();
+    SDL_Quit();
+    
+    int i = 0;
+    
+    change_dir(dir);
     
     // launch the program and it should not return, 
     // otherwise it means we are not able to execute the application
     execvp(args[0], args);
     
     log_message("Unable to execute command - ");
-    for (i=0;*(args+i);i++) printf("%s ", *(args+i)); printf("\n");
-    
+    for (i=0;*(args+i);i++) printf("\"%s\" ", *(args+i)); printf("\n");
+
+    // it should not return, otherwise it means we are not able to execute the application
+    free_arg_list(args);
+        
+    quick_exit();
 }
 
 #define IF_CMD_THEN(c, k) if (strcmp(c, COMMAND_##k)==0) return k;

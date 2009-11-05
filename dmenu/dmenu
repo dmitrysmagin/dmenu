@@ -1,7 +1,10 @@
 #!/bin/sh
-DIR=`pwd`
+ACT=".next"
 CMD="dmenu.bin"
-if [ "$DIR" != "/usr/loca/dmenu" ]; then CMD="dmenu-host.bin"; fi
+if [ "`pwd`" != "/usr/loca/dmenu" ]; then CMD="dmenu-host.bin"; fi
 
 ./$CMD
-exit
+if [ -f "$ACT" ]; then 
+    sh "$ACT"
+    rm "$ACT"
+fi

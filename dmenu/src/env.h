@@ -6,6 +6,7 @@
 #endif 
 #define DMENU_THEMES         DMENU_PATH "themes/"
 #define DMENU_CONF_FILE      DMENU_PATH "main.cfg"
+#define DMENU_COMMAND_FILE   DMENU_PATH ".next"
 char THEME_PATH[PATH_MAX];
 
 #ifndef HOME_PATH
