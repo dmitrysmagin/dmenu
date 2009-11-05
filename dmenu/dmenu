@@ -1,2 +1,7 @@
 #!/bin/sh
-for x in `ls dmenu*.bin`; do ./$x && exit; done
+DIR=`pwd`
+CMD="dmenu.bin"
+if [ "$DIR" != "/usr/loca/dmenu" ]; then CMD="dmenu-host.bin"; fi
+
+./$CMD
+exit
