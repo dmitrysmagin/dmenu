@@ -4,5 +4,6 @@
 void deinit();
 void reload();
 void quick_exit();
+void quit();
 
 #endif

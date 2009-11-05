@@ -134,27 +134,18 @@ int get_list(char* path)
 
 void clear_list()
 {
-    if (statlist) {
-        free(statlist);
-        statlist = NULL;
-    }
+    free_erase(statlist);
     
     if (namelist) {
         int i, j;
-        for (i=0;i<num_of_files;i++) {
-            free(namelist[i]);
-        }
-        free(namelist);
-        namelist = NULL;
+        for (i=0;i<num_of_files;i++) free_erase(namelist[i]);
+        
+        free_erase(namelist);
     
         for (i=0, j=current_list_start;
             (i < FILES_PER_PAGE) && (j < num_of_files);
             i++, j++) {
-            if (list_filename[i]) 
-            {
-                SDL_FreeSurface(list_filename[i]);
-                list_filename[i] = NULL;
-            }
+            free_surface(list_filename[i]);
         }
     }
     
@@ -206,23 +197,17 @@ int filelist_init(char* title, char* executable, char* path, int can_change_dirs
 void filelist_deinit()
 {
     if (!is_initted) return;
+    log_message("De-initializing");
+    
     is_initted = 0;
 
-    SDL_FreeSurface(list_bg);        list_bg = NULL;
-    SDL_FreeSurface(list_sel);       list_sel = NULL;
-    SDL_FreeSurface(list_title);     list_title = NULL;
-    SDL_FreeSurface(list_dir_icon);  list_dir_icon= NULL;
-    SDL_FreeSurface(list_file_icon); list_file_icon= NULL;
-    
-    if (list_font) {
-        TTF_CloseFont(list_font);
-        list_font = NULL;
-    }
-
-    if (list_font_color) {
-        free(list_font_color);
-        list_font_color = NULL;
-    }
+    free_surface(list_bg);
+    free_surface(list_sel);
+    free_surface(list_title);
+    free_surface(list_dir_icon);
+    free_surface(list_file_icon);
+    free_font(list_font);
+    free_color(list_font_color);
 
     clear_list();
 }
@@ -427,7 +412,6 @@ enum MenuState filelist_run()
     else {
         run_command(file_name, NULL, current_path);
     }
-        
     return MAINMENU;
 }
 

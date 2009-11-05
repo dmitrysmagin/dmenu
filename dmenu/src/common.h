@@ -10,11 +10,16 @@
 #define COMMAND_THEMESELECT "!themeselect"
 #define COMMAND_BACKGROUNDSELECT "!backgroundselect"
 
-#define new_array(t, len) (t*)malloc(sizeof(t) * len)
-#define new_str(len) new_array(char, len)
-#define new_item(t) new_array(t, 1)
+#define new_array(t, len)      (t*)malloc(sizeof(t) * len)
+#define new_str(len)           new_array(char, len)
+#define new_item(t)            new_array(t, 1)
 #define copy_item(dst, src, t) memcpy(dst,src,sizeof(t))
-#define copy_str(tmp, str) tmp = new_str(strlen(str)); strcpy(tmp, str)
+#define copy_str(tmp, str)     tmp = new_str(strlen(str)+1); strcpy(tmp, str)
+#define clean_erase(e,f)       if (e) { f(e); e = NULL; } 
+#define free_surface(sfc)      clean_erase(sfc, SDL_FreeSurface)
+#define free_font(fnt)         clean_erase(fnt, TTF_CloseFont);
+#define free_erase(e)          clean_erase(e, free);
+#define free_color(c)          free_erase(c);
 
 #define in_bounds(v, l, h) ((v>=l) && (v<h))
 #define min(a,b) (a<b?a:b)
