@@ -155,7 +155,7 @@ void clear_list()
 
 
 
-int filelist_init(char* title, char* executable, char *exec_path, char* file_path, int can_change_dirs)
+int filelist_init(char* title, char* executable, char *exec_path, char* select_path, int can_change_dirs)
 {
     log_debug("Initializing");
     
@@ -182,8 +182,8 @@ int filelist_init(char* title, char* executable, char *exec_path, char* file_pat
     
     // read files
     char real_path[PATH_MAX];
-    if (!realpath(file_path, real_path)) {
-        log_error("Failed to get real path of directory %s", file_path);
+    if (!realpath(select_path, real_path)) {
+        log_error("Failed to get real path of directory %s", select_path);
         return 1;
     }
     if (get_list(real_path)) {
