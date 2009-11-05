@@ -9,13 +9,15 @@
 #define DMENU_COMMAND_FILE   DMENU_PATH ".next"
 char THEME_PATH[PATH_MAX];
 
+/*
 #ifndef HOME_PATH
 #define HOME_PATH            "/usr/local/home/"
 #endif
+*/
 
-#define USER_PATH            HOME_PATH ".dmenu/"
+#define USER_PATH            DMENU_PATH "ini/"
 #define USER_CONF_FILE       USER_PATH "dmenu.ini"
-#define USER_BACKGROUNDS     USER_PATH "bgimages/"
+#define USER_BACKGROUNDS     DMENU_PATH "wallpapers/"
 
 //Device Info
 #define BACKLIGHT_DEVICE     "/proc/jz/lcd_backlight"
