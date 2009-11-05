@@ -372,6 +372,7 @@ enum MenuState menu_keypress(SDLKey keysym)
                 if (!listdir ) listdir = cfg_getstr(mi, "WorkDir");
                 if (!filelist_init(cfg_getstr(mi, "Name"),
                                    cfg_getstr(mi, "Executable"),
+                                   cfg_getstr(mi, "WorkDir"),
                                    listdir, 1))
                 {
                     state = FILELIST;
@@ -432,7 +433,7 @@ enum MenuState menuitem_runinternal()
     switch (get_command(executable))
     {
         case THEMESELECT:
-            if (!filelist_init(name, executable, DMENU_THEMES, 0)) 
+            if (!filelist_init(name, executable, DMENU_THEMES, DMENU_THEMES, 0)) 
             {
                 return FILELIST;
             } // else we are not able to initialise the filelist display

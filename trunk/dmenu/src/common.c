@@ -113,21 +113,21 @@ void run_internal_command(char* command, char* args, char* workdir)
     }
 }
 
-void free_arg_list(char** args)
+void free_str_arr(char** arr)
 {
     int i =0;
-    while (*(args + i)) i++;
-    while (i--) free(args[i]);
-    free(args);
+    while (*(arr + i)) i++;
+    while (i) free(arr[i--]);
+    free(arr);
 }
 
 char** build_arg_list(char* commandline, char* args) 
 {
     // build the args list for exec()
-    char** args_list = NULL;
+    char** args_list = new_str_arr(0);
     char* token, *temp;
-    int len = 0;
     const char delimeter[] = " ";
+    int len = 0;
     
     while ((token = strsep(&commandline, delimeter))) {
         if (token[0] != '\0') {
@@ -143,10 +143,8 @@ char** build_arg_list(char* commandline, char* args)
         copy_str(filename, args);
         append_str(args_list, len, filename);
     }
-    
-    // add null pointer as the last arg
     append_str(args_list, len, NULL);
-    
+        
     return args_list;
 }
 
@@ -170,7 +168,7 @@ void execute_next_command(char* dir, char** args)
     fprintf(out, "\n");
     fclose(out);
 
-    free_arg_list(args);
+    free_str_arr(args);
     
     //Exit program, and let shell script call DMENU_COMMAND_FILE
     quit();
@@ -196,7 +194,7 @@ void execute_command(char* dir, char** args)
     for (i=0;*(args+i);i++) printf("\"%s\" ", *(args+i)); printf("\n");
 
     // it should not return, otherwise it means we are not able to execute the application
-    free_arg_list(args);
+    free_str_arr(args);
     
     quick_quit();
 }

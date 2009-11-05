@@ -99,12 +99,19 @@ cfg_opt_t main_opts[] = {
     CFG_END()
 };
 
+cfg_opt_t selectordir_opts[] = {
+    CFG_STR_LIST("Key", 0, CFGF_NONE),
+    CFG_STR("Dir", 0, CFGF_NONE),
+    CFG_END()
+};
+
 cfg_opt_t value_opts[] = {
     CFG_INT("SndVol", 50, CFGF_NONE),
     CFG_INT("Bright", 3, CFGF_NONE),
     CFG_STR("Background", 0, CFGF_NONE),
     CFG_STR("FontColor", 0, CFGF_NONE),
     CFG_STR("Font", 0, CFGF_NONE),
+    CFG_SEC("SelectorDir", selectordir_opts, CFGF_MULTI),
     CFG_END()
 };
 
@@ -119,6 +126,7 @@ int path_filter(const struct dirent *dptr);
 
 cfg_t* conf_from_file(cfg_opt_t* opts, char* file)
 {
+    log_debug("Opening config file: %s", file);
     cfg_t* out = cfg_init(opts, 0);
     int rc = cfg_parse(out, file);
     if (rc != CFG_SUCCESS) {
@@ -188,6 +196,7 @@ int conf_load()
 
     struct dirent **namelist;
     int num_of_files, rc, i, j;
+    cfg_t* tmp;
 
     // load main.cfg
     cfg_main = conf_from_file(main_opts, DMENU_CONF_FILE);
@@ -224,6 +233,16 @@ int conf_load()
                 conf_merge_standalone(work_path);
             }
         }
+    }
+    
+    //Process selectordir items
+    i = cfg_size(cfg_value, "SelectorDir");
+    while (i) {
+        tmp = cfg_getnsec(cfg_value, "SelectorDir", --i);
+        char* dir = cfg_getstr(tmp, "Dir");
+        char* keys[3] =  {NULL, NULL, NULL };
+        for (j=0;j<3;j++) keys[j] = cfg_getnstr(tmp, "Key", j);
+        conf_set_item_path(cfg, keys, "SelectorDir", dir);
     }
 
     return CFG_SUCCESS;
@@ -364,76 +383,87 @@ cfg_opt_t* conf_dupopts(cfg_opt_t* opts)
     return dupopts;
 }
 
-int conf_root_item(cfg_t* menu_item, cfg_t* root_item, char* root_name) {
-
-    char *filename, *out_root_name = NULL;
-    int number_of_menu, number_of_menuitem, i, j;
-    cfg_t *m, *mi, *out_root_item = NULL;
-  
-    filename = menu_item->filename;
-
-    if (strcmp(cfg->filename, filename) == 0) {
-       out_root_item = cfg;
-       out_root_name = "";
-    } else {
-        number_of_menu = cfg_size(cfg, "Menu");
-        for (i=0;i<number_of_menu;i++) {
-            m = cfg_getnsec(cfg, "Menu", i);
-            if (strcmp(filename,m->filename)==0) {
-                out_root_name = "Menu";
-                out_root_item = m;
-                break;
-            } 
-          
-            number_of_menuitem = cfg_size(m, "MenuItem");
-            for (j=0;j<number_of_menuitem;j++) {
-                mi = cfg_getnsec(m, "MenuItem", j);
-                if (strcmp(filename, mi->filename)==0) {
-                    out_root_name = "MenuItem";
-                    out_root_item = mi;
-                    break;
+int conf_set_item_path(cfg_t* config, char** titles, char* attr, char* val)
+{
+    
+    int number_of_menu, number_of_menuitem, number_of_submenuitem,  i, j, k;
+    cfg_t *m, *mi, *smi;  
+    
+    int depth = 0;
+    for (i=1;i<3;i++) {
+        if (titles[i] != NULL && strcmp(titles[i],"")!=0) depth++;
+    }
+    
+    number_of_menu = cfg_size(config, "Menu");
+    for (i=0;i<number_of_menu;i++) {
+        m = cfg_getnsec(cfg, "Menu", i);
+        if (m->title == NULL || strcmp(m->title, titles[0]) != 0) {
+            continue;
+        } else if (depth == 0) {
+            cfg_setstr(m, attr, val);
+            return 0;
+        }
+        
+        number_of_menuitem = cfg_size(m, "MenuItem");
+        for (j=0;j<number_of_menuitem;j++) {
+            mi = cfg_getnsec(m, "MenuItem", j);
+            if (mi->title == NULL || strcmp(mi->title, titles[1]) != 0) {
+                continue;
+            } else if (depth == 1) {
+                cfg_setstr(mi, attr, val);
+                return 0;
+            }
+            
+            number_of_submenuitem = cfg_size(mi, "SubMenuItem");
+            for (k=0;k<number_of_menuitem;k++) {
+                smi = cfg_getnsec(mi, "SubMenuItem", k);
+                if (smi->title == NULL) continue;
+                if (strcmp(smi->title, titles[2]) == 0) {
+                    cfg_setstr(smi, attr, val);
+                    return 0;
                 }
             }
-            if (out_root_item != NULL) break;
         }
     }
-
-    if (out_root_item != NULL) {
-        memcpy(root_item, out_root_item, sizeof(struct cfg_t));
-        strcpy(root_name, out_root_name);
-    }
-    return out_root_item!=NULL;
+    return 1;
 }
 
-void conf_persist_item(cfg_t* menu_item) {
-
-    cfg_t *root_item = NULL;
-    char *root_name = NULL;
-    FILE *fp = load_file(menu_item->filename, "w");
-    if (fp == NULL) return;
+char** conf_get_item_path(cfg_t* item) {
     
-    root_name = new_str(100);
-    root_item = new_item(cfg_t);
-    strcpy(root_name, "");
+    char** names = new_str_arr(3); names[0] = names[1] = names[2] = "";
+    int number_of_menu, number_of_menuitem, number_of_submenuitem, i, j, k;
+    cfg_t *m, *mi, *smi;  
 
-    if (!conf_root_item(menu_item, root_item, root_name)) {
-        log_error("Unable to find config file for: %s", menu_item->name);
-        return;
-    }
-
-    if (strlen(root_name)>0) {
-        fprintf(fp, "%s %s {\n", root_name, root_item->title);
-    }
+    number_of_menu = cfg_size(cfg, "Menu");
+    for (i=0;i<number_of_menu;i++) {
+        m = cfg_getnsec(cfg, "Menu", i);
+        if (m == item) {
+            names[0] =  m->title;
+            return names;
+        }
         
-    cfg_print(root_item, fp);
-
-    if (strlen(root_name)>0) {
-        fprintf(fp, "}\n");
+        number_of_menuitem = cfg_size(m, "MenuItem");
+        for (j=0;j<number_of_menuitem;j++) {
+            mi = cfg_getnsec(m, "MenuItem", j);
+            if (mi == item) {
+                names[0] = m->title;
+                names[1] = mi->title;
+                return names;
+            }
+            
+            number_of_submenuitem = cfg_size(mi, "SubMenuItem");
+            for (k=0;k<number_of_menuitem;k++) {
+                smi = cfg_getnsec(mi, "SubMenuItem", k);
+                if (smi == item) {
+                    names[0] = m->title;
+                    names[1] = mi->title;
+                    names[2] = smi->title;
+                    return names;
+                }
+            }
+        }
     }
- 
-    free(root_name);
-    free(root_item);
-    fclose(fp);
+    return NULL;
 }
 
 void conf_themeselect(char* themedir)
@@ -454,8 +484,47 @@ void conf_themeselect(char* themedir)
 
 void conf_selectordir(cfg_t* menu_item, char* dir) 
 {
+    cfg_t* selector;
     cfg_setstr(menu_item, "SelectorDir", dir);
-    //conf_persist_item(menu_item);
+
+    int i =0;
+    char key[PATH_MAX];
+    char** keys = conf_get_item_path(menu_item);
+    
+    //Build key
+    sprintf(key, "{\"%s\",\"%s\",\"%s\"}", keys[0], keys[1], keys[2]);
+    
+    //Update if possible
+    int cnt = cfg_size(cfg_value, "SelectorDir");
+    for (i=0;i<cnt;i++) 
+    {
+        selector = cfg_getnsec(cfg_value, "SelectorDir", i);
+        
+        if ((strcmp(cfg_getnstr(selector, "Key",0), keys[0]) == 0) &&
+            (strcmp(cfg_getnstr(selector, "Key",1), keys[1]) == 0) &&
+            (strcmp(cfg_getnstr(selector, "Key",2), keys[2]) == 0))
+        {
+            cfg_setstr(selector, "Dir", dir);
+            break;
+        }
+    }
+    
+    free(keys);
+    
+    //Persist data
+    FILE* fp = load_file(USER_CONF_FILE, "w");
+    cfg_print(cfg_value, fp);
+    if (i == cnt)  //If not found
+    {
+        fprintf(fp, "SelectorDir {\nDir = \"%s\"\nKey = %s\n}\n", dir, key);
+    }
+    fclose(fp);
+    
+    if (i == cnt)
+    {
+        free(cfg_value);
+        cfg_value = conf_from_file(value_opts, USER_CONF_FILE);
+    }
 }
 
 void conf_backgroundselect(char* bgimage)
