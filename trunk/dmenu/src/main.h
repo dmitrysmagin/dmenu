@@ -3,7 +3,7 @@
 
 void deinit();
 void reload();
-void quick_exit();
+void quick_quit();
 void quit();
 
 #endif

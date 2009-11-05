@@ -119,6 +119,7 @@ void free_arg_list(char** args)
     int i =0;
     while (*(args + i)) i++;
     while (i--) free(args[i]);
+    free(args);
 }
 
 char** build_arg_list(char* commandline, char* args) 
@@ -198,7 +199,7 @@ void execute_command(char* dir, char** args)
     // it should not return, otherwise it means we are not able to execute the application
     free_arg_list(args);
     
-    quick_exit();
+    quick_quit();
 }
 
 #define IF_CMD_THEN(c, k) if (strcmp(c, COMMAND_##k)==0) return k;
@@ -307,7 +308,8 @@ SDL_Surface* load_image_file_no_alpha( char* file ) {
 SDL_Surface* load_user_image( char* file ) {
     char* tmp = user_file(file);
     SDL_Surface* out = load_image_file(tmp);
-    free(tmp); return out;
+    free(tmp); 
+    return out;
 }
 
 SDL_Color* load_user_color ( char* file ) {
@@ -320,25 +322,29 @@ SDL_Color* load_user_color ( char* file ) {
 SDL_Surface* load_theme_background( char* file ) {
     char* tmp = theme_file(file);
     SDL_Surface* out = load_image_file_no_alpha(tmp);
-    free(tmp); return out;
+    free(tmp); 
+    return out;
 }
 
 SDL_Surface* load_theme_image( char* file ) {
     char* tmp = theme_file(file);
     SDL_Surface* out = load_image_file(tmp);
-    free(tmp); return out;
+    free(tmp); 
+    return out;
 }
 
 Mix_Music* load_theme_sound( char* file ) {
     char* tmp = theme_file(file);
     Mix_Music* out = Mix_LoadMUS(tmp);
-    free(tmp); return out;
+    free(tmp); 
+    return out;
 }
 
 TTF_Font* load_theme_font( char* file, int size ) {
     char* tmp = theme_file(file);
     TTF_Font* out = TTF_OpenFont(tmp, size);
-    free(tmp); return out;
+    free(tmp); 
+    return out;
 }
 
 SDL_Surface* render_text(char* text, TTF_Font* font, SDL_Color* color, int solid) {
@@ -401,7 +407,6 @@ void  init_rect(SDL_Rect* rect, int x, int y, int w, int h) {
     if (h>=0) rect->h = h;
 }
 
-
 /**
  * Optimized for 16bit images.  Will not work any any others
  */
@@ -419,19 +424,21 @@ SDL_Surface* shrink_surface(SDL_Surface *src, double factor)
 
     register int src_pitch = src->pitch, dst_pitch = dst->pitch;
     register int src_y_off = 0, dst_y_off = 0, dst_x_off=0;
-
+    Uint16 *src_pixels = (Uint16*)src->pixels, *dst_pixels = (Uint16*)dst->pixels;
+    int max_w = SCREEN_BPP*w;
+    
     y = h;
     while (y--) {
         
         dst_y_off = dst_pitch*y;
         src_y_off = src_pitch*(int)(y*fp);
-        dst_x_off = w*SCREEN_BPP;
+        dst_x_off = max_w;
         
         x= w;
         while (x--) {
             dst_x_off -= SCREEN_BPP;
-            *((Uint16*)(dst->pixels+dst_y_off+dst_x_off)) = 
-                *((Uint16*)(src->pixels+src_y_off+(int)(x*fp)*SCREEN_BPP));
+            *(Uint16*)((int)dst_pixels + dst_y_off+dst_x_off) = 
+                *(Uint16*)((int)src_pixels + src_y_off+(int)(x*fp)*SCREEN_BPP);
         }
     }
     

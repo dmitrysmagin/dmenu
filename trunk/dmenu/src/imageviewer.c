@@ -98,6 +98,8 @@ void reset_pagination()
 
 int imageviewer_init(char* title, char* executable, char* path)
 {
+    log_debug("Initializing");
+    
     reset_pagination();
     
     // try to read files before we do anything else
@@ -147,7 +149,7 @@ void imageviewer_deinit()
 {
     int i = 0;
     if (!iv_paginate.is_ready) return;
-    log_message("De-initializing");
+    log_debug("De-initializing");
     
     free_surface(image_preview);
     free_surface(imageviewer_highlight);
