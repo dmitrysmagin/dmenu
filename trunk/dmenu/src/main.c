@@ -46,6 +46,8 @@ Uint32 time_left(void)
 int init_env() {
     int rc=0;
     
+    clear_last_command();
+    
     #ifdef DINGOO_BUILD
     // Need to ignore SIGHUP if we are started by init.
     // In FB_CloseKeyboard() of SDL_fbevents.c , it does
