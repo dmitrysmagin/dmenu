@@ -93,8 +93,8 @@ void run_command(char* executable, char* args, char* workdir)
     if (workdir != NULL) strcpy(tmp_work, workdir);
     
     // launch the program
-    //execute_next_command(tmp_work, args_list);
-    execute_command(tmp_work, args_list);
+    execute_next_command(tmp_work, args_list);
+    //execute_command(tmp_work, args_list);
 }
 
 void run_internal_command(char* command, char* args, char* workdir)
