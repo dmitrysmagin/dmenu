@@ -1,8 +1,14 @@
 #!/bin/bash
+HOST_ERRS=0
+DINGOO_ERRS=0
+
 make -f Makefile.host rebuild 0> /dev/null 1> /dev/null 2> host_err
-make -f Makefile.dingoo rebuild 0> /dev/null 1> /dev/null 2> dingoo_err
 HOST_ERRS=`cat host_err | grep "\(warning\|error\)" | wc -l`
-DINGOO_ERRS=`cat dingoo_err | grep "\(warning\|error\)" | wc -l`
+
+if [ -z $1 ]; then
+    make -f Makefile.dingoo rebuild 0> /dev/null 1> /dev/null 2> dingoo_err
+    DINGOO_ERRS=`cat dingoo_err | grep "\(warning\|error\)" | wc -l`
+fi
 
 if [ $HOST_ERRS -gt 0 ]; then
   echo 
