@@ -8,7 +8,7 @@ int base_volume;
 
 SDL_Surface* volume_status;
 SDL_Surface* volume_text;
-SDL_Color status_color = {OSD_COLOR_RGBA};
+SDL_Color status_color = {DOSD_COLOR_RGBA};
 SDL_Rect dst_icon, dst_text;
 
 int vol_enabled()
