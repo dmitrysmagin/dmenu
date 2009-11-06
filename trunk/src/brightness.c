@@ -7,7 +7,7 @@ int bright_level;
 int bright[5]={10,25,50,75,99};
 
 SDL_Surface* bright_status[5];
-SDL_Rect dst_icon;
+SDL_Rect bright_icon;
 
 extern cfg_t *cfg_value, *cfg;
 
@@ -35,7 +35,7 @@ void bright_init()
     bright_level = bound((int)cfg_getint(cfg_value, "Bright"), 0, 4);
     
     //Icon position
-    init_rect(&dst_icon,
+    init_rect(&bright_icon,
         BRIGHTNESS_ICON_X, BRIGHTNESS_ICON_Y,
         BRIGHTNESS_ICON_W, BRIGHTNESS_ICON_H);
     
@@ -59,7 +59,7 @@ void bright_set(int change) {
 }
 
 void bright_show(SDL_Surface *surface) {
-    SDL_BlitSurface( bright_status[bright_level], NULL, surface, &dst_icon );
+    SDL_BlitSurface( bright_status[bright_level], NULL, surface, &bright_icon );
 }
 
 void bright_deinit() {
