@@ -4,20 +4,15 @@
 #ifndef DMENU_PATH
 #define DMENU_PATH           "/usr/local/dmenu/"
 #endif 
+
 #define DMENU_THEMES         DMENU_PATH "themes/"
 #define DMENU_CONF_FILE      DMENU_PATH "main.cfg"
 #define DMENU_COMMAND_FILE   DMENU_PATH ".next"
+#define DMENU_BACKGROUNDS    DMENU_PATH "wallpapers/"
 char THEME_PATH[PATH_MAX];
 
-/*
-#ifndef HOME_PATH
-#define HOME_PATH            "/usr/local/home/"
-#endif
-*/
-
-#define USER_PATH            DMENU_PATH "ini/"
-#define USER_CONF_FILE       USER_PATH "dmenu.ini"
-#define USER_BACKGROUNDS     DMENU_PATH "wallpapers/"
+#define GLOBAL_PATH          DMENU_PATH "ini/"
+#define GLOBAL_CONF_FILE     GLOBAL_PATH "dmenu.ini"
 
 //Device Info
 #define BACKLIGHT_DEVICE     "/proc/jz/lcd_backlight"

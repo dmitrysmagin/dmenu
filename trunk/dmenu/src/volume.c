@@ -20,7 +20,7 @@ void vol_init() {
     log_debug("Initializing");
     
     base_volume = (int)cfg_getint(cfg_value, "SndVol");
-    volume_status = load_user_image("STATspeaker.png");
+    volume_status = load_global_image("STATspeaker.png");
     
     //Set volume
     vol_set(0);

@@ -13,7 +13,7 @@ extern cfg_t *cfg_value, *cfg;
 
 void load_image(char* file, int pos) 
 {
-    bright_status[pos] = load_user_image(file);
+    bright_status[pos] = load_global_image(file);
 }
 
 int bright_enabled()
