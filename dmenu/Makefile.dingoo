@@ -1,8 +1,8 @@
 TARGET     := dmenu.bin
 BUILD      := build
 TOOLCHAINDIR := /opt/mipsel-linux-uclibc
-INCLS      := src ../dosd/include
-SOURCES    := src ../dosd/src
+INCLS      := src src/dosd
+SOURCES    := src src/dosd
 BINPATH    := ${TOOLCHAINDIR}/usr/bin
 LIBPATH    := $(TOOLCHAINDIR)/usr/lib
 DMENU_PATH := \"/usr/local/dmenu/\"

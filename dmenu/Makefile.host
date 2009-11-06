@@ -1,8 +1,8 @@
 TARGET	   := dmenu-host.bin
 BUILD	   := build-host
 TOOLCHAINDIR := /
-INCLS	   := src ../dosd/include
-SOURCES	   := src ../dosd/src
+INCLS	   := src src/dosd
+SOURCES	   := src src/dosd
 LIBPATH    := $(TOOLCHAINDIR)/usr/lib
 DMENU_PATH := \"$(shell readlink -f "../")/\" 
 ARCH       := 
