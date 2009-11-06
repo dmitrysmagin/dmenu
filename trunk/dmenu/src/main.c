@@ -110,7 +110,7 @@ int init_display() {
     }
     
     // Init OSD
-    if (!dosd_init(OSD_COLOR))
+    if (!dosd_init(DOSD_COLOR))
     {
         log_error("Unable to initialize OSD");
         return 1;
@@ -146,7 +146,7 @@ void reload() {
     deinit();
     conf_load();
     menu_init();
-    dosd_init(OSD_COLOR);
+    dosd_init(DOSD_COLOR);
 }
 
 void quick_quit() {

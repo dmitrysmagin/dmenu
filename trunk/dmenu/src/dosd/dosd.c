@@ -9,9 +9,12 @@
 #include <stdarg.h>
 #include "dosd/dosd.h"
 #include "dosd/images.h"
+#include "env.h"
 
 #define GPIO_LOCK_MASK    (0x400000)
 #define GPIO_POWER_MASK (0x40000000)
+
+extern int image_pallette[3];
 
 typedef enum {
     BAT_EMPTY = 0,
@@ -52,13 +55,13 @@ int dosd_init(uint32_t color)
     memset(&g_images, 0, sizeof(g_images));
     
 #ifdef DINGOO_BUILD
-    g_state.proc_battery = fopen("/proc/jz/battery", "rb");
+    g_state.proc_battery = fopen(BATTERY_DEVICE, "rb");
     if (!g_state.proc_battery) goto init_error;
     
-    g_state.proc_gpio1 = fopen("/proc/jz/gpio1_pxpin", "rb");
+    g_state.proc_gpio1 = fopen(CHARGE_STATUS_DEVICE, "rb");
     if (!g_state.proc_gpio1) goto init_error;
     
-    g_state.proc_gpio3 = fopen("/proc/jz/gpio3_pxpin", "rb");
+    g_state.proc_gpio3 = fopen(LOCK_STATUS_DEVICE, "rb");
     if (!g_state.proc_gpio3) goto init_error;
 #endif
     
@@ -84,16 +87,13 @@ int dosd_init(uint32_t color)
         
         for (j = 0; j < image->w * image->h; j++)
         {
-            // We OR in the alpha information into the color
-            // passed as an argument.
-            // The image data is in effect an "alpha map":
-            // 0x00 is transparent, 0xFF is fully opaque
-            buf[j] = color | image_data->data[j];
+            buf[j] = image_pallette[image_data->data[j]];
         }
         
+        //Let the surface handle coloring
         surface = SDL_CreateRGBSurfaceFrom(
             buf, image->w, image->h, 32, image->w * 4,
-            0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF
+            (0xFF<<24) & color, (0xFF<<16) & color, (0xFF<<8) & color, 0xFF
         );
         
         if (!surface) goto init_error;
@@ -230,9 +230,9 @@ void _update()
     g_state.is_locked = ((gpio & GPIO_LOCK_MASK) == 0);
     
     // Battery charge level
-    if      (mvolts >= 3739) g_state.battery = BAT_FULL;
-    else if (mvolts >= 3675) g_state.battery = BAT_LV2;
-    else if (mvolts >= 3611) g_state.battery = BAT_LV1;
+    if      (mvolts >= BEST_LEVEL) g_state.battery = BAT_FULL;
+    else if (mvolts >= FAIR_LEVEL) g_state.battery = BAT_LV2;
+    else if (mvolts >= LOW_LEVEL ) g_state.battery = BAT_LV1;
     else                     g_state.battery = BAT_EMPTY;
 #else
     g_state.is_locked   = false;
