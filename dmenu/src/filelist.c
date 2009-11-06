@@ -184,7 +184,8 @@ int filelist_init(char* title, char* executable, char *exec_path, char* select_p
     char real_path[PATH_MAX];
     if (!realpath(select_path, real_path)) {
         log_error("Failed to get real path of directory %s", select_path);
-        return 1;
+        strcpy(real_path, "/"); //Default to root when real_path fails
+        //return 1;
     }
     if (get_list(real_path)) {
         log_error("Failed to read directory %s", real_path);

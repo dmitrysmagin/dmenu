@@ -203,7 +203,7 @@ int conf_load()
     if (cfg_main == NULL) return CFG_PARSE_ERROR;
     
     // load dmenu.ini
-    cfg_value = conf_from_file(value_opts, USER_CONF_FILE);
+    cfg_value = conf_from_file(value_opts, GLOBAL_CONF_FILE);
     if (cfg_value == NULL) return CFG_PARSE_ERROR;
 
     //Find theme path
@@ -258,7 +258,7 @@ void conf_unload()
     cfg_free(cfg_main);
 
     // Write to dmenu.ini
-    conf_to_file(cfg_value, USER_CONF_FILE);
+    conf_to_file(cfg_value, GLOBAL_CONF_FILE);
     change_dir(DMENU_PATH);
 }
 
@@ -512,7 +512,7 @@ void conf_selectordir(cfg_t* menu_item, char* dir)
     free(keys);
     
     //Persist data
-    FILE* fp = load_file(USER_CONF_FILE, "w");
+    FILE* fp = load_file(GLOBAL_CONF_FILE, "w");
     cfg_print(cfg_value, fp);
     if (i == cnt)  //If not found
     {
@@ -523,13 +523,13 @@ void conf_selectordir(cfg_t* menu_item, char* dir)
     if (i == cnt)
     {
         free(cfg_value);
-        cfg_value = conf_from_file(value_opts, USER_CONF_FILE);
+        cfg_value = conf_from_file(value_opts, GLOBAL_CONF_FILE);
     }
 }
 
 void conf_backgroundselect(char* bgimage)
 {
     cfg_setstr(cfg_value, "Background", bgimage);
-    if (!conf_to_file(cfg_value, USER_CONF_FILE)) return;
+    if (!conf_to_file(cfg_value, GLOBAL_CONF_FILE)) return;
     menu_reload_background();
 }

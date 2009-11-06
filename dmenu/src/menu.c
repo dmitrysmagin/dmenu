@@ -440,7 +440,7 @@ enum MenuState menuitem_runinternal()
             break;
             
         case BACKGROUNDSELECT:
-            if (!imageviewer_init(name, executable, USER_BACKGROUNDS))
+            if (!imageviewer_init(name, executable, DMENU_BACKGROUNDS))
             {
                 return IMAGEVIEWER;
             }
