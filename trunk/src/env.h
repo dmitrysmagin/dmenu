@@ -11,6 +11,7 @@
 #define DMENU_BACKGROUNDS    DMENU_PATH "wallpapers/"
 #define GLOBAL_RESOURCE_PATH DMENU_PATH "resources/"
 char THEME_PATH[PATH_MAX];
+#define THUMBNAILS_PATH      "/.thumb"
 
 //Device Info
 #define BACKLIGHT_DEVICE     "/proc/jz/lcd_backlight"
