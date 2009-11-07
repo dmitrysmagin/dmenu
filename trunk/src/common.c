@@ -433,14 +433,13 @@ SDL_Surface* load_resized_image(char* path, char* file, float ratio)
     
     struct stat orig_stat, new_stat, dir_stat;
     
-    char new_file[PATH_MAX];
-    char new_dir[PATH_MAX];
-    sprintf(new_dir, "%s/.thumb", path);
-    sprintf(new_file, "%s/%02f_%s.bmp", new_dir, ratio, (char*)(strrchr(file,'/')+1));
+    char new_file[PATH_MAX], new_dir[PATH_MAX];
+    strcpy(new_dir, path);
+    strcat(new_dir, "/.thumb");
+    sprintf(new_file, "%s/%s_%02f.bmp", new_dir, (char*)(strrchr(file,'/')+1), ratio);
     SDL_Surface *out = load_image_file_with_format(new_file, 0, 0), *tmp;
     
     if (out == NULL) { //If not created
-        log_debug("Caching image: %s @ %02f", file, ratio);
         out = load_image_file_no_alpha(file);
         tmp = shrink_surface(out, ratio);
         free_surface(out);
@@ -467,13 +466,10 @@ SDL_Surface* load_resized_image(char* path, char* file, float ratio)
         //If image was updated 
         if (orig_stat.st_mtime != new_stat.st_mtime) 
         {
-            log_debug("Recaching image: %s", file);
             //Clear cache and reload image
             remove(new_file); 
             free(out);
             out = load_resized_image(path, file, ratio);
-        } else  {
-            log_debug("Using cached image: %s", new_file);
         }
     }
     return out;
