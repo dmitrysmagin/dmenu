@@ -4,11 +4,11 @@
 #include "resource.h"
 
 extern char THEME_PATH[];
-extern cfg_t *cfg, *cfg_value;
+extern cfg_t *cfg, *cfg_main;
 
 char* get_user_attr(char* attr)
 {
-    char* val = cfg_getstr(cfg_value, attr);
+    char* val = cfg_getstr(cfg_main, attr);
     if (val == 0) {
         val = cfg_getstr(cfg, attr);
     }
@@ -41,7 +41,7 @@ char* dmenu_file(char* file)
 
 char* global_file(char* file) 
 {
-    return relative_file(GLOBAL_PATH, file);
+    return relative_file(GLOBAL_RESOURCE_PATH, file);
 }
 
 char* theme_file(char* file) 

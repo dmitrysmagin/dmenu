@@ -233,7 +233,7 @@ void _update()
     if      (mvolts >= BEST_LEVEL) g_state.battery = BAT_FULL;
     else if (mvolts >= FAIR_LEVEL) g_state.battery = BAT_LV2;
     else if (mvolts >= LOW_LEVEL ) g_state.battery = BAT_LV1;
-    else                     g_state.battery = BAT_EMPTY;
+    else                           g_state.battery = BAT_EMPTY;
 #else
     g_state.is_locked   = false;
     g_state.is_charging = true;

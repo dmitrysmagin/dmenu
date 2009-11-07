@@ -6,13 +6,11 @@
 #endif 
 
 #define DMENU_THEMES         DMENU_PATH "themes/"
-#define DMENU_CONF_FILE      DMENU_PATH "main.cfg"
+#define DMENU_CONF_FILE      DMENU_PATH "dmenu.ini"
 #define DMENU_COMMAND_FILE   DMENU_PATH ".next"
 #define DMENU_BACKGROUNDS    DMENU_PATH "wallpapers/"
+#define GLOBAL_RESOURCE_PATH DMENU_PATH "resources/"
 char THEME_PATH[PATH_MAX];
-
-#define GLOBAL_PATH          DMENU_PATH "ini/"
-#define GLOBAL_CONF_FILE     GLOBAL_PATH "dmenu.ini"
 
 //Device Info
 #define BACKLIGHT_DEVICE     "/proc/jz/lcd_backlight"
@@ -47,21 +45,27 @@ char THEME_PATH[PATH_MAX];
 #define DOSD_COLOR_RGBA      255,255,255,255
 #define DOSD_UPDATE_INTERVAL 500
 #define DOSD_PADDING         4
+#define DOSD_BATTERY_WIDTH   19
+#define DOSD_LOCK_WIDTH      7
+#define DOSD_HEIGHT          9
+#define DOSD_START_X         (SCREEN_WIDTH-DOSD_PADDING*2-DOSD_BATTERY_WIDTH-DOSD_LOCK_WIDTH)
 
 //Volume Positioning
-#define VOLUME_ICON_X 253
-#define VOLUME_ICON_Y 3
-#define VOLUME_ICON_W 9
-#define VOLUME_ICON_H 9
-
-#define VOLUME_TEXT_X 258
+#define VOLUME_TEXT_W 33
+#define VOLUME_TEXT_H DOSD_VOLUME_HEIGHT
+#define VOLUME_TEXT_X (DOSD_START_X - VOLUME_TEXT_W - DOSD_PADDING) 
 #define VOLUME_TEXT_Y -1
 
+#define VOLUME_ICON_W 9
+#define VOLUME_ICON_H DOSD_HEIGHT
+#define VOLUME_ICON_Y DOSD_PADDING
+#define VOLUME_ICON_X (VOLUME_TEXT_X - VOLUME_ICON_W - DOSD_PADDING)
+
 //Brightness positioning
-#define BRIGHTNESS_ICON_X 238
-#define BRIGHTNESS_ICON_Y 3
 #define BRIGHTNESS_ICON_W 9
-#define BRIGHTNESS_ICON_H 9
+#define BRIGHTNESS_ICON_H DOSD_HEIGHT
+#define BRIGHTNESS_ICON_X (VOLUME_ICON_X - BRIGHTNESS_ICON_W - DOSD_PADDING)
+#define BRIGHTNESS_ICON_Y DOSD_PADDING
 
 // the system ARG_MAX might be too large. just use a fixed
 // value here.
