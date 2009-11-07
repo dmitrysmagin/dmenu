@@ -74,6 +74,7 @@ char* relative_file(char* path, char* file);
 SDL_Surface* load_image_file( char* file );
 SDL_Surface* load_image_file_no_alpha( char* file );
 SDL_Surface* load_image_file_with_format( char* file , int alpha, int fail_on_notfound );
+SDL_Surface* load_resized_image(char* path, char* file, float ratio);
 
 SDL_Surface* render_text( char* text, TTF_Font* font, SDL_Color* color, int solid );
 SDL_Surface* draw_text( char* text, TTF_Font* font, SDL_Color* color);
