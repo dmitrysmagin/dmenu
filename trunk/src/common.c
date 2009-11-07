@@ -350,7 +350,7 @@ void  init_rect(SDL_Rect* rect, int x, int y, int w, int h) {
     if (h>=0) rect->h = h;
 }
 
-SDL_Surface* create_surface(int w, int h, int r, int g, int b, int a)
+SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a)
 {
     SDL_Surface *tmp;
     Uint32 rm, gm, bm, am; rm=gm=bm=am=0xFF;
@@ -363,7 +363,7 @@ SDL_Surface* create_surface(int w, int h, int r, int g, int b, int a)
     gm<<=8; bm<<=16; am<<=24;
     #endif
     
-    tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, rm, gm, bm, a < 0 ? 0 : am);
+    tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, depth, rm, gm, bm, (a < 0 || depth <= 24) ? 0 : am);
     
     if (a >= 0)  {
         SDL_FillRect(tmp, 0, SDL_MapRGBA(tmp->format, r,g,b,a));
@@ -412,52 +412,57 @@ SDL_Surface* shrink_surface(SDL_Surface *src, double factor)
 }
 
 /**
- * Copied from mailing list post, cleaned up a little bit.
- * Not working just yet, still runing into some weird problems.  Will need to investigate
- *    before we can use for the thumbnail caching
+ * Copied from mailing list post, cleaned up a little bit. Works Now!
  */
-int write_png(char *file_name, png_bytep *rows, int w, int h, int colortype, int bitdepth) {
-    png_structp png_ptr;
-    png_infop info_ptr;
-    FILE *fp;
+int export_surface_as_png(char *filename, SDL_Surface *surface)
+{
+    /* Creating the output surface to save */
+    SDL_Surface* surf = create_surface(surface->w, surface->h, 32, 0,0,0,0);
+    SDL_BlitSurface(surface, NULL, surf, NULL);
     
-    if (!(fp = fopen(file_name, "wb"))) goto fail;
-    if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) goto fail;
-    if (!(info_ptr = png_create_info_struct(png_ptr))) goto fail;
-    if (setjmp(png_jmpbuf(png_ptr))) goto fail;
+    FILE *fp = NULL;
+    png_structp png_ptr = NULL;
+    png_infop info_ptr = NULL;
+    int i=0, colortype, rc = -1;
+    png_bytep *rows = NULL;
+    
+    // Get resources
+    if (!(fp = fopen(filename, "wb"))) goto done;
+    if (!(png_ptr  = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,NULL,NULL))) goto done;
+    if (!(info_ptr = png_create_info_struct(png_ptr))) goto done;
+    if (setjmp(png_jmpbuf(png_ptr))) goto done;
+
+    colortype = PNG_COLOR_MASK_COLOR
+        | (surf->format->palette ? PNG_COLOR_MASK_PALETTE : 0)
+        | (surf->format->Amask   ? PNG_COLOR_MASK_ALPHA   : 0);
 
     png_init_io(png_ptr, fp);
-    png_set_IHDR(png_ptr, info_ptr, w, h, bitdepth, colortype,
-        PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+    png_set_IHDR(png_ptr, info_ptr, surf->w, surf->h, 8, colortype, 
+        PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+    /* Writing the image */
     png_write_info(png_ptr, info_ptr);
-    png_write_image(png_ptr, rows);
-    png_write_end(png_ptr, NULL);
-    return 0;
+    png_set_packing(png_ptr);
     
-fail:
-    return -1;
+    rows = (png_bytep*) malloc(sizeof(png_bytep)*surf->h);
+    for (;i<surf->h;i++) rows[i] = (png_bytep)(Uint8 *)surf->pixels + i*surf->pitch;
+    png_write_image(png_ptr, rows);
+    png_write_end(png_ptr, info_ptr);
+    rc = 0;
+    
+done: //Cleanup
+    if (png_ptr)
+        png_destroy_write_struct(&png_ptr, &info_ptr);
+    if (fp) fclose(fp);
+    free_erase(rows);
+    free_surface(surf);
+    return rc;
 }
+
 
 int export_surface_as_bmp(char *filename, SDL_Surface *surface) {
     return SDL_SaveBMP(surface, filename);
 }
-
-//As noted above, this isn't working as expected yet.  BMP is still the only
-//  stable file format
-int export_surface_as_png(char* filename, SDL_Surface* surface) {
-    int h = surface->h, w = surface->w, i=0,rc;
-    png_bytep * rows = new_array(png_bytep, h);
-    SDL_Surface* tmp = create_surface(w,h,0,0,0,0);
-    SDL_Rect tmp_rect = {0,0,w,h};
-    SDL_BlitSurface(surface, &tmp_rect, tmp, NULL);
-    
-    for(;i<h;i++) rows[i] = (png_bytep)((Uint16*)(tmp->pixels) + i * tmp->pitch);
-
-    rc = write_png(filename, rows, w, h, PNG_COLOR_TYPE_RGB, 16);
-    free_surface(tmp);
-    return rc;
-}
-
 
 //@todo, make this work with PNG instead of BMP for disk space efficiency
 SDL_Surface* load_resized_image(char* path, char* file, float ratio)
@@ -487,7 +492,9 @@ SDL_Surface* load_resized_image(char* path, char* file, float ratio)
             }   
         }
         
-        export_surface_as_bmp(new_file, tmp);
+        //Using BMP for now, b/c it is faster, should move to png but it may
+        // need to be spawned in it's own thread
+        export_surface_as_bmp(new_file, tmp); 
         stat(file, &orig_stat);
         //Copy over mtime/atime as the dingoo doesn't have a clock and so 
         // these values default to 0, and we need to be able to check mtimes
