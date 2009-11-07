@@ -1,13 +1,14 @@
 #include "volume.h"
 #include "resource.h"
 
-extern TTF_Font* status_font;
 extern cfg_t *cfg_main;
 
 int base_volume;
 
 SDL_Surface* volume_status;
 SDL_Surface* volume_text;
+TTF_Font* volume_font;
+
 SDL_Color status_color = {DOSD_COLOR_RGBA};
 SDL_Rect vol_dst_icon, vol_dst_text;
 
@@ -17,10 +18,12 @@ int vol_enabled()
 }
 
 void vol_init() {
+    
     log_debug("Initializing");
     
     base_volume = (int)cfg_getint(cfg_main, "SndVol");
     volume_status = load_global_image("STATspeaker.png");
+    volume_font = get_osd_font();
     
     //Set volume
     vol_set(0);
@@ -56,7 +59,7 @@ void vol_set_text(int volume)
     sprintf(buff, "%3d%%", volume);
     
     free_surface(volume_text);
-    volume_text = render_text(buff, status_font, &status_color, 1);
+    volume_text = render_text(buff, volume_font, &status_color, 1);
 }
 
 void vol_show(SDL_Surface* surface) 
@@ -68,6 +71,7 @@ void vol_show(SDL_Surface* surface)
 void vol_deinit() 
 {
     log_debug("De-initializing");
+    free_font(volume_font);
     free_surface(volume_status);
     free_surface(volume_text);
 }

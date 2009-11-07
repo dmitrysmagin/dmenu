@@ -56,7 +56,6 @@ int current_submenuitem_index;
 
 TTF_Font* menu_font;
 TTF_Font* menuitem_font;
-TTF_Font* status_font;
 
 void submenu_open();
 void submenu_close();
@@ -82,7 +81,6 @@ int menu_init()
     TTF_Init();
     menu_font     = get_theme_font(18);
     menuitem_font = get_theme_font(14);
-    status_font   = get_theme_font(13);
 
     // load menu
     number_of_menu     = cfg_size(cfg, "Menu");
@@ -169,7 +167,6 @@ void menu_deinit()
 
     free_font(menu_font);
     free_font(menuitem_font);
-    free_font(status_font);
     
     TTF_Quit();
 
