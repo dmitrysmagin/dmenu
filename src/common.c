@@ -9,15 +9,18 @@
  */
 
 #include <unistd.h>
+#include <utime.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
 #include <png.h>
+#include <errno.h>
 #include "env.h"
 #include "filelist.h"
 #include "conf.h"
@@ -420,4 +423,58 @@ SDL_Surface* shrink_surface(SDL_Surface *src, double factor)
 int export_surface_as_bmp(char *filename, SDL_Surface *surface)
 {
     return SDL_SaveBMP(surface, filename);
+}
+
+SDL_Surface* load_resized_image(char* path, char* file, float ratio)
+{
+    if (ratio >= 1.0f) {
+        return load_image_file_no_alpha(file);
+    }
+    
+    struct stat orig_stat, new_stat, dir_stat;
+    
+    char new_file[PATH_MAX];
+    char new_dir[PATH_MAX];
+    sprintf(new_dir, "%s/.thumb", path);
+    sprintf(new_file, "%s/%02f_%s.bmp", new_dir, ratio, (char*)(strrchr(file,'/')+1));
+    SDL_Surface *out = load_image_file_with_format(new_file, 0, 0), *tmp;
+    
+    if (out == NULL) { //If not created
+        log_debug("Caching image: %s @ %02f", file, ratio);
+        out = load_image_file_no_alpha(file);
+        tmp = shrink_surface(out, ratio);
+        free_surface(out);
+        
+        if(stat(new_dir,&dir_stat) != 0) {
+            int rc = mkdir(new_dir, 0777);
+            if (rc != 0) {
+                log_error("Unable to make dir: (%d) %s", rc, new_dir);
+                return tmp;
+            }   
+        }
+        
+        export_surface_as_bmp(new_file, tmp);
+        
+        stat(file, &orig_stat);
+        struct utimbuf new_time = {orig_stat.st_atime, orig_stat.st_mtime}; 
+        utime(new_file, &new_time);
+        
+        out = tmp;
+    } else {
+        stat(file, &orig_stat);
+        stat(new_file, &new_stat);
+    
+        //If image was updated 
+        if (orig_stat.st_mtime != new_stat.st_mtime) 
+        {
+            log_debug("Recaching image: %s", file);
+            //Clear cache and reload image
+            remove(new_file); 
+            free(out);
+            out = load_resized_image(path, file, ratio);
+        } else  {
+            log_debug("Using cached image: %s", new_file);
+        }
+    }
+    return out;
 }
