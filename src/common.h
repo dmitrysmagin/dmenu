@@ -6,6 +6,7 @@
 #include <SDL_ttf.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
+#include <png.h>
 
 #define COMMAND_THEMESELECT "!themeselect"
 #define COMMAND_BACKGROUNDSELECT "!backgroundselect"
@@ -70,6 +71,10 @@ FILE* load_file( char* file, char* mode );
 FILE* load_file_or_die( char* file, char* mode );
 char* relative_file(char* path, char* file);
 
+SDL_Surface* load_image_file( char* file );
+SDL_Surface* load_image_file_no_alpha( char* file );
+SDL_Surface* load_image_file_with_format( char* file , int alpha, int fail_on_notfound );
+
 SDL_Surface* render_text( char* text, TTF_Font* font, SDL_Color* color, int solid );
 SDL_Surface* draw_text( char* text, TTF_Font* font, SDL_Color* color);
 SDL_Color*   parse_color_string( char* color );
@@ -79,4 +84,5 @@ void  init_rect(SDL_Rect* rect, int x, int y, int w, int h);
 void  init_rect_pos(SDL_Rect* rect, int x, int y);
 SDL_Surface* create_surface(int w, int h, int r, int g, int b, int a);
 SDL_Surface* shrink_surface(SDL_Surface *src, double factor);
+int export_surface_as_bmp(char* file_name, SDL_Surface* surface);
 #endif

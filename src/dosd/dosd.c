@@ -10,6 +10,7 @@
 #include "dosd/dosd.h"
 #include "dosd/images.h"
 #include "env.h"
+#include "common.h"
 
 #define GPIO_LOCK_MASK    (0x400000)
 #define GPIO_POWER_MASK (0x40000000)
@@ -49,6 +50,7 @@ void _update();
 // Color should be passed in RRGGBB format, e.g. 0xFFFFFF for white
 int dosd_init(uint32_t color)
 {
+    log_debug("Initializing");
     int i;
 
     memset(&g_state, 0, sizeof(g_state));
@@ -121,6 +123,7 @@ init_error:
 
 void dosd_deinit()
 {
+    log_debug("De-initializing");
     int i;
     
 #ifdef DINGOO_BUILD

@@ -17,6 +17,7 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
+#include <png.h>
 #include "env.h"
 #include "filelist.h"
 #include "conf.h"
@@ -255,13 +256,17 @@ FILE* load_file(char* file, char* mode) {
     return load_file_and_handle_fail(file,mode,0);
 }
 
-SDL_Surface* load_image_file_with_format( char* file , int alpha ) {
+SDL_Surface* load_image_file_with_format( char* file , int alpha, int fail_on_notfound ) {
     SDL_Surface* out = NULL;
 
     tmp_surface = IMG_Load(file);
     if (tmp_surface == NULL) {
-        log_error("Failed to load %s: %s", file, IMG_GetError());
-        exit(EXIT_FAILURE);
+        if (fail_on_notfound) {
+            log_error("Failed to load %s: %s", file, IMG_GetError());
+            exit(EXIT_FAILURE);
+        } else {
+            return NULL;
+        }
     }
     
     if ( alpha ) {
@@ -275,11 +280,11 @@ SDL_Surface* load_image_file_with_format( char* file , int alpha ) {
 }
 
 SDL_Surface* load_image_file( char* file ) {
-    return load_image_file_with_format(file, 1);
+    return load_image_file_with_format(file, 1, 1);
 }
 
 SDL_Surface* load_image_file_no_alpha( char* file ) {
-    return load_image_file_with_format(file, 0);
+    return load_image_file_with_format(file, 0, 1);
 }
 
 SDL_Surface* render_text(char* text, TTF_Font* font, SDL_Color* color, int solid) {
@@ -342,6 +347,35 @@ void  init_rect(SDL_Rect* rect, int x, int y, int w, int h) {
     if (h>=0) rect->h = h;
 }
 
+SDL_Surface* create_surface(int w, int h, int r, int g, int b, int a)
+{
+    SDL_Surface *tmp;
+    Uint32 rmask, gmask, bmask, amask;
+    
+    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
+    on the endianness (byte order) of the machine */
+    #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    rmask = 0xff000000;
+    gmask = rmask>>8;
+    bmask = gmask>>8;
+    amask = bmask>>8;
+    #else
+    rmask = 0x000000ff;
+    gmask = rmask<<8;
+    bmask = gmask<<8;
+    amask = bmask<<8;
+    #endif
+    
+    tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, rmask, gmask, bmask, a < 0 ? 0 : amask);
+    
+    if (a >= 0)  {
+        SDL_FillRect(tmp, 0, SDL_MapRGBA(tmp->format, r,g,b,a));
+    } else {
+        SDL_FillRect(tmp, 0, SDL_MapRGB(tmp->format, r,g,b));
+    }
+    return tmp;
+}
+
 /**
  * Optimized for 16bit images.  Will not work any any others
  */
@@ -380,34 +414,10 @@ SDL_Surface* shrink_surface(SDL_Surface *src, double factor)
     return dst;
 }
 
-SDL_Surface* create_surface(int w, int h, int r, int g, int b, int a)
+/**
+ * Copied from mailing list post, cleaned up a little bit, and voila.  We can now save pngs.
+ */
+int export_surface_as_bmp(char *filename, SDL_Surface *surface)
 {
-    SDL_Surface *tmp;
-    Uint32 rmask, gmask, bmask, amask;
-    
-    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
-    on the endianness (byte order) of the machine */
-    #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-        rmask = 0xff000000;
-        gmask = 0x00ff0000;
-        bmask = 0x0000ff00;
-        amask = 0x000000ff;
-    #else
-        rmask = 0x000000ff;
-        gmask = 0x0000ff00;
-        bmask = 0x00ff0000;
-        amask = 0xff000000;
-    #endif
-    
-    tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, rmask, gmask, bmask, a < 0 ? 0 : amask);
-    
-    if (a >= 0) 
-    {
-        SDL_FillRect(tmp, 0, SDL_MapRGBA(tmp->format, r,g,b,a));
-    } 
-    else 
-    {
-        SDL_FillRect(tmp, 0, SDL_MapRGB(tmp->format, r,g,b));
-    }
-    return tmp;
+    return SDL_SaveBMP(surface, filename);
 }

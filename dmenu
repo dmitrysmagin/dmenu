@@ -3,7 +3,7 @@ ACT=".next"
 CMD="dmenu.bin"
 if [ "`pwd`" != "/usr/local/dmenu" ]; then CMD="dmenu-host.bin"; fi
 
-./$CMD
+./$CMD || sleep 5
 if [ -f "$ACT" ]; then 
     sh "$ACT"
     rm "$ACT"

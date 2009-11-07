@@ -244,6 +244,7 @@ void listen() {
 int main ( int argc, char** argv )
 {
     int rc = init();
+    log_debug("Fully initialized");
 
     if (rc==0) {
         listen(); //main loop
