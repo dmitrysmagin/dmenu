@@ -8,6 +8,7 @@
 
 char* get_user_attr(char*attr);
 TTF_Font* get_theme_font(int size);
+TTF_Font* get_osd_font();
 SDL_Color* get_theme_font_color();
 
 char* dmenu_file(char* file);
@@ -18,6 +19,7 @@ SDL_Surface* load_image_file( char* file );
 SDL_Surface* load_image_file_no_alpha( char* file );
 SDL_Surface* load_global_image( char* file );
 SDL_Color*   load_global_color( char* file );
+TTF_Font*    load_global_font( char* file, int size);
 SDL_Surface* load_theme_image( char* file );
 SDL_Surface* load_theme_background( char* file );
 TTF_Font*    load_theme_font( char* file, int size );

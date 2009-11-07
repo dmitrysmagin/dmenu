@@ -20,6 +20,11 @@ TTF_Font* get_theme_font(int size)
     return load_theme_font(get_user_attr("Font"), size);
 }
 
+TTF_Font* get_osd_font()
+{
+    return load_global_font("FreeSans.ttf", 13);
+}
+
 SDL_Color* get_theme_font_color()
 {
     SDL_Color* out = NULL;
@@ -59,6 +64,14 @@ SDL_Surface* load_global_image( char* file ) {
 SDL_Color* load_global_color ( char* file ) {
     char* tmp = global_file(file);
     SDL_Color* out = load_color_file(tmp);
+    free(tmp);
+    return out;
+}
+
+TTF_Font* load_global_font( char* file, int size)
+{   
+    char* tmp = global_file(file);
+    TTF_Font* out = TTF_OpenFont(tmp, size);
     free(tmp);
     return out;
 }
