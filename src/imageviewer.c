@@ -127,13 +127,13 @@ int imageviewer_init(char* title, char* executable, char* path)
         
         imageviewer_title     = render_imageviewer_text(title);
         imageviewer_osd_highlight = create_surface(
-                SCREEN_WIDTH, 20, 
+                SCREEN_WIDTH, 20, 32, 
                 IMAGE_VIEWER_TITLE_COLOR, 
                 IMAGE_VIEWER_TITLE_ALPHA);
     }
     
     imageviewer_highlight = create_surface(
-                IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT, 
+                IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT, 32,
                 IMAGE_VIEWER_SELECT_COLOR,
                 IMAGE_VIEWER_SELECT_ALPHA);
                     
