@@ -1,4 +1,4 @@
-                               Dmenu 0.4
+                               Dmenu 0.5
                                =========
 
 Dmenu is a simple menu system for Dingux (Linux on Dingoo A320). It resembles
@@ -17,8 +17,9 @@ Keys
 In main menu,
 
 left, right key - select menu
+left, B key - close SubMenu if you opened
 up, down key - select menu item
-A key - run the selected menu item
+A key - run the selected menu item / open SubMenu
 Select key - exit dmenu
 R key - SoundVolume +5%
 L key - SoundVolume -5%
@@ -33,6 +34,8 @@ left - change to the parent directory
 right - go to the selected directory
 A key - run the selected file or go to the selected directory
 B key - exit file selector menu
+R key - page down
+L key - page up
 
 
 Theme support
@@ -48,7 +51,8 @@ file.
 Due to miniSD file system corruption bug in Dingux, theme selection within Dmenu
 is disabled by default. To enable theme selection, add
 
-        AllowDynamicThemeChange = Yes
+        AllowDynamicThemeChange = true
+        (You can use the keyword "yes" as same as "true")
 
 to main.cfg, and add below MenuItem to one of the menu,
 
@@ -160,6 +164,60 @@ up/down to select the submenu items and press A to launch.
 
 One caveat though, dmenu.cfg included from SearchPath does not support submenu.
 dmenu will print a warning and ignore the menuitem if it's a submenu.
+
+
+
+Selector and SelectorDir
+------------------------
+In MenuItem and SubMenuItem, you can use Selector and SelectorDir to get into
+the filelist. For example,
+
+    MenuItem foo
+    {
+        Icon = "res/emu1.png"
+        Name = "SomeEmulator"
+        Executable = "./emu"
+        WorkDir = "/usr/local/emulator/emu"
+        Selector = "true"
+        SelectorDir = "/usr/local/data/roms"
+    }
+
+The filelist current folder is set to "SelectorDir".
+
+
+
+Wallpaper Selector with thumbnail
+---------------------------------
+In Menu, you can make "built in Wallpaper Selector" menuitem.
+For example,
+
+    MenuItem BackgroundSelect
+    {
+        Icon = "res/star1.png"
+        Name = "Select Wallpaper"
+        Executable = "!backgroundselect"
+    }
+
+
+
+FontColor Selector
+------------------
+In Menu, you can make "FontColor Selector" menuitem.
+For example,
+
+    MenuItem FontColor
+    {
+        Icon = "res/tri4.png"
+        Name = "FontColor"
+        Executable = ""
+        WorkDir = "/usr/local/dmenu/fontcolor_scripts/"
+        Selector = yes
+    }
+
+In "fontcolor_selector" folder, there are some font color setting scripts.
+You can select one to change font color.
+Also, you can add your new color setting scripts as you like.
+See their script files.
 
 
 
