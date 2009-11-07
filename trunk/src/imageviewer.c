@@ -169,6 +169,28 @@ void imageviewer_deinit()
     iv_paginate.is_ready = 0;
 }
 
+SDL_Surface* imageviewer_get_image(char* file, float ratio)
+{
+    if (ratio == 1.0f) {
+        return load_image_file_no_alpha(file);
+    }
+    
+    char new_file[PATH_MAX];
+    char new_dir[PATH_MAX];
+    sprintf(new_dir, "%s/.thumb", iv_paginate.root);
+    sprintf(new_file, "%s/%02f_%s.bmp", new_dir, ratio, (char*)(strrchr(file,'/')+1));
+    SDL_Surface *out = load_image_file_with_format(new_file, 0, 0), *tmp;
+    if (out == NULL) {
+        mkdir(new_dir, 0777);
+        out = load_image_file_no_alpha(file);
+        tmp = shrink_surface(out, ratio);
+        free_surface(out);
+        export_surface_as_bmp(new_file, tmp);
+        out = tmp;
+    }
+    return out;
+}
+
 void imageviewer_draw(SDL_Surface* screen)
 {
     if (!iv_paginate.state_changed) return;
@@ -222,14 +244,11 @@ void imageviewer_update_list()
     
     int start = iv_paginate.page * size;
     char tmp[PATH_MAX];
-    SDL_Surface *tmp_surf;
     
     for (i=0,j=start;j<iv_paginate.total_size&&i<size;i++,j++) 
     {
         get_root_file(tmp, j);
-        tmp_surf = load_image_file_no_alpha(tmp);
-        iv_paginate.entries[i] = shrink_surface(tmp_surf, IMAGE_THUMB_RATIO_INNER);
-        SDL_FreeSurface(tmp_surf);
+        iv_paginate.entries[i] = imageviewer_get_image(tmp, IMAGE_THUMB_RATIO_INNER);
     }
 }
 
@@ -238,9 +257,7 @@ void imageviewer_update_preview()
     if (image_preview) SDL_FreeSurface(image_preview);
     char str[PATH_MAX];
     get_root_file(str, iv_paginate.absolute_pos);
-    SDL_Surface* tmp = load_image_file_no_alpha(str);
-    image_preview = shrink_surface(tmp, IMAGE_PREVIEW_RATIO);
-    SDL_FreeSurface(tmp);
+    image_preview = imageviewer_get_image(str, IMAGE_PREVIEW_RATIO);
 }
 
 void imageviewer_move_page(enum Direction dir)

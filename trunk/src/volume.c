@@ -40,7 +40,7 @@ void vol_set(int change) {
 	int mixer;
 
 	base_volume = bound(base_volume + change, 0, 100);
-
+    
 	int oss_volume = base_volume | (base_volume << 8); // set volume for both channels
     
 	mixer = open(MIXER_DEVICE, O_WRONLY);
@@ -54,12 +54,14 @@ void vol_set(int change) {
 }
 
 void vol_set_text(int volume)
-{
+{ 
     char buff[10];
     sprintf(buff, "%3d%%", volume);
     
     free_surface(volume_text);
     volume_text = render_text(buff, volume_font, &status_color, 1);
+    
+    log_debug("Setting volume text: %3d%%", volume);
 }
 
 void vol_show(SDL_Surface* surface) 

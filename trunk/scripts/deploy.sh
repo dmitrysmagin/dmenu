@@ -5,4 +5,7 @@ if [ -z "$1" ]; then
 fi
 MNT="$1"
 DMN="$MNT/local/dmenu"
-./scripts/build.sh && mount $MNT && cp dmenu $DMN && cp dmenu.bin $DMN && sleep 3 && umount $MNT
+FILES="dmenu dmenu.bin dmenu.ini"
+mount $MNT && ./scripts/build.sh && for x in $FILES; do cp $x $DMN; done
+sleep 3
+umount $MNT
