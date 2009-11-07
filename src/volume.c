@@ -2,34 +2,34 @@
 #include "resource.h"
 
 extern TTF_Font* status_font;
-extern cfg_t *cfg_value, *cfg;
+extern cfg_t *cfg_main;
 
 int base_volume;
 
 SDL_Surface* volume_status;
 SDL_Surface* volume_text;
 SDL_Color status_color = {DOSD_COLOR_RGBA};
-SDL_Rect dst_icon, dst_text;
+SDL_Rect vol_dst_icon, vol_dst_text;
 
 int vol_enabled()
 {
-    return cfg_getbool(cfg,"VolDisp");
+    return cfg_getbool(cfg_main, "VolDisp");
 }
 
 void vol_init() {
     log_debug("Initializing");
     
-    base_volume = (int)cfg_getint(cfg_value, "SndVol");
+    base_volume = (int)cfg_getint(cfg_main, "SndVol");
     volume_status = load_global_image("STATspeaker.png");
     
     //Set volume
     vol_set(0);
 
     //Initialize OSD positions
-    init_rect(&dst_icon, 
+    init_rect(&vol_dst_icon, 
         VOLUME_ICON_X, VOLUME_ICON_Y,
         VOLUME_ICON_W, VOLUME_ICON_H);
-    init_rect_pos(&dst_text, 
+    init_rect_pos(&vol_dst_text, 
         VOLUME_TEXT_X, VOLUME_TEXT_Y);
 }
 
@@ -46,14 +46,14 @@ void vol_set(int change) {
 	}
 	close(mixer);
 
-	cfg_setint( cfg_value, "SndVol", (long)base_volume );
+    cfg_setint( cfg_main, "SndVol", (long)base_volume );
     vol_set_text(base_volume);
 }
 
 void vol_set_text(int volume)
 {
     char buff[10];
-    sprintf(buff, "%4d%%", volume);
+    sprintf(buff, "%3d%%", volume);
     
     free_surface(volume_text);
     volume_text = render_text(buff, status_font, &status_color, 1);
@@ -61,8 +61,8 @@ void vol_set_text(int volume)
 
 void vol_show(SDL_Surface* surface) 
 {    
-	SDL_BlitSurface(volume_status, NULL, surface, &dst_icon );    
-    SDL_BlitSurface(volume_text,   NULL, surface, &dst_text );
+    SDL_BlitSurface(volume_status, NULL, surface, &vol_dst_icon );    
+    SDL_BlitSurface(volume_text,   NULL, surface, &vol_dst_text );
 }
 
 void vol_deinit() 

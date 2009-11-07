@@ -430,7 +430,8 @@ enum MenuState filelist_keypress(SDLKey key)
         case DINGOO_BUTTON_A:
             return filelist_run();
         case DINGOO_BUTTON_START:
-            conf_selectordir(mi, current_path);
+            if (can_change_dir) 
+                conf_selectordir(mi, current_path);
             break;
         case DINGOO_BUTTON_R:
             filelist_move_page(DOWN);
@@ -439,18 +440,24 @@ enum MenuState filelist_keypress(SDLKey key)
             filelist_move_page(UP);
             break;
         case DINGOO_BUTTON_UP:
-            if (keystate[DINGOO_BUTTON_Y]) filelist_move_page(UP);
-            else filelist_move_single(UP);
+            if (keystate[DINGOO_BUTTON_Y]) 
+                filelist_move_page(UP);
+            else 
+                filelist_move_single(UP);
             break;
         case DINGOO_BUTTON_DOWN:
-            if (keystate[DINGOO_BUTTON_Y]) filelist_move_page(DOWN);
-            else filelist_move_single(DOWN);
+            if (keystate[DINGOO_BUTTON_Y]) 
+                filelist_move_page(DOWN);
+            else 
+                filelist_move_single(DOWN);
             break;
         case DINGOO_BUTTON_RIGHT:
-            if (can_change_dir) filelist_right();
+            if (can_change_dir) 
+                filelist_right();
             break;
         case DINGOO_BUTTON_LEFT:
-            if (can_change_dir) filelist_left();
+            if (can_change_dir) 
+                filelist_left();
             break;
 
         default:break;

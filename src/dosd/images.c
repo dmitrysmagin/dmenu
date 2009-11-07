@@ -7,12 +7,13 @@
  */
 
 #include "dosd/images.h"
+#include "env.h"
 
 const int image_pallette[3] = {0xFFFFFF00,0xFFFFFF88,0xFFFFFFFF};
 
 /* Battery outline */
 const image_data_t c_img_battery = {
-    19, 9,
+    DOSD_BATTERY_WIDTH, DOSD_HEIGHT,
     {
         0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 
         0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
@@ -28,7 +29,7 @@ const image_data_t c_img_battery = {
 
 /* Battery is 1/3rd full */
 const image_data_t c_img_battery_1 = {
-    19, 9,
+    DOSD_BATTERY_WIDTH, DOSD_HEIGHT,
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -44,7 +45,7 @@ const image_data_t c_img_battery_1 = {
 
 /* Battery is 2/3rds full */
 const image_data_t c_img_battery_2 = {
-    19, 9,
+    DOSD_BATTERY_WIDTH, DOSD_HEIGHT,
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -60,7 +61,7 @@ const image_data_t c_img_battery_2 = {
 
 /* Battery is full */
 const image_data_t c_img_battery_3 = {
-    19, 9,
+    DOSD_BATTERY_WIDTH, DOSD_HEIGHT,
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -76,7 +77,7 @@ const image_data_t c_img_battery_3 = {
 
 /* Lock icon */
 const image_data_t c_img_lock = {
-    7, 9,
+    DOSD_LOCK_WIDTH, DOSD_HEIGHT,
     {
         0, 1, 2, 2, 2, 1, 0, 
         1, 2, 0, 0, 0, 2, 1, 

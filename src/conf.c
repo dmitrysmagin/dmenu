@@ -92,12 +92,6 @@ cfg_opt_t standalone_opts[] = {
     CFG_END()
 };
 
-cfg_opt_t main_opts[] = {
-    CFG_STR("Theme", "default", CFGF_NONE),
-    CFG_STR_LIST("SearchPath", "{}", CFGF_NONE),
-    CFG_BOOL("AllowDynamicThemeChange", cfg_false, CFGF_NONE),
-    CFG_END()
-};
 
 cfg_opt_t selectordir_opts[] = {
     CFG_STR_LIST("Key", 0, CFGF_NONE),
@@ -105,19 +99,24 @@ cfg_opt_t selectordir_opts[] = {
     CFG_END()
 };
 
-cfg_opt_t value_opts[] = {
+cfg_opt_t main_opts[] = {
+    CFG_STR("Theme", "default", CFGF_NONE),
+    CFG_STR_LIST("SearchPath", "{}", CFGF_NONE),
+    CFG_BOOL("AllowDynamicThemeChange", cfg_false, CFGF_NONE),
+    CFG_BOOL("VolDisp", cfg_false, CFGF_NONE),
+    CFG_BOOL("BrightDisp", cfg_false, CFGF_NONE),
     CFG_INT("SndVol", 50, CFGF_NONE),
     CFG_INT("Bright", 3, CFGF_NONE),
     CFG_STR("Background", 0, CFGF_NONE),
     CFG_STR("FontColor", 0, CFGF_NONE),
     CFG_STR("Font", 0, CFGF_NONE),
+    
     CFG_SEC("SelectorDir", selectordir_opts, CFGF_MULTI),
     CFG_END()
 };
 
 cfg_t *cfg;
 cfg_t *cfg_main;
-cfg_t *cfg_value;
 
 char* theme_path;
 
@@ -198,14 +197,10 @@ int conf_load()
     int num_of_files, rc, i, j;
     cfg_t* tmp;
 
-    // load main.cfg
+    // load dmenu.ini
     cfg_main = conf_from_file(main_opts, DMENU_CONF_FILE);
     if (cfg_main == NULL) return CFG_PARSE_ERROR;
     
-    // load dmenu.ini
-    cfg_value = conf_from_file(value_opts, GLOBAL_CONF_FILE);
-    if (cfg_value == NULL) return CFG_PARSE_ERROR;
-
     //Find theme path
     rc = conf_load_theme();
     if (rc) return rc;
@@ -236,9 +231,9 @@ int conf_load()
     }
     
     //Process selectordir items
-    i = cfg_size(cfg_value, "SelectorDir");
+    i = cfg_size(cfg_main, "SelectorDir");
     while (i) {
-        tmp = cfg_getnsec(cfg_value, "SelectorDir", --i);
+        tmp = cfg_getnsec(cfg_main, "SelectorDir", --i);
         char* dir = cfg_getstr(tmp, "Dir");
         char* keys[3] =  {NULL, NULL, NULL };
         for (j=0;j<3;j++) keys[j] = cfg_getnstr(tmp, "Key", j);
@@ -255,10 +250,11 @@ void conf_unload()
     free(THEME_CONF_FILE);
     
     cfg_free(cfg);
-    cfg_free(cfg_main);
 
     // Write to dmenu.ini
-    conf_to_file(cfg_value, GLOBAL_CONF_FILE);
+    conf_to_file(cfg_main, DMENU_CONF_FILE);
+    cfg_free(cfg_main);
+    
     change_dir(DMENU_PATH);
 }
 
@@ -495,10 +491,10 @@ void conf_selectordir(cfg_t* menu_item, char* dir)
     sprintf(key, "{\"%s\",\"%s\",\"%s\"}", keys[0], keys[1], keys[2]);
     
     //Update if possible
-    int cnt = cfg_size(cfg_value, "SelectorDir");
+    int cnt = cfg_size(cfg_main, "SelectorDir");
     for (i=0;i<cnt;i++) 
     {
-        selector = cfg_getnsec(cfg_value, "SelectorDir", i);
+        selector = cfg_getnsec(cfg_main, "SelectorDir", i);
         
         if ((strcmp(cfg_getnstr(selector, "Key",0), keys[0]) == 0) &&
             (strcmp(cfg_getnstr(selector, "Key",1), keys[1]) == 0) &&
@@ -512,8 +508,8 @@ void conf_selectordir(cfg_t* menu_item, char* dir)
     free(keys);
     
     //Persist data
-    FILE* fp = load_file(GLOBAL_CONF_FILE, "w");
-    cfg_print(cfg_value, fp);
+    FILE* fp = load_file(DMENU_CONF_FILE, "w");
+    cfg_print(cfg_main, fp);
     if (i == cnt)  //If not found
     {
         fprintf(fp, "SelectorDir {\nDir = \"%s\"\nKey = %s\n}\n", dir, key);
@@ -522,14 +518,14 @@ void conf_selectordir(cfg_t* menu_item, char* dir)
     
     if (i == cnt)
     {
-        free(cfg_value);
-        cfg_value = conf_from_file(value_opts, GLOBAL_CONF_FILE);
+        free(cfg_main);
+        cfg_main = conf_from_file(main_opts, DMENU_CONF_FILE);
     }
 }
 
 void conf_backgroundselect(char* bgimage)
 {
-    cfg_setstr(cfg_value, "Background", bgimage);
-    if (!conf_to_file(cfg_value, GLOBAL_CONF_FILE)) return;
+    cfg_setstr(cfg_main, "Background", bgimage);
+    if (!conf_to_file(cfg_main, DMENU_CONF_FILE)) return;
     menu_reload_background();
 }

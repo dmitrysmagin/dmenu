@@ -7,9 +7,9 @@ int bright_level;
 int bright[5]={10,25,50,75,99};
 
 SDL_Surface* bright_status[5];
-SDL_Rect bright_icon;
+SDL_Rect bright_dst_icon;
 
-extern cfg_t *cfg_value, *cfg;
+extern cfg_t *cfg_main;
 
 void load_image(char* file, int pos) 
 {
@@ -18,7 +18,7 @@ void load_image(char* file, int pos)
 
 int bright_enabled()
 {
-    return cfg_getbool(cfg,"BrightDisp");
+    return cfg_getbool(cfg_main,"BrightDisp");
 }
 
 void bright_init() 
@@ -32,10 +32,10 @@ void bright_init()
         load_image(file, i);
     }
     
-    bright_level = bound((int)cfg_getint(cfg_value, "Bright"), 0, 4);
+    bright_level = bound((int)cfg_getint(cfg_main, "Bright"), 0, 4);
     
     //Icon position
-    init_rect(&bright_icon,
+    init_rect(&bright_dst_icon,
         BRIGHTNESS_ICON_X, BRIGHTNESS_ICON_Y,
         BRIGHTNESS_ICON_W, BRIGHTNESS_ICON_H);
     
@@ -55,11 +55,11 @@ void bright_set(int change) {
         fclose(brt_fd);
     #endif
 
-    cfg_setint( cfg_value, "Bright", (long)bright_level );
+    cfg_setint( cfg_main, "Bright", (long)bright_level );
 }
 
 void bright_show(SDL_Surface *surface) {
-    SDL_BlitSurface( bright_status[bright_level], NULL, surface, &bright_icon );
+    SDL_BlitSurface( bright_status[bright_level], NULL, surface, &bright_dst_icon );
 }
 
 void bright_deinit() {
