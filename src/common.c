@@ -353,23 +353,17 @@ void  init_rect(SDL_Rect* rect, int x, int y, int w, int h) {
 SDL_Surface* create_surface(int w, int h, int r, int g, int b, int a)
 {
     SDL_Surface *tmp;
-    Uint32 rmask, gmask, bmask, amask;
+    Uint32 rm, gm, bm, am; rm=gm=bm=am=0xFF;
     
     /* SDL interprets each pixel as a 32-bit number, so our masks must depend
     on the endianness (byte order) of the machine */
     #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    rmask = 0xff000000;
-    gmask = rmask>>8;
-    bmask = gmask>>8;
-    amask = bmask>>8;
+    rm<<=24; gm<<=16; bm<<=8; 
     #else
-    rmask = 0x000000ff;
-    gmask = rmask<<8;
-    bmask = gmask<<8;
-    amask = bmask<<8;
+    gm<<=8; bm<<=16; am<<=24;
     #endif
     
-    tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, rmask, gmask, bmask, a < 0 ? 0 : amask);
+    tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, rm, gm, bm, a < 0 ? 0 : am);
     
     if (a >= 0)  {
         SDL_FillRect(tmp, 0, SDL_MapRGBA(tmp->format, r,g,b,a));
@@ -418,13 +412,54 @@ SDL_Surface* shrink_surface(SDL_Surface *src, double factor)
 }
 
 /**
- * Copied from mailing list post, cleaned up a little bit, and voila.  We can now save pngs.
+ * Copied from mailing list post, cleaned up a little bit.
+ * Not working just yet, still runing into some weird problems.  Will need to investigate
+ *    before we can use for the thumbnail caching
  */
-int export_surface_as_bmp(char *filename, SDL_Surface *surface)
-{
+int write_png(char *file_name, png_bytep *rows, int w, int h, int colortype, int bitdepth) {
+    png_structp png_ptr;
+    png_infop info_ptr;
+    FILE *fp;
+    
+    if (!(fp = fopen(file_name, "wb"))) goto fail;
+    if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) goto fail;
+    if (!(info_ptr = png_create_info_struct(png_ptr))) goto fail;
+    if (setjmp(png_jmpbuf(png_ptr))) goto fail;
+
+    png_init_io(png_ptr, fp);
+    png_set_IHDR(png_ptr, info_ptr, w, h, bitdepth, colortype,
+        PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+    png_write_info(png_ptr, info_ptr);
+    png_write_image(png_ptr, rows);
+    png_write_end(png_ptr, NULL);
+    return 0;
+    
+fail:
+    return -1;
+}
+
+int export_surface_as_bmp(char *filename, SDL_Surface *surface) {
     return SDL_SaveBMP(surface, filename);
 }
 
+//As noted above, this isn't working as expected yet.  BMP is still the only
+//  stable file format
+int export_surface_as_png(char* filename, SDL_Surface* surface) {
+    int h = surface->h, w = surface->w, i=0,rc;
+    png_bytep * rows = new_array(png_bytep, h);
+    SDL_Surface* tmp = create_surface(w,h,0,0,0,0);
+    SDL_Rect tmp_rect = {0,0,w,h};
+    SDL_BlitSurface(surface, &tmp_rect, tmp, NULL);
+    
+    for(;i<h;i++) rows[i] = (png_bytep)((Uint16*)(tmp->pixels) + i * tmp->pitch);
+
+    rc = write_png(filename, rows, w, h, PNG_COLOR_TYPE_RGB, 16);
+    free_surface(tmp);
+    return rc;
+}
+
+
+//@todo, make this work with PNG instead of BMP for disk space efficiency
 SDL_Surface* load_resized_image(char* path, char* file, float ratio)
 {
     if (ratio >= 1.0f) {
@@ -435,8 +470,8 @@ SDL_Surface* load_resized_image(char* path, char* file, float ratio)
     
     char new_file[PATH_MAX], new_dir[PATH_MAX];
     strcpy(new_dir, path);
-    strcat(new_dir, "/.thumb");
-    sprintf(new_file, "%s/%s_%02f.bmp", new_dir, (char*)(strrchr(file,'/')+1), ratio);
+    strcat(new_dir, THUMBNAILS_PATH);
+    sprintf(new_file, "%s/%s_%02f", new_dir, (char*)(strrchr(file,'/')+1), ratio);
     SDL_Surface *out = load_image_file_with_format(new_file, 0, 0), *tmp;
     
     if (out == NULL) { //If not created
@@ -453,8 +488,10 @@ SDL_Surface* load_resized_image(char* path, char* file, float ratio)
         }
         
         export_surface_as_bmp(new_file, tmp);
-        
         stat(file, &orig_stat);
+        //Copy over mtime/atime as the dingoo doesn't have a clock and so 
+        // these values default to 0, and we need to be able to check mtimes
+        // to know if we need to recache
         struct utimbuf new_time = {orig_stat.st_atime, orig_stat.st_mtime}; 
         utime(new_file, &new_time);
         
@@ -463,7 +500,7 @@ SDL_Surface* load_resized_image(char* path, char* file, float ratio)
         stat(file, &orig_stat);
         stat(new_file, &new_stat);
     
-        //If image was updated 
+        //If image timestamp is different
         if (orig_stat.st_mtime != new_stat.st_mtime) 
         {
             //Clear cache and reload image
