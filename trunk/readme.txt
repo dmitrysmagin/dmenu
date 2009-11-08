@@ -37,6 +37,14 @@ B key - exit file selector menu
 R key - page down
 L key - page up
 
+In color selector menu,
+
+up, down key - select R/G/B
+left - reduce selected color value
+right - increase selected color value
+A key - set color and exit color selector menu
+B key - exit color selector menu
+
 
 Theme support
 -------------
@@ -209,15 +217,8 @@ For example,
     {
         Icon = "res/tri4.png"
         Name = "FontColor"
-        Executable = ""
-        WorkDir = "/usr/local/dmenu/fontcolor_scripts/"
-        Selector = yes
+        Executable = "!colorselect"
     }
-
-In "fontcolor_selector" folder, there are some font color setting scripts.
-You can select one to change font color.
-Also, you can add your new color setting scripts as you like.
-See their script files.
 
 
 
