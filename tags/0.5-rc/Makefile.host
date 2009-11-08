@@ -1,0 +1,51 @@
+TARGET	   := dmenu-host.bin
+BUILD	   := build-host
+TOOLCHAINDIR := /
+INCLS	   := src src/dosd
+SOURCES	   := src src/dosd
+LIBPATH    := $(TOOLCHAINDIR)/usr/lib
+DMENU_PATH := \"$(shell readlink -f "../")/\" 
+ARCH       := 
+CC         := $(ARCH)gcc 
+CFLAGS     := -O2 -DDEBUG=1 -DDMENU_PATH="$(DMENU_PATH)" -DHOST_BUILD -Wall -g -fomit-frame-pointer -funroll-loops -DHAVE_CONFIG_H -I$(TOOLCHAINDIR)/usr/include -I$(TOOLCHAINDIR)/usr/include/SDL
+
+ifneq ($(notdir $(CURDIR)), $(BUILD))
+
+export INCLUDE	:= $(foreach dir, $(INCLS) $(BUILD), -I$(CURDIR)/$(dir))
+export LIBDIRS	:= $(foreach dir, $(LIBPATH) $(BUILD), -L$(CURDIR)/$(dir))
+export OUTPUT	:= $(CURDIR)/$(TARGET)
+export VPATH    := $(foreach dir, $(SOURCES), $(CURDIR)/$(dir))
+CFILES   := $(foreach dir, $(SOURCES), $(notdir $(wildcard $(dir)/*.c)))
+
+export OFILES := $(CFILES:.c=.o)
+
+
+.PHONY: $(BUILD) clean
+
+$(BUILD):
+	@[ -d $@ ] || mkdir -p $@
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile.host
+
+rebuild: clean $(BUILD)
+
+clean:
+	@echo clean ... $(TARGET)
+	@rm -fr $(BUILD) $(TARGET)
+
+else
+
+DEPENDS := $(OFILES:.o=.d)
+
+
+$(OUTPUT): $(OFILES) 
+	$(CC) $^ $(LIBDIRS) -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -lconfuse -o $@
+
+%.o : %.c
+	$(CC) -MM $(CFLAGS) $(INCLUDE) -o $*.d $<
+	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+
+
+-include $(DEPENDS)
+
+endif
+
