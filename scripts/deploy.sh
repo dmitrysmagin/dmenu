@@ -23,6 +23,9 @@ if ./scripts/build.sh; then
    for x in $FILES; do 
        cp $x $DMN
    done
+   for x in $(ls resources/*); do
+       cp $x $DMN/resources
+   done
 fi
 
 if [ $NEED_MOUNT -gt 0 ]; then 
