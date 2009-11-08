@@ -1,3 +1,19 @@
+[0.5]
+- Fixed a lot of SegFault bugs
+- Change the mechanism that the next application is called
+- Rename dmenu binaly to "dmenu.bin"
+- Added a start up dmenu script named "dmenu"
+- Added "built in Wallpaper Selector with thumbnails"
+- Added "SelectorDir" setting command
+- Added new key binds in filelist
+- Moved and Renamed the dmenu resource folder "/usr/local/home/.dmenu" to
+  "/usr/local/dmenu/resources"
+- Moved and Renamed the fontcolor setting script folder 
+  "/usr/local/apps/fontcolor" to "/usr/local/dmenu/fontcolor_scripts"
+- Rewrite the fontcolor setting scripts
+- Moved "dmenu.ini" from "/usr/local/dmenu/resouces/" to "/usr/local/dmenu/"
+- Merged "main.cfg" to "dmenu.ini"
+
 [0.4]
 - Change SearchPath to a string list to allow multiple search paths
 - Menu sound effect
@@ -14,7 +30,6 @@ respectively. Same for MenuItem (up/down).
 - Menuitem text overlapping problem should be fixed now.
 - Fixed problem of passing multiple args when launching a program 
 - Persist index of selected menu/menuitem
-by 1@qbQD4T5Z0949
 - Default theme created.
 - Added SoundVolume control ([L]:-5% / [R]:+5%)
 - Added Brightness control ([X]:LevelUp / [Y]:LevelDown)
