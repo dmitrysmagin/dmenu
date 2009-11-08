@@ -1,2 +1,2 @@
 #!/bin/sh
-echo "255,0,0" > /usr/local/dmenu/ini/fontcolor.ini
+echo "255,0,0" > /usr/local/dmenu/resources/fontcolor.ini
