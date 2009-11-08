@@ -23,6 +23,6 @@ TTF_Font*    load_global_font( char* file, int size);
 SDL_Surface* load_theme_image( char* file );
 SDL_Surface* load_theme_background( char* file );
 TTF_Font*    load_theme_font( char* file, int size );
-Mix_Music*   load_theme_sound( char* file );
+Mix_Chunk*   load_theme_sound( char* file );
 
 #endif

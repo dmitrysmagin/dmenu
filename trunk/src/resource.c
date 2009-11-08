@@ -103,9 +103,9 @@ SDL_Surface* load_theme_image( char* file ) {
     return out;
 }
 
-Mix_Music* load_theme_sound( char* file ) {
+Mix_Chunk* load_theme_sound( char* file ) {
     char* tmp = theme_file(file);
-    Mix_Music* out = Mix_LoadMUS(tmp);
+    Mix_Chunk* out = Mix_LoadWAV(tmp);
     free(tmp); 
     return out;
 }

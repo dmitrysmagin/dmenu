@@ -4,7 +4,7 @@
 #include "resource.h"
 
 extern cfg_t *cfg;
-Mix_Music* gSE[6];
+Mix_Chunk* gSE[6];
 
 void load_sound(char* file, enum MenuSound snd) 
 {
@@ -29,16 +29,16 @@ void SE_Init()
 
 void SE_out(enum MenuSound se)
 {
-    Mix_PlayMusic( gSE[se], 1 );
+    Mix_PlayChannel( -1, gSE[se], 0 );
 }
 
 void SE_deInit()
 {
     log_debug("De-initializing");
     int i = 0;
-    Mix_HaltMusic();
+    Mix_HaltChannel(-1);
     for(;i<6;i++){
-         Mix_FreeMusic(gSE[i]);
+         Mix_FreeChunk(gSE[i]);
          gSE[i] = NULL;
     }
     Mix_CloseAudio();
