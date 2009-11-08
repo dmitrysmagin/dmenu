@@ -20,6 +20,7 @@
 #include "common.h"
 #include "conf.h"
 #include "resource.h"
+#include "colorpicker.h"
 #include "filelist.h"
 #include "imageviewer.h"
 #include "persistent.h"
@@ -63,7 +64,7 @@ void submenu_close();
 void menu_reload_background() 
 {
     free_surface(background);
-    background = load_theme_background(get_user_attr("Background"));
+    background = get_theme_background();
 }
 
 int menu_init()
@@ -426,26 +427,29 @@ enum MenuState menuitem_runinternal()
 {
     char* executable = cfg_getstr(mi, "Executable");
     char* name       = cfg_getstr(mi, "Name");
-
+    char* tmp;
+    enum MenuState state = MAINMENU;
+    int rc;
+    
     switch (get_command(executable))
     {
         case THEMESELECT:
-            if (!filelist_init(name, executable, DMENU_THEMES, DMENU_THEMES, 0)) 
-            {
-                return FILELIST;
-            } // else we are not able to initialise the filelist display
+            rc = filelist_init(name, executable, DMENU_THEMES, DMENU_THEMES, 0);
+            if (!rc) state = FILELIST;
             break;
-            
         case BACKGROUNDSELECT:
-            if (!imageviewer_init(name, executable, DMENU_BACKGROUNDS))
-            {
-                return IMAGEVIEWER;
-            }
+            rc = imageviewer_init(name, executable, DMENU_BACKGROUNDS);
+            if (!rc) state = IMAGEVIEWER;
             break;
-        default: break;
+        case COLORSELECT:
+            tmp = theme_file(get_user_attr("Background"));
+            rc = colorpicker_init(name, executable, NULL, get_theme_font_color_string(), tmp);
+            if (!rc) state = COLORPICKER;
+            free(tmp);
+            break;
     }
     
-    return MAINMENU;
+    return state;
 }
 
 enum MenuState menuitem_run()

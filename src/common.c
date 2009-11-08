@@ -113,7 +113,9 @@ void run_internal_command(char* command, char* args, char* workdir)
         case BACKGROUNDSELECT:
             conf_backgroundselect(args);
             break;
-        default: break;
+        case COLORSELECT:
+            conf_colorselect(args);
+            break;
     }
 }
 
@@ -207,6 +209,7 @@ void execute_command(char* dir, char** args)
 enum InternalCommand get_command(char* cmd) {
     IF_CMD_THEN(cmd, THEMESELECT);
     IF_CMD_THEN(cmd, BACKGROUNDSELECT);
+    IF_CMD_THEN(cmd, COLORSELECT);
     return 0;
 }
 
@@ -238,6 +241,15 @@ int change_dir(char* path)
         log_error("Unable to change to directory %s", path);
     }
     return rc;
+}
+
+char* read_first_line( char* file ) 
+{
+    FILE* fp = load_file( file , "r" );
+    char* out = new_str(100);
+    int i = fscanf(fp, "%s", out);
+    fclose(fp);
+    return (i == 0 || i == EOF) ? NULL : out;
 }
 
 FILE* load_file_and_handle_fail(char* file, char* mode, int die_on_fail) {
@@ -317,10 +329,10 @@ SDL_Color* parse_color_string(char* str) {
             format = "#%2x%2x%2x"; // #RRGGBB
             break;
         case '(':
-            format = "(%d,%d,%d)"; // (R,G,B)
+            format = "(%3d,%3d,%3d)"; // (R,G,B)
             break;
         default:
-            format = "%d,%d,%d"; // R,G,B
+            format = "%3d,%3d,%3d"; // R,G,B
     }
     
     sscanf(str, format, &r, &g, &b);
@@ -332,13 +344,12 @@ SDL_Color* parse_color_string(char* str) {
 }
 
 SDL_Color* load_color_file(char* filename) {
-    char color[12];
-    FILE* fd = load_file_or_die(filename,"r");
-    int i = fscanf(fd, "%s", color);
-    fclose(fd);
-    return (i == 0 || i == EOF) ? NULL : parse_color_string(color);
+    char *color = read_first_line(filename);
+    SDL_Color* out = parse_color_string(color);
+    free(color);
+    return out;
 }
-
+ 
 void init_rect_pos(SDL_Rect* rect, int x, int y) {
     init_rect(rect, x, y, -1, -1);
 }
@@ -365,7 +376,7 @@ SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a)
     
     tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, depth, rm, gm, bm, (a < 0 || depth <= 24) ? 0 : am);
     
-    if (a >= 0)  {
+    if (a > 0)  {
         SDL_FillRect(tmp, 0, SDL_MapRGBA(tmp->format, r,g,b,a));
     } else {
         SDL_FillRect(tmp, 0, SDL_MapRGB(tmp->format, r,g,b));
@@ -376,12 +387,12 @@ SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a)
 /**
  * Optimized for 16bit images.  Will not work any any others
  */
-SDL_Surface* shrink_surface(SDL_Surface *src, double factor)
+SDL_Surface* shrink_surface(SDL_Surface *src, float ratio_x, float ratio_y)
 {
-    if(!src || factor > 1 || factor <= 0) return NULL;
+    if(!src || ratio_x > 1 || ratio_x <= 0 || ratio_y > 1 || ratio_y <= 0) return NULL;
     
-    double fp = 1/factor;
-    int y,x,w = (int)(src->w * factor), h = (int)(src->h * factor);
+    float fpx = 1/ratio_x, fpy = 1/ratio_y;
+    int y,x,w = (int)(src->w * ratio_x), h = (int)(src->h * ratio_y);
     
     SDL_Surface *dst = SDL_CreateRGBSurface(
         src->flags, w, h, SCREEN_COLOR_DEPTH,
@@ -397,14 +408,14 @@ SDL_Surface* shrink_surface(SDL_Surface *src, double factor)
     while (y--) {
         
         dst_y_off = dst_pitch*y;
-        src_y_off = src_pitch*(int)(y*fp);
+        src_y_off = src_pitch*(int)(y*fpy);
         dst_x_off = max_w;
         
         x= w;
         while (x--) {
             dst_x_off -= SCREEN_BPP;
             *(Uint16*)((int)dst_pixels + dst_y_off+dst_x_off) = 
-                *(Uint16*)((int)src_pixels + src_y_off+(int)(x*fp)*SCREEN_BPP);
+                *(Uint16*)((int)src_pixels + src_y_off+(int)(x*fpx)*SCREEN_BPP);
         }
     }
     
@@ -465,23 +476,29 @@ int export_surface_as_bmp(char *filename, SDL_Surface *surface) {
 }
 
 //@todo, make this work with PNG instead of BMP for disk space efficiency
-SDL_Surface* load_resized_image(char* path, char* file, float ratio)
+SDL_Surface* load_resized_image(char* file, float ratio_x, float ratio_y)
 {
-    if (ratio >= 1.0f) {
+    if (ratio_x >= 1.0f || ratio_y >= 1.0f) {
         return load_image_file_no_alpha(file);
     }
     
     struct stat orig_stat, new_stat, dir_stat;
     
     char new_file[PATH_MAX], new_dir[PATH_MAX];
-    strcpy(new_dir, path);
+  
+    //Copy path of file
+    int i = 0;
+    char *end = strrchr(file, '/');
+    do new_dir[i] = *(file+i); while ((file+ ++i) != end); 
+    new_dir[i] = '\0';
     strcat(new_dir, THUMBNAILS_PATH);
-    sprintf(new_file, "%s/%s_%02f", new_dir, (char*)(strrchr(file,'/')+1), ratio);
+    
+    sprintf(new_file, "%s/%s_%02f_%02f", new_dir, (char*)(end+1), ratio_x, ratio_y);
     SDL_Surface *out = load_image_file_with_format(new_file, 0, 0), *tmp;
     
     if (out == NULL) { //If not created
         out = load_image_file_no_alpha(file);
-        tmp = shrink_surface(out, ratio);
+        tmp = shrink_surface(out, ratio_x, ratio_y);
         free_surface(out);
         
         if(stat(new_dir,&dir_stat) != 0) {
@@ -513,7 +530,7 @@ SDL_Surface* load_resized_image(char* path, char* file, float ratio)
             //Clear cache and reload image
             remove(new_file); 
             free(out);
-            out = load_resized_image(path, file, ratio);
+            out = load_resized_image(file, ratio_x, ratio_y);
         }
     }
     return out;

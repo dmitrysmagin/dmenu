@@ -10,6 +10,7 @@
 
 #define COMMAND_THEMESELECT "!themeselect"
 #define COMMAND_BACKGROUNDSELECT "!backgroundselect"
+#define COMMAND_COLORSELECT "!colorselect"
 
 #define new_array(t, len)      (t*)malloc(sizeof(t) * len)
 #define new_str(len)           new_array(char, len)
@@ -45,8 +46,8 @@ void free_str_arr(char** arr);
     lst = realloc(lst, len*sizeof(char*));\
     lst[len-1] = val;
     
-enum MenuState { MAINMENU, FILELIST, IMAGEVIEWER };
-enum InternalCommand { THEMESELECT, BACKGROUNDSELECT }; 
+enum MenuState { MAINMENU, FILELIST, IMAGEVIEWER, COLORPICKER };
+enum InternalCommand { THEMESELECT, BACKGROUNDSELECT, COLORSELECT }; 
 enum Direction { PREV, NEXT, UP, DOWN, RIGHT, LEFT };
 
 //void fill_fb(Uint16* source);
@@ -70,11 +71,12 @@ FILE* load_file_and_handle_fail ( char* file, char* mode, int die_on_fail );
 FILE* load_file( char* file, char* mode );
 FILE* load_file_or_die( char* file, char* mode );
 char* relative_file(char* path, char* file);
+char* read_first_line( char* file);
 
 SDL_Surface* load_image_file( char* file );
 SDL_Surface* load_image_file_no_alpha( char* file );
 SDL_Surface* load_image_file_with_format( char* file , int alpha, int fail_on_notfound );
-SDL_Surface* load_resized_image(char* path, char* file, float ratio);
+SDL_Surface* load_resized_image(char* file, float ratio_x, float ratio_y);
 
 SDL_Surface* render_text( char* text, TTF_Font* font, SDL_Color* color, int solid );
 SDL_Surface* draw_text( char* text, TTF_Font* font, SDL_Color* color);
@@ -84,6 +86,6 @@ SDL_Color*   load_color_file( char* file );
 void  init_rect(SDL_Rect* rect, int x, int y, int w, int h);
 void  init_rect_pos(SDL_Rect* rect, int x, int y);
 SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a);
-SDL_Surface* shrink_surface(SDL_Surface *src, double factor);
+SDL_Surface* shrink_surface(SDL_Surface *src, float ratio_x, float ratio_y);
 int export_surface_as_bmp(char* file_name, SDL_Surface* surface);
 #endif

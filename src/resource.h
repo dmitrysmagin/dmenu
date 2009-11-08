@@ -10,6 +10,8 @@ char* get_user_attr(char*attr);
 TTF_Font* get_theme_font(int size);
 TTF_Font* get_osd_font();
 SDL_Color* get_theme_font_color();
+char* get_theme_font_color_string();
+SDL_Surface* get_theme_background();
 
 char* dmenu_file(char* file);
 char* global_file(char* file);

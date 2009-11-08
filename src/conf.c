@@ -470,12 +470,30 @@ void conf_themeselect(char* themedir)
         path++;
     }
     
+    log_debug("Setting theme: %s", path);
+    
     if (cfg_getbool(cfg_main, "AllowDynamicThemeChange")) {
         cfg_setstr(cfg_main, "Theme", path);
         
         if (!conf_to_file(cfg_main, DMENU_CONF_FILE)) return;
         reload();
     }
+}
+
+void conf_backgroundselect(char* bgimage)
+{
+    log_debug("Setting background image: %s", bgimage);
+    cfg_setstr(cfg_main, "Background", bgimage);
+    if (!conf_to_file(cfg_main, DMENU_CONF_FILE)) return;
+    menu_reload_background();
+}
+
+void conf_colorselect(char* color)
+{
+    log_debug("Setting font color: %s", color);
+    cfg_setstr(cfg_main, "FontColor", color);
+    if (!conf_to_file(cfg_main, DMENU_CONF_FILE)) return;
+    reload();
 }
 
 void conf_selectordir(cfg_t* menu_item, char* dir) 
@@ -521,11 +539,4 @@ void conf_selectordir(cfg_t* menu_item, char* dir)
         free(cfg_main);
         cfg_main = conf_from_file(main_opts, DMENU_CONF_FILE);
     }
-}
-
-void conf_backgroundselect(char* bgimage)
-{
-    cfg_setstr(cfg_main, "Background", bgimage);
-    if (!conf_to_file(cfg_main, DMENU_CONF_FILE)) return;
-    menu_reload_background();
 }
