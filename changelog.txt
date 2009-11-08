@@ -2,17 +2,18 @@
 - Fixed a lot of SegFault bugs
 - Change the mechanism that the next application is called
 - Rename dmenu binaly to "dmenu.bin"
-- Added a start up dmenu script named "dmenu"
+- Added a dmenu start up script named "dmenu"
+- Added "SelectorDir" setting for menuitem and submenuitem
+- Added new key binds in filelist ( L key - page up / R key - page down )
 - Added "built in Wallpaper Selector with thumbnails"
-- Added "SelectorDir" setting command
-- Added new key binds in filelist
+- Added "built in Color Selector"
+- Added ColorBar graphics for "built in Color Selector"
 - Moved and Renamed the dmenu resource folder "/usr/local/home/.dmenu" to
   "/usr/local/dmenu/resources"
-- Moved and Renamed the fontcolor setting script folder 
-  "/usr/local/apps/fontcolor" to "/usr/local/dmenu/fontcolor_scripts"
-- Rewrite the fontcolor setting scripts
 - Moved "dmenu.ini" from "/usr/local/dmenu/resouces/" to "/usr/local/dmenu/"
-- Merged "main.cfg" to "dmenu.ini"
+- Merged "main.cfg and fontcolor.ini" to "dmenu.ini"
+- Remove the fontcolor setting scripts and folder
+- Remove fontcolor.ini
 
 [0.4]
 - Change SearchPath to a string list to allow multiple search paths
