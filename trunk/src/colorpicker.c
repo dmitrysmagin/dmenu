@@ -70,7 +70,6 @@ int  colorpicker_init(char* title, char* executable,  char* path, char* color, c
     if (strlen(cp_global.title) > 0) 
     {
         cp_title     = render_colorpicker_text(title);
-        
         cp_title_bg = create_surface(
             SCREEN_WIDTH, SELECT_TITLE_HEIGHT, 32, 
             SELECT_TITLE_COLOR, SELECT_TITLE_ALPHA);
