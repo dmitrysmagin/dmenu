@@ -32,18 +32,7 @@ SDL_Surface* get_theme_background()
 
 char* get_theme_font_color_string()
 {
-    char* color = new_str(20);
-    char* user_color = get_user_attr("FontColor");
-    
-    if (!user_color) 
-    {
-        color = read_first_line(global_file("fontcolor.ini"));
-    } 
-    else {
-        strcpy(color, user_color);
-    }
-    
-    return color;
+    return get_user_attr("FontColor");
 }
 
 SDL_Color* get_theme_font_color()
