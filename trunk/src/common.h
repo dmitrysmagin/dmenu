@@ -88,4 +88,5 @@ void  init_rect_pos(SDL_Rect* rect, int x, int y);
 SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a);
 SDL_Surface* shrink_surface(SDL_Surface *src, float ratio_x, float ratio_y);
 int export_surface_as_bmp(char* file_name, SDL_Surface* surface);
+SDL_Surface* tint_surface(SDL_Surface* src, int color, int alpha);
 #endif

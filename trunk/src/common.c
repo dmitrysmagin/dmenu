@@ -376,10 +376,12 @@ SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a)
     
     tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, depth, rm, gm, bm, (a < 0 || depth <= 24) ? 0 : am);
     
-    if (a > 0)  {
-        SDL_FillRect(tmp, 0, SDL_MapRGBA(tmp->format, r,g,b,a));
-    } else {
-        SDL_FillRect(tmp, 0, SDL_MapRGB(tmp->format, r,g,b));
+    if (r>=0 && g>=0 && b>=0) {
+        if (a >= 0)  {
+            SDL_FillRect(tmp, 0, SDL_MapRGBA(tmp->format, r,g,b,a));
+        } else {
+            SDL_FillRect(tmp, 0, SDL_MapRGB(tmp->format, r,g,b));
+        }
     }
     return tmp;
 }
@@ -533,5 +535,23 @@ SDL_Surface* load_resized_image(char* file, float ratio_x, float ratio_y)
             out = load_resized_image(file, ratio_x, ratio_y);
         }
     }
+    return out;
+}
+
+SDL_Surface* tint_surface(SDL_Surface* src, int color, int alpha) {
+    
+    SDL_Surface *out;
+    Uint32 rm=0xFF&(color>>16), gm=0xFF&(color>>8), bm=0xFF&(color), am=0xFF;
+    
+    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
+    on the endianness (byte order) of the machine */
+    #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    rm<<=24; gm<<=16; bm<<=8; 
+    #else
+    gm<<=8; bm<<=16; am<<=24;
+    #endif
+    
+    out =  SDL_CreateRGBSurface(SDL_SWSURFACE, src->w, src->h, 24, rm, gm, bm, alpha?am:0);
+    SDL_BlitSurface(src, NULL, out, NULL);
     return out;
 }

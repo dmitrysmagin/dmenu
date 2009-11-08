@@ -15,18 +15,11 @@ SDL_Surface* cp_highlight_inactive;
 SDL_Surface* cp_highlight_active;
 SDL_Surface* cp_preview;
 SDL_Surface* cp_preview_bg;
+SDL_Surface* cp_demo_text;
 TTF_Font*    cp_font;
 SDL_Color*   cp_fontcolor;
 
-char* colorpicker_demo_text = 
-    "Lorem ipsum dolor sit amet, consectetur adipisicing elit,\n"
-    "sed do eiusmod tempor incididunt ut labore et dolore magna\n"
-    "aliqua. Ut enim ad minim veniam, quis nostrud exercitation\n"
-    "ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis\n"
-    "aute irure dolor in reprehenderit in voluptate velit esse \n"
-    "cillum dolore eu fugiat nulla pariatur. Excepteur sint \n"
-    "occaecat cupidatat non proident, sunt in culpa qui officia \n"
-    "deserunt mollit anim id est laborum.";
+char* colorpicker_demo_text = "Lorem ipsum dolor sit amet, consectetur adipisicing elit";
 
 typedef struct ColorPickerGLobal {
     char executable[PATH_MAX];
@@ -46,48 +39,9 @@ SDL_Surface* render_colorpicker_text(char* text) {
     return draw_text(text, cp_font, cp_fontcolor);
 }
 
-void render_colorpicker_paragraph( char* text, SDL_Surface* out, SDL_Rect* offs) {
-    char* copy; copy_str(copy, text);
-    char* lines[100], *tmp = copy;
-    int i=0, len = 0;
-    
-    while (tmp) {
-        if (len > 0) {
-            *tmp = '\0';
-            tmp++;
-        }
-        lines[len++] = tmp;
-        tmp = strchr(tmp, '\n');
-    }
-    SDL_Surface* line_sfc[len];
-    for (;i<len;i++) {
-        line_sfc[i] = render_colorpicker_text(lines[i]);
-    }
-    free(copy);
-    
-    int off_y = TTF_FontLineSkip(cp_font);
-    for (i=0;i<len;i++) {
-        SDL_BlitSurface(line_sfc[i], NULL, out, offs);
-        offs->y += off_y;
-        free_surface(line_sfc[i]);
-    }
-}
-
 SDL_Surface* colorpicker_load_gradient(int color) {
     SDL_Surface *out, *tmp = load_global_image("gradient.png");
-    Uint32 rm=0xFF&(color>>16), gm=0xFF&(color>>8), bm=0xFF&(color);
-    
-    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
-    on the endianness (byte order) of the machine */
-    #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    rm<<=24; gm<<=16; bm<<=8; 
-    #else
-    gm<<=8; bm<<=16;
-    #endif
-    
-    out =  SDL_CreateRGBSurface(SDL_SWSURFACE, 
-        tmp->w, tmp->h, 24, rm, gm, bm, 0);
-    SDL_BlitSurface(tmp, NULL, out, NULL);
+    out = tint_surface(tmp, color, 0);
     free_surface(tmp);
     return out;
 }
@@ -141,7 +95,7 @@ int  colorpicker_init(char* title, char* executable,  char* path, char* color, c
         
     cp_preview = create_surface(
         COLORPICKER_PREVIEW_W, COLORPICKER_PREVIEW_H,
-        24, 0,0,0,0);
+        24, -1,-1,-1, 0);
         
     if (strlen(cp_global.background) > 0) {
         double xr = COLORPICKER_PREVIEW_W,
@@ -169,6 +123,8 @@ void colorpicker_deinit() {
     for (;i<3;i++) {
         free_surface(cp_gradient[i]);
     }
+    
+    free_surface(cp_demo_text);
     free_surface(cp_preview_bg);
     free_surface(cp_preview);
     free_surface(cp_background);
@@ -255,12 +211,11 @@ void colorpicker_update_color()
         SDL_FillRect(cp_preview, NULL, SDL_MapRGB(cp_preview->format,cols[0],cols[1],cols[2]));
     } else {
         SDL_BlitSurface(cp_preview_bg, NULL, cp_preview, NULL);
-        
-        SDL_Rect prev_rect;
-        init_rect(&prev_rect, 4, 2, 
-            COLORPICKER_PREVIEW_W, COLORPICKER_PREVIEW_H);
-        render_colorpicker_paragraph(
-            colorpicker_demo_text, cp_preview, &prev_rect);
+        free_surface(cp_demo_text);
+        cp_demo_text = render_colorpicker_text(colorpicker_demo_text);
+        SDL_Rect pos = {4,cp_preview->h/2-cp_demo_text->h/2,
+            COLORPICKER_PREVIEW_W,COLORPICKER_PREVIEW_H};
+        SDL_BlitSurface(cp_demo_text,  NULL, cp_preview, &pos);
     }
     if (strlen(cp_global.title) > 0) 
     {
