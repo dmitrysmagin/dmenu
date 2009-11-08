@@ -22,21 +22,34 @@ TTF_Font* get_theme_font(int size)
 
 TTF_Font* get_osd_font()
 {
-    return load_global_font("FreeSans.ttf", 13);
+    return load_global_font(DOSD_FONT, DOSD_FONT_SIZE);
+}
+
+SDL_Surface* get_theme_background()
+{
+    return load_theme_background(get_user_attr("Background"));
+}
+
+char* get_theme_font_color_string()
+{
+    char* color = new_str(20);
+    char* user_color = get_user_attr("FontColor");
+    
+    if (!user_color) 
+    {
+        color = read_first_line(global_file("fontcolor.ini"));
+    } 
+    else {
+        strcpy(color, user_color);
+    }
+    
+    return color;
 }
 
 SDL_Color* get_theme_font_color()
 {
-    SDL_Color* out = NULL;
-    char* color = get_user_attr("FontColor");
-    if (color == 0) 
-    {
-        out = load_global_color("fontcolor.ini");
-    } 
-    else {
-        out = parse_color_string(color);
-    }
-    return out;
+    char* tmp = get_theme_font_color_string();
+    return parse_color_string(tmp);
 }
 
 char* dmenu_file(char* file) 

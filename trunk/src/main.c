@@ -18,6 +18,7 @@
 
 #include "menu.h"
 #include "filelist.h"
+#include "colorpicker.h"
 #include "imageviewer.h"
 
 #include "conf.h"
@@ -135,6 +136,7 @@ void deinit() {
     */ 
     
     // de-init everything
+    colorpicker_deinit();
     filelist_deinit();
     imageviewer_deinit();
     menu_deinit();
@@ -169,6 +171,9 @@ void update_display() {
             break;
         case IMAGEVIEWER:
             imageviewer_draw(screen);
+            break;
+        case COLORPICKER:
+            colorpicker_draw(screen);
             break;
     }
     
@@ -230,6 +235,9 @@ void listen() {
                             break;
                         case IMAGEVIEWER:
                             state = imageviewer_keypress(key);
+                            break;
+                        case COLORPICKER:
+                            state = colorpicker_keypress(key);
                             break;
                     }
                     break;
