@@ -30,50 +30,6 @@
 SDL_Surface* tmp_surface;
 
 void run_internal_command(char* command, char* args, char* workdir);
-/*
-void fill_fb(Uint16* source)
-{
-    int fbdev;
-    Uint16 *fb;
-    
-    fbdev=open("/dev/fb0", O_RDWR);
-    fb=(Uint16 *)mmap(0, 320*240*sizeof(Uint16), PROT_WRITE, MAP_SHARED, fbdev, 0);
-    memcpy(fb, source, 320*240*sizeof(Uint16));
-    }
-*/
-
-/*
-void run_command(char* executable, char* args, char* workdir)
-{
-    char exe[512];
-    char cwd[512];
-    int rc;
-    
-    int exe_len = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
-    exe[exe_len] = '\0';
-    int cwd_len = readlink("/proc/self/cwd", cwd, sizeof(cwd) - 1);
-    cwd[cwd_len] = '\0';
-    
-    char cmd[1024];
-    snprintf(cmd, sizeof(cmd), "%s %s;cd %s;exec %s", executable, args, cwd, exe);
-    
-    rc = chdir(workdir);
-    if (rc != 0) {
-   printf("Unable to change to directory %s\n", workdir);
-   perror(0);
-   }
-   
-   execlp("/bin/sh", "/bin/sh", "-c", cmd, NULL);
-   
-   // it should not return, otherwise it means we are not able to execute the application
-   rc = chdir(cwd);
-   if (rc != 0) {
-   printf("Unable to change to directory %s\n", cwd);
-   perror(0);
-   }
-   execlp(exe, exe, NULL);
-   }
-*/
 
 void clear_last_command()
 {
@@ -98,7 +54,6 @@ void run_command(char* executable, char* args, char* workdir)
     
     // launch the program
     execute_next_command(tmp_work, args_list);
-    //execute_command(tmp_work, args_list);
 }
 
 void run_internal_command(char* command, char* args, char* workdir)

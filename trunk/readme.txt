@@ -46,22 +46,24 @@ In file selector menu,
 
 up, down key - select file
 Y + up/down key - page up/down
-left - change to the parent directory
+left  - change to the parent directory
 right - go to the selected directory
 A key - run the selected file or go to the selected directory
 B key - exit file selector menu
 R key - page down
 L key - page up
+Start - Save current directory as the future value of
+        SelectorDir for the menuitem that called it
 
 In color selector menu,
 
 up, down key - select R/G/B
-left - reduce selected color value
-right - increase selected color value
+left  - reduce selected color value broadly
+right - increase selected color value broadly
+L key - reduce selected color value finely
+R key - increase selected color value finely
 A key - set color and exit color selector menu
 B key - exit color selector menu
-
-
 
 Theme support
 -------------
@@ -209,8 +211,9 @@ the filelist. For example,
         SelectorDir = "/usr/local/data/roms"
     }
 
-The filelist current folder is set to "SelectorDir".
-
+The filelist current folder is set to "SelectorDir". If the user has set
+SelectorDir manually for a MenuItem (by pressing Start in the fileselector),
+that value will override the MenuItem value.
 
 
 Wallpaper Selector with thumbnail

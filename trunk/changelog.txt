@@ -1,7 +1,7 @@
 [0.5]
 - Fixed a lot of SegFault bugs
 - Change the mechanism that the next application is called
-- Rename dmenu binaly to "dmenu.bin"
+- Rename dmenu binary to "dmenu.bin"
 - Added a dmenu start up script named "dmenu"
 - Added "SelectorDir" setting for menuitem and submenuitem
 - Added new key binds in filelist ( L key - page up / R key - page down )

@@ -50,7 +50,6 @@ enum MenuState { MAINMENU, FILELIST, IMAGEVIEWER, COLORPICKER };
 enum InternalCommand { THEMESELECT, BACKGROUNDSELECT, COLORSELECT }; 
 enum Direction { PREV, NEXT, UP, DOWN, RIGHT, LEFT };
 
-//void fill_fb(Uint16* source);
 enum InternalCommand get_command(char* cmd);
 
 int bound(int val, int low, int high);
