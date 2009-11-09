@@ -511,7 +511,6 @@ void run_export_job(char* old_filename, char* new_filename, SDL_Surface* sfc)
     pthread_create(&image_exporter[CURRENT_JOB], NULL, export_image, (void*)job); 
 }
 
-//@todo, make this work with PNG instead of BMP for disk space efficiency
 SDL_Surface* load_resized_image(char* file, int width, int height)
 {
     struct stat orig_stat, new_stat, dir_stat;
@@ -525,7 +524,7 @@ SDL_Surface* load_resized_image(char* file, int width, int height)
     new_dir[i] = '\0';
     strcat(new_dir, THUMBNAILS_PATH);
     
-    sprintf(new_file, "%s/%s_%03d_%03d", new_dir, (char*)(end+1), width, height);
+    sprintf(new_file, "%s/%s_%03dx%03d", new_dir, (char*)(end+1), width, height);
     SDL_Surface *out = load_image_file_with_format(new_file, 0, 0), *tmp;
     
     if (out == NULL) { //If not created
