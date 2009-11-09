@@ -57,7 +57,7 @@ typedef struct {
     char* file;
     struct stat* orig_stat;
     SDL_Surface *surface;
-} ImageExport;
+} ImageExportJob;
 
 int bound(int val, int low, int high);
 int wrap(int val, int low, int high);
@@ -83,6 +83,7 @@ SDL_Surface* load_image_file( char* file );
 SDL_Surface* load_image_file_no_alpha( char* file );
 SDL_Surface* load_image_file_with_format( char* file , int alpha, int fail_on_notfound );
 SDL_Surface* load_resized_image(char* file, int width, int height);
+void export_image(ImageExportJob* job);
 
 SDL_Surface* render_text( char* text, TTF_Font* font, SDL_Color* color, int solid );
 SDL_Surface* draw_text( char* text, TTF_Font* font, SDL_Color* color);
