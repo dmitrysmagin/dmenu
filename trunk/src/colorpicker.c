@@ -28,7 +28,7 @@ typedef struct ColorPickerGLobal {
     char title[PATH_MAX];
     char color_string[20];
     int active;
-    int is_ready, state_changed;
+    int is_ready, state_changed, color_changed;
     int colors[4];
     
 } ColorPickerGlobal;
@@ -106,6 +106,7 @@ int  colorpicker_init(char* title, char* executable,  char* path, char* color, c
     
     colorpicker_update_color();
 
+    cp_global.color_changed = 1;
     cp_global.state_changed = 1;
     
     return 0;
@@ -131,7 +132,10 @@ void colorpicker_deinit() {
     free_surface(cp_title_bg);
     free_color(cp_fontcolor);
     free_font(cp_font);
+    
     cp_global.is_ready = 0;
+    cp_global.state_changed = 0;
+    cp_global.color_changed = 0;
 }
 
 void colorpicker_draw(SDL_Surface* screen) {
@@ -158,6 +162,8 @@ void colorpicker_draw(SDL_Surface* screen) {
         dstrect.y += COLORPICKER_COLOR_FULL;
         dhtrect.y += COLORPICKER_COLOR_FULL;
     }
+    
+    colorpicker_update_preview();
     
     init_rect(&dstrect, 
         COLORPICKER_PREVIEW_X, COLORPICKER_PREVIEW_Y, 
@@ -194,7 +200,7 @@ void colorpicker_change_color_set(enum Direction dir)
 {
     int delta = (dir == UP) ? -1 : 1;
     SE_out ( MENUITEM_MOVE );
-    cp_global.active = wrap(cp_global.active+delta,0,3);
+    cp_global.active = wrap(cp_global.active+delta,0,2);
     cp_global.state_changed = 1;
 }
 
@@ -205,6 +211,15 @@ void colorpicker_update_color()
     cp_fontcolor->r = cols[0];
     cp_fontcolor->g = cols[1];
     cp_fontcolor->b = cols[2];
+    cp_global.color_changed = 1;
+}
+
+void colorpicker_update_preview() 
+{
+    int* cols = cp_global.colors;
+    
+    if (!cp_global.color_changed) return;
+    cp_global.color_changed = 0;
     
     if (strlen(cp_global.background) == 0) {
         SDL_FillRect(cp_preview, NULL, SDL_MapRGB(cp_preview->format,cols[0],cols[1],cols[2]));
@@ -215,11 +230,6 @@ void colorpicker_update_color()
         SDL_Rect pos = {4,cp_preview->h/2-cp_demo_text->h/2,
             COLORPICKER_PREVIEW_W,COLORPICKER_PREVIEW_H};
         SDL_BlitSurface(cp_demo_text,  NULL, cp_preview, &pos);
-    }
-    if (strlen(cp_global.title) > 0) 
-    {
-        free_surface(cp_title);
-        cp_title = render_colorpicker_text(cp_global.title);
     }
 }
 
