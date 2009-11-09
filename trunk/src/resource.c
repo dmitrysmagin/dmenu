@@ -46,12 +46,19 @@ void show_menu_snapshot(SDL_Surface* screen)
     SDL_Surface* tmp = load_image_file_with_format(DMENU_SNAPSHOT,0,0);
     if (tmp) {
         SDL_BlitSurface(tmp, 0, screen, 0);
+        SDL_Flip(screen);
         free_surface(tmp);
-    }
+    }    
 }
 
-void save_menu_snapshot(SDL_Surface* screen)
+void save_menu_snapshot(SDL_Surface* screen, int blur)
 {
+    if (blur) {
+        SDL_Surface* tmp = create_surface(screen->w, screen->h, 32, EXIT_TINT_COLOR);
+        SDL_BlitSurface(tmp, 0, screen, 0);        
+        SDL_Flip(screen);
+        free_surface(tmp);
+    }
     export_surface_as_bmp(DMENU_SNAPSHOT, screen);
 }
 
