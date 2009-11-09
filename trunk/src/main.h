@@ -5,5 +5,6 @@ void deinit();
 void reload();
 void quick_quit();
 void quit();
+void update_display();
 
 #endif

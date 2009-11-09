@@ -41,6 +41,20 @@ SDL_Color* get_theme_font_color()
     return parse_color_string(tmp);
 }
 
+void show_menu_snapshot(SDL_Surface* screen)
+{
+    SDL_Surface* tmp = load_image_file_with_format(DMENU_SNAPSHOT,0,0);
+    if (tmp) {
+        SDL_BlitSurface(tmp, 0, screen, 0);
+        free_surface(tmp);
+    }
+}
+
+void save_menu_snapshot(SDL_Surface* screen)
+{
+    export_surface_as_bmp(DMENU_SNAPSHOT, screen);
+}
+
 char* dmenu_file(char* file) 
 {
     return relative_file(DMENU_PATH, file);    
