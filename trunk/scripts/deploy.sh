@@ -7,6 +7,7 @@ fi
 MNT=$( echo $1 | sed -e 's/\/$//g')
 DMN="$MNT/local/dmenu"
 FILES="dmenu dmenu.bin dmenu.ini"
+FOLDERS="resources wallpapers"
 NEED_MOUNT=1
 
 if mount | grep "on $MNT type" > /dev/null; then 
@@ -20,11 +21,14 @@ if [ $NEED_MOUNT -gt 0 ]; then
 fi
 
 if ./scripts/build.sh; then
+   rm -rf $DMN/wallpapers/.thumb
    for x in $FILES; do 
        cp $x $DMN
    done
-   for x in $(ls resources/*); do
-       cp $x $DMN/resources
+   for y in $FOLDERS; do
+       for x in $(ls $y/*); do
+           cp $x $DMN/$y
+       done
    done
 fi
 

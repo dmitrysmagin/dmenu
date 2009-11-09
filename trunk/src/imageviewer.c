@@ -223,7 +223,9 @@ void imageviewer_update_list()
     for (i=0,j=start;j<iv_global.total_size&&i<size;i++,j++) 
     {
         get_root_file(tmp, j);
-        iv_global.entries[i] = load_resized_image(tmp, IMAGE_THUMB_RATIO_INNER, IMAGE_THUMB_RATIO_INNER);
+        iv_global.entries[i] = load_resized_image(tmp, 
+            SCREEN_WIDTH  * IMAGE_THUMB_RATIO_INNER, 
+            SCREEN_HEIGHT * IMAGE_THUMB_RATIO_INNER);
     }
 }
 
@@ -232,7 +234,9 @@ void imageviewer_update_preview()
     if (imageviewer_preview) SDL_FreeSurface(imageviewer_preview);
     char tmp[PATH_MAX];
     get_root_file(tmp, iv_global.absolute_pos);
-    imageviewer_preview = load_resized_image(tmp, IMAGE_PREVIEW_RATIO, IMAGE_PREVIEW_RATIO);
+    imageviewer_preview = load_resized_image(tmp, 
+        SCREEN_WIDTH  * IMAGE_PREVIEW_RATIO, 
+        SCREEN_HEIGHT * IMAGE_PREVIEW_RATIO);
 }
 
 void imageviewer_move_page(enum Direction dir)
@@ -260,7 +264,6 @@ void imageviewer_move(enum Direction dir)
     int prev_p = iv_global.page;
     
     iv_global.absolute_pos = bound(iv_global.absolute_pos + delta, 0, iv_global.total_size-1);
-    iv_global.state_changed = prev != iv_global.absolute_pos;
     iv_global.page = iv_global.absolute_pos/iv_global.set_size;
  
     SE_out( MENUITEM_MOVE );
@@ -272,7 +275,8 @@ void imageviewer_move(enum Direction dir)
         imageviewer_update_list();
     }
     
-    if (iv_global.state_changed) {
+    if (prev !=  iv_global.absolute_pos) {
+        iv_global.state_changed = 1;
         imageviewer_update_preview();
     }
 }

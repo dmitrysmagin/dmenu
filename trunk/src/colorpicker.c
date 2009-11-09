@@ -97,11 +97,8 @@ int  colorpicker_init(char* title, char* executable,  char* path, char* color, c
         24, -1,-1,-1, 0);
         
     if (strlen(cp_global.background) > 0) {
-        double xr = COLORPICKER_PREVIEW_W,
-               yr = COLORPICKER_PREVIEW_H;
-        xr /= SCREEN_WIDTH;
-        yr /= SCREEN_HEIGHT;
-        cp_preview_bg = load_resized_image(cp_global.background, xr, yr);
+        cp_preview_bg = load_resized_image(
+            cp_global.background, COLORPICKER_PREVIEW_W, COLORPICKER_PREVIEW_H);
     } 
     
     colorpicker_update_color();

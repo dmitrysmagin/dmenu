@@ -2,6 +2,7 @@
 #define _COMMON_H_
 
 #include "confuse.h"
+#include <sys/stat.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <SDL_image.h>
@@ -52,6 +53,12 @@ enum Direction { PREV, NEXT, UP, DOWN, RIGHT, LEFT };
 
 enum InternalCommand get_command(char* cmd);
 
+typedef struct {
+    char* file;
+    struct stat* orig_stat;
+    SDL_Surface *surface;
+} ImageExport;
+
 int bound(int val, int low, int high);
 int wrap(int val, int low, int high);
 
@@ -75,7 +82,7 @@ char* read_first_line( char* file);
 SDL_Surface* load_image_file( char* file );
 SDL_Surface* load_image_file_no_alpha( char* file );
 SDL_Surface* load_image_file_with_format( char* file , int alpha, int fail_on_notfound );
-SDL_Surface* load_resized_image(char* file, float ratio_x, float ratio_y);
+SDL_Surface* load_resized_image(char* file, int width, int height);
 
 SDL_Surface* render_text( char* text, TTF_Font* font, SDL_Color* color, int solid );
 SDL_Surface* draw_text( char* text, TTF_Font* font, SDL_Color* color);
@@ -85,7 +92,8 @@ SDL_Color*   load_color_file( char* file );
 void  init_rect(SDL_Rect* rect, int x, int y, int w, int h);
 void  init_rect_pos(SDL_Rect* rect, int x, int y);
 SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a);
-SDL_Surface* shrink_surface(SDL_Surface *src, float ratio_x, float ratio_y);
+SDL_Surface* shrink_surface(SDL_Surface *src, int width, int height);
 int export_surface_as_bmp(char* file_name, SDL_Surface* surface);
 SDL_Surface* tint_surface(SDL_Surface* src, int color, int alpha);
+SDL_Surface* copy_surface(SDL_Surface* src);
 #endif

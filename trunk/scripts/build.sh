@@ -2,6 +2,8 @@
 HOST_ERRS=0
 DINGOO_ERRS=0
 
+rm -rf wallpapers/.thumb
+
 make -f Makefile.host rebuild 0> /dev/null 1> /dev/null 2> host_err
 HOST_ERRS=`cat host_err | grep "\(warning\|error\)" | wc -l`
 

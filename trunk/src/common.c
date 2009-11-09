@@ -13,21 +13,25 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
+#include <png.h>
+#include <pthread.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
-#include <png.h>
-#include <errno.h>
 #include "env.h"
 #include "filelist.h"
 #include "conf.h"
 #include "main.h"
 #include "menu.h"
 
+#define MAX_IMAGE_JOBS 20
+int CURRENT_JOB = 0;
+
 SDL_Surface* tmp_surface;
+pthread_t image_exporter[MAX_IMAGE_JOBS];
 
 void run_internal_command(char* command, char* args, char* workdir);
 
@@ -344,31 +348,35 @@ SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a)
 /**
  * Optimized for 16bit images.  Will not work any any others
  */
-SDL_Surface* shrink_surface(SDL_Surface *src, float ratio_x, float ratio_y)
+SDL_Surface* shrink_surface(SDL_Surface *src, int width, int height)
 {
-    if(!src || ratio_x > 1 || ratio_x <= 0 || ratio_y > 1 || ratio_y <= 0) return NULL;
+    if (!src) return NULL;
     
-    float fpx = 1/ratio_x, fpy = 1/ratio_y;
-    int y,x,w = (int)(src->w * ratio_x), h = (int)(src->h * ratio_y);
+    int h = src->h, w = src->w;
+    
+    if(width>w || height>h || h <=0 || w <= 0) return NULL;
+    
+    float fpx = (w*1.0f)/(width*1.0f), fpy =(h*1.0f)/(height*1.0f);
+    int y,x;
     
     SDL_Surface *dst = SDL_CreateRGBSurface(
-        src->flags, w, h, SCREEN_COLOR_DEPTH,
+        src->flags, width, height, SCREEN_COLOR_DEPTH,
         src->format->Rmask, src->format->Gmask, 
         src->format->Bmask, src->format->Amask);
 
     register int src_pitch = src->pitch, dst_pitch = dst->pitch;
     register int src_y_off = 0, dst_y_off = 0, dst_x_off=0;
     Uint16 *src_pixels = (Uint16*)src->pixels, *dst_pixels = (Uint16*)dst->pixels;
-    int max_w = SCREEN_BPP*w;
+    int max_w = SCREEN_BPP*width;
     
-    y = h;
+    y = height;
     while (y--) {
         
         dst_y_off = dst_pitch*y;
         src_y_off = src_pitch*(int)(y*fpy);
         dst_x_off = max_w;
         
-        x= w;
+        x= width;
         while (x--) {
             dst_x_off -= SCREEN_BPP;
             *(Uint16*)((int)dst_pixels + dst_y_off+dst_x_off) = 
@@ -377,6 +385,40 @@ SDL_Surface* shrink_surface(SDL_Surface *src, float ratio_x, float ratio_y)
     }
     
     return dst;
+}
+
+SDL_Surface* tint_surface(SDL_Surface* src, int color, int alpha) {
+    
+    SDL_Surface *out;
+    Uint32 rm=0xFF&(color>>16), gm=0xFF&(color>>8), bm=0xFF&(color), am=0xFF;
+    
+    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
+    on the endianness (byte order) of the machine */
+    #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    rm<<=24; gm<<=16; bm<<=8; 
+    #else
+    gm<<=8; bm<<=16; am<<=24;
+    #endif
+    
+    out =  SDL_CreateRGBSurface(SDL_SWSURFACE, src->w, src->h, 24, rm, gm, bm, alpha?am:0);
+    SDL_BlitSurface(src, NULL, out, NULL);
+    return out;
+}
+
+SDL_Surface* copy_surface(SDL_Surface* src) {
+    Uint32 rm=0xFF, gm=0xFF, bm=0xFF, am=0xFF;
+    
+    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
+    on the endianness (byte order) of the machine */
+    #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    rm<<=24; gm<<=16; bm<<=8; 
+    #else
+    gm<<=8; bm<<=16; am<<=24;
+    #endif
+    
+    SDL_Surface *out =  SDL_CreateRGBSurface(SDL_SWSURFACE, src->w, src->h, 32, rm, gm, bm, am);
+    SDL_BlitSurface(src, NULL, out, NULL);
+    return out;
 }
 
 /**
@@ -406,7 +448,7 @@ int export_surface_as_png(char *filename, SDL_Surface *surface)
 
     png_init_io(png_ptr, fp);
     png_set_IHDR(png_ptr, info_ptr, surf->w, surf->h, 8, colortype, 
-        PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+        PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
     /* Writing the image */
     png_write_info(png_ptr, info_ptr);
@@ -432,13 +474,46 @@ int export_surface_as_bmp(char *filename, SDL_Surface *surface) {
     return SDL_SaveBMP(surface, filename);
 }
 
-//@todo, make this work with PNG instead of BMP for disk space efficiency
-SDL_Surface* load_resized_image(char* file, float ratio_x, float ratio_y)
+void* export_image(void* in)
 {
-    if (ratio_x >= 1.0f || ratio_y >= 1.0f) {
-        return load_image_file_no_alpha(file);
+    ImageExport* job = (ImageExport*) in;
+    export_surface_as_png(job->file, job->surface); 
+    
+    //Copy over mtime/atime as the dingoo doesn't have a clock and so 
+    // these values default to 0, and we need to be able to check mtimes
+    // to know if we need to recache
+    struct utimbuf new_time = {job->orig_stat->st_atime, job->orig_stat->st_mtime}; 
+    utime(job->file, &new_time);   
+    
+    //free_surface(job->surface); 
+    free(job->file); 
+    free(job->orig_stat); 
+    free(job);
+    return 0;
+}
+
+void run_export_job(char* old_filename, char* new_filename, SDL_Surface* sfc) 
+{
+    //Using BMP for now, b/c it is faster, should move to png but it may
+    // need to be spawned in it's own thread
+    ImageExport* job = new_item(ImageExport); {
+        char* tmp_file; 
+        copy_str(tmp_file, new_filename);
+        job->file = tmp_file; 
+        
+        struct stat* tmp_stat = new_item(struct stat);
+        stat(old_filename, tmp_stat);
+        job->orig_stat = tmp_stat;            
+        job->surface = sfc;
     }
     
+    CURRENT_JOB = wrap(CURRENT_JOB+1,0,MAX_IMAGE_JOBS-1);
+    pthread_create(&image_exporter[CURRENT_JOB], NULL, export_image, (void*)job); 
+}
+
+//@todo, make this work with PNG instead of BMP for disk space efficiency
+SDL_Surface* load_resized_image(char* file, int width, int height)
+{
     struct stat orig_stat, new_stat, dir_stat;
     
     char new_file[PATH_MAX], new_dir[PATH_MAX];
@@ -450,13 +525,14 @@ SDL_Surface* load_resized_image(char* file, float ratio_x, float ratio_y)
     new_dir[i] = '\0';
     strcat(new_dir, THUMBNAILS_PATH);
     
-    sprintf(new_file, "%s/%s_%02f_%02f", new_dir, (char*)(end+1), ratio_x, ratio_y);
+    sprintf(new_file, "%s/%s_%03d_%03d", new_dir, (char*)(end+1), width, height);
     SDL_Surface *out = load_image_file_with_format(new_file, 0, 0), *tmp;
     
     if (out == NULL) { //If not created
         out = load_image_file_no_alpha(file);
-        tmp = shrink_surface(out, ratio_x, ratio_y);
+        tmp = shrink_surface(out, width, height);
         free_surface(out);
+        out = tmp;
         
         if(stat(new_dir,&dir_stat) != 0) {
             int rc = mkdir(new_dir, 0777);
@@ -465,18 +541,8 @@ SDL_Surface* load_resized_image(char* file, float ratio_x, float ratio_y)
                 return tmp;
             }   
         }
+        run_export_job(file, new_file, out);
         
-        //Using BMP for now, b/c it is faster, should move to png but it may
-        // need to be spawned in it's own thread
-        export_surface_as_bmp(new_file, tmp); 
-        stat(file, &orig_stat);
-        //Copy over mtime/atime as the dingoo doesn't have a clock and so 
-        // these values default to 0, and we need to be able to check mtimes
-        // to know if we need to recache
-        struct utimbuf new_time = {orig_stat.st_atime, orig_stat.st_mtime}; 
-        utime(new_file, &new_time);
-        
-        out = tmp;
     } else {
         stat(file, &orig_stat);
         stat(new_file, &new_stat);
@@ -487,26 +553,8 @@ SDL_Surface* load_resized_image(char* file, float ratio_x, float ratio_y)
             //Clear cache and reload image
             remove(new_file); 
             free(out);
-            out = load_resized_image(file, ratio_x, ratio_y);
+            out = load_resized_image(file, width, height);
         }
     }
-    return out;
-}
-
-SDL_Surface* tint_surface(SDL_Surface* src, int color, int alpha) {
-    
-    SDL_Surface *out;
-    Uint32 rm=0xFF&(color>>16), gm=0xFF&(color>>8), bm=0xFF&(color), am=0xFF;
-    
-    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
-    on the endianness (byte order) of the machine */
-    #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    rm<<=24; gm<<=16; bm<<=8; 
-    #else
-    gm<<=8; bm<<=16; am<<=24;
-    #endif
-    
-    out =  SDL_CreateRGBSurface(SDL_SWSURFACE, src->w, src->h, 24, rm, gm, bm, alpha?am:0);
-    SDL_BlitSurface(src, NULL, out, NULL);
     return out;
 }
