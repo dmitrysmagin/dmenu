@@ -11,6 +11,7 @@
 - Moved and Renamed the dmenu resource folder "/usr/local/home/.dmenu" to
   "/usr/local/dmenu/resources"
 - Moved "dmenu.ini" from "/usr/local/dmenu/resouces/" to "/usr/local/dmenu/"
+- Moved Background/ VolDisp/ BrightDisp setting from each "theme.cfg" to "dmenu.ini"
 - Merged "main.cfg and fontcolor.ini" to "dmenu.ini"
 - Remove the fontcolor setting scripts and folder
 - Remove fontcolor.ini

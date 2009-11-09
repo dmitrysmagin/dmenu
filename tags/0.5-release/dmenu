@@ -8,10 +8,10 @@ fi
 if ./$CMD; then
     if [ -f "$ACT" ]; then 
         if ! `sh ./$ACT`; then
-            sleep 5
+            sleep 1
         fi
         rm "$ACT"
     fi
 else
-    sleep 5
+    sleep 1
 fi

@@ -5,11 +5,27 @@ Dmenu is a simple menu system for Dingux (Linux on Dingoo A320). It resembles
 the original XMB-like menu comes with the stock Dingoo A320 firmware.
 
 
+
 Installation
 ------------
-All files of Dmenu need to go to /usr/local/dmenu. To start dmenu on system
-start, use a shell script as /usr/local/sbin/main to start dmenu, or copy dmenu
-to /usr/local/sbin/main.
+All files of Dmenu need to go to /usr/local/dmenu. 
+These are the minimum set must copy to run Dmenu,
+ [FILE] dmenu
+ [FILE] dmenu.bin
+ [FILE] dmenu.ini
+ [FOLDER] resources/
+ [FOLDER] themes/
+ [FOLDER] wallpapers/
+
+To start dmenu on system start, use a shell script as /usr/local/sbin/main to
+start dmenu like this,
+
+[shell script]
+   #!/bin/sh
+   cd /usr/local/dmenu
+   ./dmenu
+[/shell script]
+
 
 
 Keys
@@ -44,6 +60,7 @@ left - reduce selected color value
 right - increase selected color value
 A key - set color and exit color selector menu
 B key - exit color selector menu
+
 
 
 Theme support
@@ -84,10 +101,12 @@ Dingux, until the bug is fixed.
 *******************************************************************************
 
 
+
 Theme config file includes
 --------------------------
 Theme config file can include other config files. See theme.cfg in the sample 
 theme called 'include_sample'.
+
 
 
 SearchPath
@@ -205,6 +224,9 @@ For example,
         Name = "Select Wallpaper"
         Executable = "!backgroundselect"
     }
+
+You can add your favorite wall paper to "/usr/local/dmenu/wallpapers".
+WallpaperSelecter pick up all png file automatically from that folder.
 
 
 
