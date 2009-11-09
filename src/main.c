@@ -93,6 +93,12 @@ int init_display() {
     // make sure SDL cleans up before exit
     atexit(SDL_Quit);
     
+    // disable mouse pointer
+    SDL_ShowCursor(SDL_DISABLE);
+
+    //Allow for easier menu nav
+    SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
+        
     // create a new window
     screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_COLOR_DEPTH, SDL_SWSURFACE);
     if ( !screen )
@@ -103,13 +109,7 @@ int init_display() {
     
     //Show saved image as soon as possible to help hide startup times
     show_menu_snapshot(screen);
-    
-    //Allow for easier menu nav
-    SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
-    
-    // disable mouse pointer
-    SDL_ShowCursor(SDL_DISABLE);
-    
+  
     return 0;
 }
 
