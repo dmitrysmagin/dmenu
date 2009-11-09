@@ -150,7 +150,7 @@ void deinit() {
     // Save snapshot on menu deinit
     state = MAINMENU;
     update_display();
-    save_menu_snapshot(screen);
+    save_menu_snapshot(screen, 1);
     
     menu_deinit();
     conf_unload();
