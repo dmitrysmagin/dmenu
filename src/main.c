@@ -15,7 +15,9 @@
 #include <SDL_image.h>
 #include "env.h" 
 #include "common.h"
+#include "resource.h"
 
+#include "main.h"
 #include "menu.h"
 #include "filelist.h"
 #include "colorpicker.h"
@@ -45,28 +47,16 @@ Uint32 time_left(void)
         return next_time - now;
 }
 
-int init_env() {
-    int rc=0;
-    
-    clear_last_command();
-    
-    #ifdef DINGOO_BUILD
-    // Need to ignore SIGHUP if we are started by init.
-    // In FB_CloseKeyboard() of SDL_fbevents.c , it does
-    // ioctl(tty0_fd, TIOCNOTTY, 0) to detach the process from tty,
-    // this will send a SIGHUP to us and dmenu will quit at 
-    // SDL_Init() below if it's not ignored.
-    if (signal(SIGHUP, SIG_IGN) == SIG_ERR) {
-        log_error("Unable to ignore SIGHUP");
-    }
-    #endif
+int init_system() {
 
     //Move to dmenu root dir
     change_dir(DMENU_PATH);
     
     // load config
-    rc = conf_load();
-    if (rc) return rc;
+    if (conf_load()) 
+    {
+        return 1;
+    }
     
     // Read saved persistent state
     if (!persistent_init())
@@ -74,35 +64,6 @@ int init_env() {
         log_error("Unable to initialize persistent memory");
     }
     
-    return 0;
-}
-
-int init_display() {
-    
-    // initialize SDL video
-    if ( SDL_Init( SDL_INIT_VIDEO ) < 0 )
-    {
-        log_error( "Unable to init SDL: %s", SDL_GetError() );
-        return 1;
-    }
-    
-    //Allow for easier menu nav
-    SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
-    
-    // make sure SDL cleans up before exit
-    atexit(SDL_Quit);
-    
-    // create a new window
-    screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_COLOR_DEPTH, SDL_SWSURFACE);
-    if ( !screen )
-    {
-        log_error("Unable to set %dx%d video: %s", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_GetError());
-        return 1;
-    }
-    
-    // disable mouse pointer
-    SDL_ShowCursor(SDL_DISABLE);
-   
     // init menu config
     if (menu_init())
     {
@@ -117,14 +78,60 @@ int init_display() {
         return 1;
     }
     
-    next_time = SDL_GetTicks() + TICK_INTERVAL;
+    return 0;
+}
+
+int init_display() {
+    
+    // initialize SDL video
+    if ( SDL_Init( SDL_INIT_VIDEO ) < 0 )
+    {
+        log_error( "Unable to init SDL: %s", SDL_GetError() );
+        return 1;
+    }
+        
+    // make sure SDL cleans up before exit
+    atexit(SDL_Quit);
+    
+    // create a new window
+    screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_COLOR_DEPTH, SDL_SWSURFACE);
+    if ( !screen )
+    {
+        log_error("Unable to set %dx%d video: %s", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_GetError());
+        return 1;
+    }
+    
+    //Show saved image as soon as possible to help hide startup times
+    show_menu_snapshot(screen);
+    
+    //Allow for easier menu nav
+    SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
+    
+    // disable mouse pointer
+    SDL_ShowCursor(SDL_DISABLE);
     
     return 0;
 }
 
 int init() {
     log_debug("Initializing");
-    return init_env() || init_display();
+    
+    clear_last_command();
+    
+    #ifdef DINGOO_BUILD
+    // Need to ignore SIGHUP if we are started by init.
+    // In FB_CloseKeyboard() of SDL_fbevents.c , it does
+    // ioctl(tty0_fd, TIOCNOTTY, 0) to detach the process from tty,
+    // this will send a SIGHUP to us and dmenu will quit at 
+    // SDL_Init() below if it's not ignored.
+    if (signal(SIGHUP, SIG_IGN) == SIG_ERR) {
+        log_error("Unable to ignore SIGHUP");
+    }
+    #endif
+    
+    int rc =  init_display() || init_system();
+    next_time = SDL_GetTicks() + TICK_INTERVAL;
+    return rc;
 }
 
 void deinit() {
@@ -139,6 +146,12 @@ void deinit() {
     colorpicker_deinit();
     filelist_deinit();
     imageviewer_deinit();
+    
+    // Save snapshot on menu deinit
+    state = MAINMENU;
+    update_display();
+    save_menu_snapshot(screen);
+    
     menu_deinit();
     conf_unload();
     dosd_deinit();

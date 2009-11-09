@@ -8,6 +8,7 @@
 #define DMENU_THEMES         DMENU_PATH "themes/"
 #define DMENU_CONF_FILE      DMENU_PATH "dmenu.ini"
 #define DMENU_COMMAND_FILE   DMENU_PATH ".next"
+#define DMENU_SNAPSHOT       DMENU_PATH ".screen"
 #define DMENU_BACKGROUNDS    DMENU_PATH "wallpapers/"
 #define GLOBAL_RESOURCE_PATH DMENU_PATH "resources/"
 char THEME_PATH[PATH_MAX];
