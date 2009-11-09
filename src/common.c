@@ -474,9 +474,8 @@ int export_surface_as_bmp(char *filename, SDL_Surface *surface) {
     return SDL_SaveBMP(surface, filename);
 }
 
-void* export_image(void* in)
+void run_export_job(ImageExportJob* job)
 {
-    ImageExport* job = (ImageExport*) in;
     export_surface_as_png(job->file, job->surface); 
     
     //Copy over mtime/atime as the dingoo doesn't have a clock and so 
@@ -489,14 +488,13 @@ void* export_image(void* in)
     free(job->file); 
     free(job->orig_stat); 
     free(job);
-    return 0;
 }
 
-void run_export_job(char* old_filename, char* new_filename, SDL_Surface* sfc) 
+void init_export_job(char* old_filename, char* new_filename, SDL_Surface* sfc) 
 {
     //Using BMP for now, b/c it is faster, should move to png but it may
     // need to be spawned in it's own thread
-    ImageExport* job = new_item(ImageExport); {
+    ImageExportJob* job = new_item(ImageExportJob); {
         char* tmp_file; 
         copy_str(tmp_file, new_filename);
         job->file = tmp_file; 
@@ -508,7 +506,7 @@ void run_export_job(char* old_filename, char* new_filename, SDL_Surface* sfc)
     }
     
     CURRENT_JOB = wrap(CURRENT_JOB+1,0,MAX_IMAGE_JOBS-1);
-    pthread_create(&image_exporter[CURRENT_JOB], NULL, export_image, (void*)job); 
+    pthread_create(&image_exporter[CURRENT_JOB], NULL, (void*)run_export_job, (void*)job); 
 }
 
 SDL_Surface* load_resized_image(char* file, int width, int height)
@@ -540,7 +538,7 @@ SDL_Surface* load_resized_image(char* file, int width, int height)
                 return tmp;
             }   
         }
-        run_export_job(file, new_file, out);
+        init_export_job(file, new_file, out);
         
     } else {
         stat(file, &orig_stat);
