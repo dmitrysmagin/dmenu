@@ -7,9 +7,23 @@ the original XMB-like menu comes with the stock Dingoo A320 firmware.
 
 Installation
 ------------
-All files of Dmenu need to go to /usr/local/dmenu. To start dmenu on system
-start, use a shell script as /usr/local/sbin/main to start dmenu, or copy dmenu
-to /usr/local/sbin/main.
+All files of Dmenu need to go to /usr/local/dmenu. 
+These are the minimum set must copy to run Dmenu,
+ [FILE] dmenu
+ [FILE] dmenu.bin
+ [FILE] dmenu.ini
+ [FOLDER] wallpapers/
+ [FOLDER] themes/
+
+To start dmenu on system start, use a shell script as /usr/local/sbin/main to
+start dmenu like this,
+
+[shell script]
+   #!/bin/sh
+   cd /usr/local/dmenu
+   ./dmenu
+[/shell script]
+
 
 
 Keys
@@ -205,6 +219,9 @@ For example,
         Name = "Select Wallpaper"
         Executable = "!backgroundselect"
     }
+
+You can add your favorite wall paper to "/usr/local/dmenu/wallpapers".
+WallpaperSelecter pick up all png file automatically from that folder.
 
 
 
