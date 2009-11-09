@@ -54,7 +54,7 @@ char THEME_PATH[PATH_MAX];
 #define IMAGE_SELECT_ALPHA      64
 
 
-#define EXIT_TINT_COLOR      0x44,0x44,0x44,0x66
+#define EXIT_TINT_COLOR      0,0,0,0xAA
 
 #define DOSD_COLOR           0xffffff
 #define DOSD_COLOR_RGB       255,255,255

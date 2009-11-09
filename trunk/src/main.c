@@ -95,9 +95,6 @@ int init_display() {
     
     // disable mouse pointer
     SDL_ShowCursor(SDL_DISABLE);
-
-    //Allow for easier menu nav
-    SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
         
     // create a new window
     screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_COLOR_DEPTH, SDL_SWSURFACE);
@@ -214,6 +211,9 @@ void listen() {
     SDLKey key;
     SDL_Event event;
     
+    //Allow for easier menu nav
+    SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
+        
     while (!program_done)
     {
         // message processing loop

@@ -121,7 +121,7 @@ void execute_next_command(char* dir, char** args)
     //Write change dir
     if (dir!=NULL && strlen(dir) > 0)
     {
-        fprintf(out, "cd %s\n", dir);
+        fprintf(out, "cd \"%s\"\n", dir);
     }
     
     //Write command
