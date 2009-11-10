@@ -29,8 +29,6 @@
 
 #define MAX_IMAGE_JOBS 20
 int CURRENT_JOB = 0;
-
-SDL_Surface* tmp_surface;
 pthread_t image_exporter[MAX_IMAGE_JOBS];
 
 void run_internal_command(char* command, char* args, char* workdir);
@@ -90,23 +88,20 @@ char** build_arg_list(char* commandline, char* args)
 {
     // build the args list for exec()
     char** args_list = new_str_arr(0);
-    char* token, *temp;
+    char* token;
     const char delimeter[] = " ";
     int len = 0;
     
     while ((token = strsep(&commandline, delimeter))) {
         if (token[0] != '\0') {
-            copy_str(temp, token);
-            append_str(args_list, len, temp);
+            append_str(args_list, len, strdup(token));
         }
     }
     
     // filelist.c will pass the selected filename in args. filename
     // may contain spaces.
-    char *filename = NULL;
     if (args) {
-        copy_str(filename, args);
-        append_str(args_list, len, filename);
+        append_str(args_list, len, strdup(args));
     }
     append_str(args_list, len, NULL);
         
@@ -231,7 +226,7 @@ FILE* load_file(char* file, char* mode) {
 }
 
 SDL_Surface* load_image_file_with_format( char* file , int alpha, int fail_on_notfound ) {
-    SDL_Surface* out = NULL;
+    SDL_Surface* out = NULL, *tmp_surface;
 
     tmp_surface = IMG_Load(file);
     if (tmp_surface == NULL) {
@@ -262,7 +257,7 @@ SDL_Surface* load_image_file_no_alpha( char* file ) {
 }
 
 SDL_Surface* render_text(char* text, TTF_Font* font, SDL_Color* color, int solid) {
-    SDL_Surface* out = NULL;
+    SDL_Surface* out = NULL, *tmp_surface;
     if (solid == 0) {
         tmp_surface = TTF_RenderUTF8_Blended(font, text, *color);
     } else {
@@ -495,13 +490,11 @@ void init_export_job(char* old_filename, char* new_filename, SDL_Surface* sfc)
     //Using BMP for now, b/c it is faster, should move to png but it may
     // need to be spawned in it's own thread
     ImageExportJob* job = new_item(ImageExportJob); {
-        char* tmp_file; 
-        copy_str(tmp_file, new_filename);
-        job->file = tmp_file; 
         
         struct stat* tmp_stat = new_item(struct stat);
         stat(old_filename, tmp_stat);
         job->orig_stat = tmp_stat;            
+        job->file = strdup(new_filename); 
         job->surface = sfc;
     }
     

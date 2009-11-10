@@ -25,10 +25,8 @@
 #include "sound.h"
 #include "dingoo.h"
 
-extern SDL_Surface* background;
-extern cfg_t *cfg;
-
 SDL_Surface* imageviewer_preview;
+SDL_Surface* imageviewer_preview_title;
 SDL_Surface* imageviewer_background;
 SDL_Surface* imageviewer_highlight;
 SDL_Surface* imageviewer_title_bg;
@@ -45,23 +43,34 @@ typedef struct ImageViewerGlobal {
     int absolute_pos;
     int relative_pos;
     int new;
+    int title_ticks;
     
-    int state_changed;
+    int  state_changed;
     char title[PATH_MAX];
     char executable[PATH_MAX];
     char root[PATH_MAX];
-    struct dirent **files;
     SDL_Surface** entries;
+    char** files;
+    char** file_titles;
+    
 } ImageViewerGlobal;
 
 ImageViewerGlobal iv_global;
+
+#define get_root_file(buff, i)\
+    strcpy(buff,"");\
+    if (iv_global.files[i][0] != '/') {\
+        strcat(buff, iv_global.root);\
+        strcat(buff,"/");\
+    };\
+    strcat(buff, iv_global.files[i])
 
 SDL_Surface* render_imageviewer_text(char* text) {
     return draw_text(text, imageviewer_font, imageviewer_font_color);
 }
 
 char* IMAGE_TYPES[3] = {".jpg", ".png", ".bmp"};
-int filter(const struct dirent *dptr)
+int imageviewer_file_filter(const struct dirent *dptr)
 {
     char *name = (char*)dptr->d_name;
     return strstr(name, IMAGE_TYPES[0]) != NULL 
@@ -69,16 +78,40 @@ int filter(const struct dirent *dptr)
         || strstr(name, IMAGE_TYPES[2]) != NULL;
 }
 
-int get_imagelist(char* path)
+int get_imagelist(char* path, ImageEntry** files)
 {
-    iv_global.total_size = max(scandir(path, &iv_global.files, filter, alphasort), 0);
+    int i = 0;
+    if (files == NULL) {
+        struct dirent** dir_files;
+        iv_global.total_size = max(scandir(path, &dir_files, imageviewer_file_filter, alphasort), 0);
+        if (iv_global.total_size > 0) {
+            iv_global.files       = new_array(char*, iv_global.total_size);
+            iv_global.file_titles = new_array(char*, iv_global.total_size);
+            for (i=0;i<iv_global.total_size;i++) {
+                iv_global.files[i] = strdup(dir_files[i]->d_name);
+                iv_global.file_titles[i] = NULL;
+                free(dir_files[i]);
+            }
+            free(dir_files);
+        }
+    } else {
+        while (files[i] != NULL) i++;
+        iv_global.total_size = i;
+        if (i > 0) {
+            iv_global.files       = new_array(char*, iv_global.total_size);
+            iv_global.file_titles = new_array(char*, iv_global.total_size);
+            for (i=0;i<iv_global.total_size;i++) {
+                iv_global.files[i] = strdup(files[i]->file);
+                if (strlen(files[i]->title)>0) {
+                    iv_global.file_titles[i] = strdup(files[i]->title);
+                } else {
+                    iv_global.file_titles[i] = NULL;
+                }
+            }
+        }
+    }
     return iv_global.total_size == 0 ? 1 : 0;
 }
-
-#define get_root_file(buff, i)\
-    strcpy(buff, iv_global.root);\
-    strcat(buff,"/");\
-    strcat(buff, iv_global.files[i]->d_name)
 
 void reset_pagination()
 {
@@ -88,11 +121,12 @@ void reset_pagination()
     iv_global.relative_pos = 0;
     iv_global.absolute_pos = 0;
     iv_global.page = 0;
+    iv_global.title_ticks = 0;
     iv_global.title[0] = '\0';
     iv_global.executable[0] = '\0';
 }
 
-int imageviewer_init(char* title, char* executable, char* path)
+int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** files)
 {
     log_debug("Initializing");
     
@@ -104,8 +138,8 @@ int imageviewer_init(char* title, char* executable, char* path)
         return 1;
     }
     
-    if (get_imagelist(iv_global.root)) {
-        log_error("Failed to read directory %s", iv_global.root);
+    if (get_imagelist(iv_global.root, files)) {
+        log_error("Failed to read/find files in %s", iv_global.root);
         return 1;
     }
     
@@ -119,7 +153,7 @@ int imageviewer_init(char* title, char* executable, char* path)
         imageviewer_font       = get_theme_font(14);
         imageviewer_font_color = get_theme_font_color();
         imageviewer_title      = render_imageviewer_text(title);
-        imageviewer_title_bg = create_surface(
+        imageviewer_title_bg   = create_surface(
             SCREEN_WIDTH, SELECT_TITLE_HEIGHT, 32, 
             SELECT_TITLE_COLOR, 
             SELECT_TITLE_ALPHA);
@@ -132,7 +166,10 @@ int imageviewer_init(char* title, char* executable, char* path)
     imageviewer_background = create_surface(
         SCREEN_WIDTH, SCREEN_HEIGHT, 24, SELECT_BG_COLOR, 0);
 
-    iv_global.entries = new_array(SDL_Surface*, iv_global.total_size);
+    int i;
+    iv_global.entries = new_array(SDL_Surface*, iv_global.set_size);
+    for (i=0;i<iv_global.set_size;i++) iv_global.entries[i] = NULL;
+    
     imageviewer_update_list();
     imageviewer_update_preview();
     
@@ -149,6 +186,7 @@ void imageviewer_deinit()
     log_debug("De-initializing");
     
     free_surface(imageviewer_preview);
+    free_surface(imageviewer_preview_title);
     free_surface(imageviewer_background);
     free_surface(imageviewer_highlight);
     free_surface(imageviewer_title_bg);
@@ -156,10 +194,14 @@ void imageviewer_deinit()
     free_color(imageviewer_font_color);
     free_font(imageviewer_font);
     
-    for (i=0;i<iv_global.total_size;i++) free_erase(iv_global.files[i]);
+    for (i=0;i<iv_global.total_size;i++) {
+        free(iv_global.files[i]);        
+        free_erase(iv_global.file_titles[i]);
+    }
     for (i=0;i<iv_global.set_size;i++) free_surface(iv_global.entries[i]);
     
     free_erase(iv_global.files);
+    free_erase(iv_global.file_titles);
     free_erase(iv_global.entries);
     
     reset_pagination();
@@ -168,7 +210,13 @@ void imageviewer_deinit()
 
 void imageviewer_draw(SDL_Surface* screen)
 {
-    if (!iv_global.state_changed) return;
+    iv_global.title_ticks++;    
+    
+    if (!iv_global.state_changed) {
+        if (iv_global.title_ticks >= 10 && iv_global.title_ticks <= 16) ;
+        else
+            return;
+    }
     
     int i;
     SDL_Rect dstrect, txtrect;
@@ -193,6 +241,23 @@ void imageviewer_draw(SDL_Surface* screen)
     init_rect_pos(&dstrect, screen->w/2-imageviewer_preview->w/2, (screen->h-IMAGE_THUMB_HEIGHT)/2-imageviewer_preview->h/2);
     SDL_BlitSurface(imageviewer_preview, 0, screen, &dstrect);
 
+    //Wait to show title as a time delayed feature, practicing animation skills
+    if (imageviewer_preview_title && iv_global.title_ticks >= 10) {
+        int h= imageviewer_preview_title->h;
+        
+        dstrect.x += 35; dstrect.y=screen->h-IMAGE_THUMB_HEIGHT-h*2;
+        
+        //Alpha is function of time
+        int alpha = (int)(0xaa * ((iv_global.title_ticks-10.0)/6.0));
+        
+        SDL_Surface* tmp = create_surface(imageviewer_preview->w, h*1.2, 32, 0,0,0,alpha);
+        SDL_BlitSurface(tmp, 0, screen, &dstrect);
+        free_surface(tmp);
+        dstrect.x += imageviewer_preview->w - imageviewer_preview_title->w - 10;
+        dstrect.y += h*.1;
+        SDL_BlitSurface(imageviewer_preview_title, 0, screen, &dstrect);
+    }
+    
     //Draw top message
     init_rect_pos(&txtrect, 0,0);
     SDL_BlitSurface(imageviewer_title_bg, 0, screen, &txtrect);
@@ -207,19 +272,11 @@ void imageviewer_update_list()
 {
     int i,j;
     int size = iv_global.set_size;
-    
-    for (i=0;i<size;i++)
-    {
-        if (iv_global.entries[i] && iv_global.is_ready)
-        {
-            SDL_FreeSurface(iv_global.entries[i]);
-        }
-        iv_global.entries[i] = NULL;
-    }
-    
     int start = iv_global.page * size;
     char tmp[PATH_MAX];
     
+    for (i=0;i<size;i++) free_surface(iv_global.entries[i]);
+        
     for (i=0,j=start;j<iv_global.total_size&&i<size;i++,j++) 
     {
         get_root_file(tmp, j);
@@ -231,12 +288,18 @@ void imageviewer_update_list()
 
 void imageviewer_update_preview() 
 {
-    if (imageviewer_preview) SDL_FreeSurface(imageviewer_preview);
     char tmp[PATH_MAX];
     get_root_file(tmp, iv_global.absolute_pos);
+    free_surface(imageviewer_preview);
     imageviewer_preview = load_resized_image(tmp, 
         SCREEN_WIDTH  * IMAGE_PREVIEW_RATIO, 
         SCREEN_HEIGHT * IMAGE_PREVIEW_RATIO);
+        
+    if (iv_global.file_titles[iv_global.absolute_pos]) {
+        free_surface(imageviewer_preview_title);
+        imageviewer_preview_title = render_imageviewer_text(
+            iv_global.file_titles[iv_global.absolute_pos]);
+    }
 }
 
 void imageviewer_move_page(enum Direction dir)
@@ -321,6 +384,7 @@ enum MenuState imageviewer_keypress(SDLKey keysym)
             break;            
         default: break;
     }
+    iv_global.title_ticks = 0;
     
     return IMAGEVIEWER;
 }

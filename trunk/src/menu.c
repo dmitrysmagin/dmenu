@@ -428,17 +428,39 @@ enum MenuState menuitem_runinternal()
     char* executable = cfg_getstr(mi, "Executable");
     char* name       = cfg_getstr(mi, "Name");
     char* tmp;
+    char **files;
+    ImageEntry** images;
     enum MenuState state = MAINMENU;
-    int rc;
+    int rc=0, i=0, count;
     
     switch (get_command(executable))
     {
         case THEMESELECT:
-            rc = filelist_init(name, executable, DMENU_THEMES, DMENU_THEMES, 0);
-            if (!rc) state = FILELIST;
+            files = get_theme_previews(&count);
+            images = new_array(ImageEntry*, count+1);
+            
+            for (i=0;i<count;i++) {
+                images[i] = new_item(ImageEntry); {
+                    strcpy(images[i]->file, files[i]);
+                    tmp = strcpy(images[i]->title, files[i]);
+                    *strrchr(tmp, '/') = '\0';
+                    tmp = strrchr(tmp, '/')+1;
+                    strcpy(images[i]->title, tmp);
+                }
+                free_erase(files[i]);
+            }
+            free_erase(files);
+            images[count] = NULL;
+            
+            rc = imageviewer_init(name, executable, DMENU_THEMES, images);
+            if (!rc) state = IMAGEVIEWER;
+            
+            for (i=0;i<count;i++) free(images[i]);
+            free(images);
+            
             break;
         case BACKGROUNDSELECT:
-            rc = imageviewer_init(name, executable, DMENU_BACKGROUNDS);
+            rc = imageviewer_init(name, executable, DMENU_BACKGROUNDS, NULL);
             if (!rc) state = IMAGEVIEWER;
             break;
         case COLORSELECT:
