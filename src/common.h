@@ -2,6 +2,7 @@
 #define _COMMON_H_
 
 #include "confuse.h"
+#include <string.h>
 #include <sys/stat.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
@@ -17,7 +18,6 @@
 #define new_str(len)           new_array(char, len)
 #define new_item(t)            new_array(t, 1)
 #define copy_item(dst, src, t) memcpy(dst,src,sizeof(t))
-#define copy_str(tmp, str)     tmp = new_str(strlen(str)+1); strcpy(tmp, str)
 #define clean_erase(e,f)       if (e) { f(e); e = NULL; } 
 #define free_surface(sfc)      clean_erase(sfc, SDL_FreeSurface)
 #define free_font(fnt)         clean_erase(fnt, TTF_CloseFont);

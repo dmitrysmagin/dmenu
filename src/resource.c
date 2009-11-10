@@ -1,3 +1,7 @@
+#include <stdlib.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h>
 #include "env.h"
 #include "conf.h"
 #include "common.h"
@@ -13,6 +17,36 @@ char* get_user_attr(char* attr)
         val = cfg_getstr(cfg, attr);
     }
     return val;
+}
+
+char** get_theme_previews(int* count) 
+{
+    struct dirent** dir_files;
+    struct stat     file_stat;
+    char name[PATH_MAX], *tmp;
+    char* names[PATH_MAX];
+    char** out;
+    int i, pos=0, cnt=max(scandir(DMENU_THEMES, &dir_files, NULL, NULL), 0);
+    
+    for (i=0;i<cnt;i++) {
+        tmp = dir_files[i]->d_name;
+        if (tmp == NULL || tmp[0] == '.') continue;
+        sprintf(name, "%s%s/theme.png", DMENU_THEMES, tmp);
+        
+        if (stat(name, &file_stat)==0) { //If file is there
+            names[pos] = strdup(name);
+            pos++;
+        }
+        free(dir_files[i]);
+    }
+    free(dir_files);
+    
+    out = new_array(char*, pos+1);
+    for (i=0;i<pos;i++) out[i] = strdup(names[i]);
+    out[pos] = NULL;
+    *count = pos;
+    
+    return out;
 }
 
 TTF_Font* get_theme_font(int size)

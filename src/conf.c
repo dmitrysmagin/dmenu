@@ -219,15 +219,15 @@ int conf_load()
         }
 
         num_of_files = scandir(search_path, &namelist, path_filter, alphasort);
-        if (num_of_files > 0) {
-            for (i=0;i<num_of_files;i++) {
-                strcpy(work_path, search_path);
-                strcat(work_path, "/");
-                strcat(work_path, namelist[i]->d_name);
-                strcat(work_path, "/dmenu.cfg");
-                conf_merge_standalone(work_path);
-            }
+        for (i=0;i<num_of_files;i++) {
+            strcpy(work_path, search_path);
+            strcat(work_path, "/");
+            strcat(work_path, namelist[i]->d_name);
+            strcat(work_path, "/dmenu.cfg");
+            free(namelist[i]);
+            conf_merge_standalone(work_path);
         }
+        free(namelist);
     }
     
     //Process selectordir items
@@ -464,20 +464,24 @@ char** conf_get_item_path(cfg_t* item) {
 
 void conf_themeselect(char* themedir)
 {
-    char* path = strrchr(themedir, '/'); 
-    if (path == NULL) path = themedir;
-    else {
-        path++;
+    if (!cfg_getbool(cfg_main, "AllowDynamicThemeChange")) return;
+    
+    char* path = strdup(themedir), *orig = path;
+    if (strrchr(path, '.') != NULL) {
+        *strrchr(path, '/') = '\0'; //Strip out filename
     }
     
-    log_debug("Setting theme: %s", path);
-    
-    if (cfg_getbool(cfg_main, "AllowDynamicThemeChange")) {
-        cfg_setstr(cfg_main, "Theme", path);
-        
-        if (!conf_to_file(cfg_main, DMENU_CONF_FILE)) return;
-        reload();
+    if (strrchr(path, '/')) {
+        path = (strrchr(path, '/')+1);
     }
+    
+    log_debug("Setting theme: %s", path);    
+    cfg_setstr(cfg_main, "Theme", path);
+    
+    strcpy(orig, themedir);
+    free_erase(orig);
+    
+    if (conf_to_file(cfg_main, DMENU_CONF_FILE)) reload();
 }
 
 void conf_backgroundselect(char* bgimage)

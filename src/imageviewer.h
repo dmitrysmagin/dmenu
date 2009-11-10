@@ -3,7 +3,12 @@
 
 #include "common.h"
 
-int  imageviewer_init(char* title, char* executable,  char* path);
+typedef struct {
+    char title[PATH_MAX];
+    char file[PATH_MAX];
+} ImageEntry;
+
+int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** files);
 void imageviewer_deinit();
 void imageviewer_draw(SDL_Surface* screen);
 enum MenuState imageviewer_keypress(SDLKey keysym);
