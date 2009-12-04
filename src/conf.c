@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <libgen.h>
 #include "resource.h"
 #include "common.h"
@@ -136,20 +137,48 @@ cfg_t* conf_from_file(cfg_opt_t* opts, char* file)
     return out;
 }
 
-int conf_to_file(cfg_t* cfg, char* file) {
-    FILE *fp;
-    int file_no;
-
-    log_debug("Saving conf file: %s", file);
+void copy_files(char* from, char* to) {
+    struct stat st; 
     
+    //If file saved and has size
+    if (stat(from, &st)==0 && st.st_size > 1) {
+        copyfile(from, to);
+    } else {
+        log_error("Writing configuration file failed: %s", to);
+    }
+}
+
+FILE* open_conf_file(cfg_t* cfg, char* file) {
+    FILE *fp;
     fp = load_file(file, "w");
     if (fp == NULL) return 0;
-
+    
     cfg_print(cfg, fp);
+    return fp;
+}
+
+void close_conf_file(FILE* fp) {
+    int file_no;
     file_no = fileno(fp);
     fsync(file_no);
     fclose(fp);
+}
+
+int conf_to_file(cfg_t* cfg, char* file) {
+    char* tmp;
+
+    log_debug("Saving conf file: %s", file);
+    tmp = new_str(strlen(file)+5); {
+        strcpy(tmp, file);
+        strcat(tmp, ".tmp");
+    }
     
+    FILE* fp = open_conf_file(cfg, tmp);
+    if (fp == NULL) return 0;
+    close_conf_file(fp);
+    copy_files(tmp, file);    
+    free(tmp);
+
     return 1;
 }
 
@@ -530,13 +559,14 @@ void conf_selectordir(cfg_t* menu_item, char* dir)
     free(keys);
     
     //Persist data
-    FILE* fp = load_file(DMENU_CONF_FILE, "w");
-    cfg_print(cfg_main, fp);
+    FILE* fp = open_conf_file(cfg_main, DMENU_CONF_FILE ".tmp");
+    if (fp == NULL) return ;
     if (i == cnt)  //If not found
     {
         fprintf(fp, "SelectorDir {\nDir = \"%s\"\nKey = %s\n}\n", dir, key);
     }
-    fclose(fp);
+    close_conf_file(fp);
+    copyfile(DMENU_CONF_FILE ".tmp", DMENU_CONF_FILE);
     
     if (i == cnt)
     {
