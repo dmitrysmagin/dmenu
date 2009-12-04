@@ -41,7 +41,6 @@ char* strndup(char* s, size_t n);
 int strrpos (char* s, int c);
 int bound(int val, int low, int high);
 int wrap(int val, int low, int high);
-void copyfile(char* from, char* to);
 void _foreach(void** array, void* (f)(void*), int len);
 
 #endif
