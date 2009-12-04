@@ -9,6 +9,10 @@
 #define DMENU_CONF_FILE_NAME "dmenu.ini"
 #endif
 
+#ifndef SOUND_ENABLED
+#define SOUND_ENABLED        1
+#endif
+
 #define DMENU_THEMES         DMENU_PATH "themes/"
 #define DMENU_CONF_FILE      DMENU_PATH DMENU_CONF_FILE_NAME
 #define DMENU_COMMAND_FILE   DMENU_PATH ".next"
