@@ -26,6 +26,8 @@
 #define copy_item(dst, src, t) memcpy(dst,src,sizeof(t))
 #define clean_erase(e,f)       if (e) { f(e); e = NULL; } 
 
+#define foreach(arr, fn, len) _foreach((void*)arr, (void*)fn, len)
+
 #define new_str_arr(l) new_array(char*, l)
 void free_str_arr(char** arr);
 #define append_str(lst, len, val)\
@@ -40,5 +42,6 @@ char* strndup(char* s, size_t n);
 int strrpos (char* s, int c);
 int bound(int val, int low, int high);
 int wrap(int val, int low, int high);
+void _foreach(void** array, void* (f)(void*), int len);
 
 #endif
