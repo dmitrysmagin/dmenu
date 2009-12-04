@@ -4,8 +4,8 @@
 #include "common.h"
 
 typedef struct {
-    char title[PATH_MAX];
-    char file[PATH_MAX];
+    char* title;
+    char* file;
 } ImageEntry;
 
 int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** files);

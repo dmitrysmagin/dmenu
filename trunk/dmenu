@@ -7,10 +7,7 @@ fi
 
 if ./$CMD; then
     if [ -f "$ACT" ]; then 
-		RESULT="`sh ./$ACT`"
-		echo $RESULT
-        if [ -n $? ] ; then
-			echo $?
+        if  ! sh ./$ACT; then
             sleep 5
         fi
         rm "$ACT"

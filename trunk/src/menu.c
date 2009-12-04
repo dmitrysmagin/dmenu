@@ -431,21 +431,21 @@ enum MenuState menuitem_runinternal()
     char **files;
     ImageEntry** images;
     enum MenuState state = MAINMENU;
-    int rc=0, i=0, count;
+    int rc=0, i=0, count=0;
     
     switch (get_command(executable))
     {
         case THEMESELECT:
-            files = get_theme_previews(&count);
+            files = get_theme_previews();
+            while (files[count] != NULL) count++;
             images = new_array(ImageEntry*, count+1);
             
             for (i=0;i<count;i++) {
                 images[i] = new_item(ImageEntry); {
-                    strcpy(images[i]->file, files[i]);
-                    tmp = strcpy(images[i]->title, files[i]);
-                    *strrchr(tmp, '/') = '\0';
-                    tmp = strrchr(tmp, '/')+1;
-                    strcpy(images[i]->title, tmp);
+                    images[i]->file = strdup(files[i]);
+                    tmp = strndup(files[i], strrpos(files[i], '/'));
+                    images[i]->title = strdup(strrchr(tmp,'/')+1);
+                    free(tmp);
                 }
                 free_erase(files[i]);
             }
@@ -455,7 +455,11 @@ enum MenuState menuitem_runinternal()
             rc = imageviewer_init(name, executable, DMENU_THEMES, images);
             if (!rc) state = IMAGEVIEWER;
             
-            for (i=0;i<count;i++) free(images[i]);
+            for (i=0;i<count;i++) {
+                free(images[i]->file);
+                free(images[i]->title);
+                free(images[i]);
+            }
             free(images);
             
             break;

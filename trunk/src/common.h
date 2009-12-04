@@ -1,6 +1,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
+#include "basec.h"
 #include "confuse.h"
 #include <string.h>
 #include <sys/stat.h>
@@ -14,19 +15,11 @@
 #define COMMAND_BACKGROUNDSELECT "!backgroundselect"
 #define COMMAND_COLORSELECT "!colorselect"
 
-#define new_array(t, len)      (t*)malloc(sizeof(t) * len)
-#define new_str(len)           new_array(char, len)
-#define new_item(t)            new_array(t, 1)
-#define copy_item(dst, src, t) memcpy(dst,src,sizeof(t))
-#define clean_erase(e,f)       if (e) { f(e); e = NULL; } 
 #define free_surface(sfc)      clean_erase(sfc, SDL_FreeSurface)
 #define free_font(fnt)         clean_erase(fnt, TTF_CloseFont);
 #define free_erase(e)          clean_erase(e, free);
 #define free_color(c)          free_erase(c);
 
-#define in_bounds(v, l, h) ((v>=l) && (v<h))
-#define min(a,b) (a<b?a:b)
-#define max(a,b) (a>b?a:b)
 #define internal_command(s) (s[0] == '!')
 
 #define _log(dst, pre, fmt, args...) fprintf(dst, "%-20s(%4d)[%s]: "fmt "\n", strstr(__FILE__, "src"), __LINE__, pre, ##args)
@@ -39,13 +32,6 @@
 #endif
 
 #define foreach(arr, fn, len) _foreach((void*)arr, (void*)fn, len)
-
-#define new_str_arr(l) new_array(char*, l)
-void free_str_arr(char** arr);
-#define append_str(lst, len, val)\
-    len++;\
-    lst = realloc(lst, len*sizeof(char*));\
-    lst[len-1] = val;
     
 enum MenuState { MAINMENU, FILELIST, IMAGEVIEWER, COLORPICKER };
 enum InternalCommand { THEMESELECT, BACKGROUNDSELECT, COLORSELECT }; 
@@ -59,8 +45,6 @@ typedef struct {
     SDL_Surface *surface;
 } ImageExportJob;
 
-int bound(int val, int low, int high);
-int wrap(int val, int low, int high);
 
 void _foreach(void** array, void* (f)(void*), int len);
 
