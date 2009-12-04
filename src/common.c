@@ -28,7 +28,7 @@
 #include "main.h"
 #include "menu.h"
 
-#define MAX_IMAGE_JOBS 20
+#define MAX_IMAGE_JOBS 40
 int CURRENT_JOB = 0;
 pthread_t image_exporter[MAX_IMAGE_JOBS];
 
