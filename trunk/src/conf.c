@@ -144,14 +144,7 @@ void move_file(char* from, char* to) {
     
     //If file saved and has size
     if (stat(from, &st)==0 && st.st_size > 20) {
-        copyfile(from, to);
-        if (stat(to, &st)==0 && st.st_size > 20) {
-            if (remove(from)) { //Delete file
-                log_debug("Unable to remove file: %s", from);
-            } else {
-                log_debug("Deleted src file: %s", from);
-            }
-        }
+        rename(from, to);
     } else {
         log_error("Writing configuration file failed: %s", to);
     }
