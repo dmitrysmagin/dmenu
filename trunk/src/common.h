@@ -30,8 +30,6 @@
 #else
     #define log_debug(args...)
 #endif
-
-#define foreach(arr, fn, len) _foreach((void*)arr, (void*)fn, len)
     
 enum MenuState { MAINMENU, FILELIST, IMAGEVIEWER, COLORPICKER };
 enum InternalCommand { THEMESELECT, BACKGROUNDSELECT, COLORSELECT }; 
@@ -45,8 +43,6 @@ typedef struct {
     SDL_Surface *surface;
 } ImageExportJob;
 
-
-void _foreach(void** array, void* (f)(void*), int len);
 
 void run_command (char* cmd, char* args, char* workdir);
 void run_internal_command (char* cmd, char* args, char* workdir);
