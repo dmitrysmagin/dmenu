@@ -137,18 +137,29 @@ cfg_t* conf_from_file(cfg_opt_t* opts, char* file)
     return out;
 }
 
-void copy_files(char* from, char* to) {
+void move_file(char* from, char* to) {
     struct stat st; 
     
+    log_debug("Moving %s to %s", from, to);
+    
     //If file saved and has size
-    if (stat(from, &st)==0 && st.st_size > 1) {
+    if (stat(from, &st)==0 && st.st_size > 20) {
         copyfile(from, to);
+        if (stat(to, &st)==0 && st.st_size > 20) {
+            if (remove(from)) { //Delete file
+                log_debug("Unable to remove file: %s", from);
+            } else {
+                log_debug("Deleted src file: %s", from);
+            }
+        }
     } else {
         log_error("Writing configuration file failed: %s", to);
     }
 }
 
 FILE* open_conf_file(cfg_t* cfg, char* file) {
+    log_debug("Opening conf file for writing: %s", file);
+    
     FILE *fp;
     fp = load_file(file, "w");
     if (fp == NULL) return 0;
@@ -158,6 +169,7 @@ FILE* open_conf_file(cfg_t* cfg, char* file) {
 }
 
 void close_conf_file(FILE* fp) {
+    log_debug("Closing conf file");
     int file_no;
     file_no = fileno(fp);
     fsync(file_no);
@@ -167,7 +179,6 @@ void close_conf_file(FILE* fp) {
 int conf_to_file(cfg_t* cfg, char* file) {
     char* tmp;
 
-    log_debug("Saving conf file: %s", file);
     tmp = new_str(strlen(file)+5); {
         strcpy(tmp, file);
         strcat(tmp, ".tmp");
@@ -176,7 +187,7 @@ int conf_to_file(cfg_t* cfg, char* file) {
     FILE* fp = open_conf_file(cfg, tmp);
     if (fp == NULL) return 0;
     close_conf_file(fp);
-    copy_files(tmp, file);    
+    move_file(tmp, file);    
     free(tmp);
 
     return 1;
@@ -566,7 +577,7 @@ void conf_selectordir(cfg_t* menu_item, char* dir)
         fprintf(fp, "SelectorDir {\nDir = \"%s\"\nKey = %s\n}\n", dir, key);
     }
     close_conf_file(fp);
-    copyfile(DMENU_CONF_FILE ".tmp", DMENU_CONF_FILE);
+    move_file(DMENU_CONF_FILE ".tmp", DMENU_CONF_FILE);
     
     if (i == cnt)
     {
