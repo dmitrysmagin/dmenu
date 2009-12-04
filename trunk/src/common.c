@@ -37,7 +37,10 @@ void run_internal_command(char* command, char* args, char* workdir);
 
 void clear_last_command()
 {
-    remove(DMENU_COMMAND_FILE);
+    struct stat st;
+    if (stat(DMENU_COMMAND_FILE, &st) == 0) {
+        remove(DMENU_COMMAND_FILE);
+    }
 }
 
 /* this is a simplified version when init is used to spawn dmenu */
@@ -120,8 +123,6 @@ void execute_next_command(char* dir, char** args)
         fprintf(out, "\"%s\" ", *(args+i)); 
     }    
     fprintf(out, "\n");
-    int fno = fileno(out);
-    fsync(fno);
     fclose(out);
 
     free_str_arr(args);
