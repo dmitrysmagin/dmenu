@@ -1,13 +1,3 @@
-/*
- *  Copyright (C) 2009 Timothy Soehnlin <timothy.soehnlin@gmail.com>
- *
- *  Author: <timothy.soehnlin@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- */
-
 #ifndef __BASEC_H__
 #define __BASEC_H__
 
@@ -15,6 +5,15 @@
 #include<stdlib.h>
 #include<string.h>
 #include<sys/types.h>
+
+#define _log(dst, pre, fmt, args...) fprintf(dst, "%-20s(%4d)[%s]: "fmt "\n", strstr(__FILE__, "src"), __LINE__, pre, ##args)
+#define log_error(fmt, args...)      _log(stderr, "err", fmt, ##args); perror(0)
+#define log_message(fmt, args...)    _log(stdout, "msg", fmt, ##args)
+#if DEBUG==1
+#define log_debug(fmt, args...) _log(stdout, "dbg", fmt, ##args)
+#else
+#define log_debug(args...)
+#endif
 
 #define in_bounds(v, l, h) ((v>=l) && (v<h))
 #define min(a,b) (a<b?a:b)
@@ -42,6 +41,7 @@ char* strndup(char* s, size_t n);
 int strrpos (char* s, int c);
 int bound(int val, int low, int high);
 int wrap(int val, int low, int high);
+void copyfile(char* from, char* to);
 void _foreach(void** array, void* (f)(void*), int len);
 
 #endif

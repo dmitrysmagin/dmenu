@@ -15,6 +15,7 @@
 
 #define DMENU_THEMES         DMENU_PATH "themes/"
 #define DMENU_CONF_FILE      DMENU_PATH DMENU_CONF_FILE_NAME
+#define DMENU_CONF_TEMP      DMENU_PATH DMENU_CONF_FILE_NAME ".tmp"
 #define DMENU_COMMAND_FILE   DMENU_PATH ".next"
 #define DMENU_SNAPSHOT       DMENU_PATH ".screen"
 #define DMENU_BACKGROUNDS    DMENU_PATH "wallpapers/"

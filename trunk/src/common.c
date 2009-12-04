@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2009 Rookie1 <mr.rookie1@gmail.com>
+ *  Copyright (C) 2009 Rookie1 <mr.rookie1@gmail.com>, <timothy.soehnlin@gmail.com>
  *
- *  Author: <mr.rookie1@gmail.com>
+ *  Authors: <mr.rookie1@gmail.com>,
+ *           <timothy.soehnlin@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -119,6 +120,8 @@ void execute_next_command(char* dir, char** args)
         fprintf(out, "\"%s\" ", *(args+i)); 
     }    
     fprintf(out, "\n");
+    int fno = fileno(out);
+    fsync(fno);
     fclose(out);
 
     free_str_arr(args);
@@ -438,7 +441,11 @@ int export_surface_as_png(char *filename, SDL_Surface *surface)
 done: //Cleanup
     if (png_ptr)
         png_destroy_write_struct(&png_ptr, &info_ptr);
-    if (fp) fclose(fp);
+    if (fp) {
+        int fno = fileno(fp);
+        fsync(fno);
+        fclose(fp);
+    }
     free_erase(rows);
     free_surface(surf);
     return rc;
