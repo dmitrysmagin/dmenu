@@ -46,9 +46,9 @@ typedef struct ImageViewerGlobal {
     int title_ticks;
     
     int  state_changed;
-    char title[PATH_MAX];
-    char executable[PATH_MAX];
-    char root[PATH_MAX];
+    char* title;
+    char* executable;
+    char* root;
     SDL_Surface** entries;
     char** files;
     char** file_titles;
@@ -58,7 +58,7 @@ typedef struct ImageViewerGlobal {
 ImageViewerGlobal iv_global;
 
 #define get_root_file(buff, i)\
-    strcpy(buff,"");\
+    strcpy(buff, "");\
     if (iv_global.files[i][0] != '/') {\
         strcat(buff, iv_global.root);\
         strcat(buff,"/");\
@@ -92,8 +92,8 @@ int get_imagelist(char* path, ImageEntry** files)
                 iv_global.file_titles[i] = NULL;
                 free(dir_files[i]);
             }
-            free(dir_files);
         }
+        free(dir_files);
     } else {
         while (files[i] != NULL) i++;
         iv_global.total_size = i;
@@ -122,8 +122,9 @@ void reset_pagination()
     iv_global.absolute_pos = 0;
     iv_global.page = 0;
     iv_global.title_ticks = 0;
-    iv_global.title[0] = '\0';
-    iv_global.executable[0] = '\0';
+    free_erase(iv_global.root);
+    free_erase(iv_global.title);
+    free_erase(iv_global.executable);
 }
 
 int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** files)
@@ -133,18 +134,20 @@ int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** fi
     reset_pagination();
     
     // try to read files before we do anything else
-    if (!realpath(path, iv_global.root)) {
+    char root[PATH_MAX];
+    if (!realpath(path, root)) {
         log_error("Failed to get real path of directory %s", path);
         return 1;
     }
+    iv_global.root = strdup(root);
     
     if (get_imagelist(iv_global.root, files)) {
         log_error("Failed to read/find files in %s", iv_global.root);
         return 1;
     }
     
-    if (title != NULL) strcpy(iv_global.title, title);
-    if (executable != NULL) strcpy(iv_global.executable, executable);
+    if (title != NULL) iv_global.title = strdup(title);
+    if (executable != NULL) iv_global.executable = strdup(executable);
     
     //Setup UI
     if (strlen(iv_global.title) > 0) 

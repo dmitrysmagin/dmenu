@@ -24,6 +24,7 @@
 #include "env.h"
 #include "filelist.h"
 #include "conf.h"
+#include "basec.h"
 #include "main.h"
 #include "menu.h"
 
@@ -74,14 +75,6 @@ void run_internal_command(char* command, char* args, char* workdir)
             conf_colorselect(args);
             break;
     }
-}
-
-void free_str_arr(char** arr)
-{
-    int i =0;
-    while (*(arr + i)) i++;
-    while (i) free(arr[i--]);
-    free(arr);
 }
 
 char** build_arg_list(char* commandline, char* args) 
@@ -165,19 +158,6 @@ enum InternalCommand get_command(char* cmd) {
     IF_CMD_THEN(cmd, BACKGROUNDSELECT);
     IF_CMD_THEN(cmd, COLORSELECT);
     return 0;
-}
-
-int bound(int val, int low, int high) {
-    return val < low ? low : ( val > high ? high : val);
-}
-
-int wrap(int val, int low, int high) {
-    return val < low ? high : (val > high ? low : val);
-}
-
-void _foreach(void** array, void* (f)(void*), int len) {
-    int i=-1;
-    while (++i<len) f(array[i]);
 }
 
 char* relative_file(char* root, char* file) 
@@ -471,13 +451,16 @@ int export_surface_as_bmp(char *filename, SDL_Surface *surface) {
 
 void run_export_job(ImageExportJob* job)
 {
-    export_surface_as_png(job->file, job->surface); 
-    
-    //Copy over mtime/atime as the dingoo doesn't have a clock and so 
-    // these values default to 0, and we need to be able to check mtimes
-    // to know if we need to recache
-    struct utimbuf new_time = {job->orig_stat->st_atime, job->orig_stat->st_mtime}; 
-    utime(job->file, &new_time);   
+    if (job->surface) //If surface is still around
+    {
+        export_surface_as_png(job->file, job->surface); 
+        
+        //Copy over mtime/atime as the dingoo doesn't have a clock and so 
+        // these values default to 0, and we need to be able to check mtimes
+        // to know if we need to recache
+        struct utimbuf new_time = {job->orig_stat->st_atime, job->orig_stat->st_mtime}; 
+        utime(job->file, &new_time);
+    }
     
     //free_surface(job->surface); 
     free(job->file); 
@@ -507,15 +490,15 @@ SDL_Surface* load_resized_image(char* file, int width, int height)
     struct stat orig_stat, new_stat, dir_stat;
     
     char new_file[PATH_MAX], new_dir[PATH_MAX];
-  
+    
     //Copy path of file
-    int i = 0;
-    char *end = strrchr(file, '/');
-    do new_dir[i] = *(file+i); while ((file+ ++i) != end); 
-    new_dir[i] = '\0';
+    int end = strrpos(file, '/');
+    strncpy(new_dir, file, end);
+    new_dir[end] = '\0';
     strcat(new_dir, THUMBNAILS_PATH);
     
-    sprintf(new_file, "%s/%s_%03dx%03d", new_dir, (char*)(end+1), width, height);
+    sprintf(new_file, "%s/%s_%03dx%03d", new_dir, strrchr(file, '/')+1, width, height);
+    
     SDL_Surface *out = load_image_file_with_format(new_file, 0, 0), *tmp;
     
     if (out == NULL) { //If not created
@@ -532,7 +515,6 @@ SDL_Surface* load_resized_image(char* file, int width, int height)
             }   
         }
         init_export_job(file, new_file, out);
-        
     } else {
         stat(file, &orig_stat);
         stat(new_file, &new_stat);
