@@ -324,6 +324,12 @@ SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a)
     return tmp;
 }
 
+
+void blitSurfaceAlpha ( SDL_Surface* src, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect, int alpha)
+{
+    SDL_BlitSurface(src,  src_rect, dst, dst_rect);
+}
+
 /**
  * Optimized for 16bit images.  Will not work any any others
  */

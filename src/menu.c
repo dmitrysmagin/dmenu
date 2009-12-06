@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2009 Rookie1 <mr.rookie1@gmail.com>
  *                     sca <scahoo <at> gmail <dot> com>
+                       timothy.soehnlin <timothy.soehnlin@gmail.com>
  *
  *  Author: <mr.rookie1@gmail.com>
  *
@@ -35,7 +36,6 @@ cfg_t *mi;
 cfg_t *smi;
 
 SDL_Surface* background;
-SDL_Surface* cursor;
 
 SDL_Surface** menu_icons;
 SDL_Surface** menu_text;
@@ -58,9 +58,6 @@ int current_submenuitem_index;
 TTF_Font* menu_font;
 TTF_Font* menuitem_font;
 
-void submenu_open();
-void submenu_close();
-
 void menu_reload_background() 
 {
     free_surface(background);
@@ -76,7 +73,6 @@ int menu_init()
     menu_reload_background();
     
     /*fill_fb(background->pixels);*/
-    cursor = load_theme_image(cfg_getstr(cfg, "Cursor"));
 
     // load font
     TTF_Init();
@@ -147,7 +143,6 @@ void menu_deinit()
     g_persistent->current_menuitem = current_menuitem_index;
 
     free_surface(background);
-    free_surface(cursor);
     
     for (i=0;i<number_of_menu;i++) {
         SDL_FreeSurface(menu_icons[i]);
@@ -175,37 +170,36 @@ void menu_deinit()
 }
 
 //Draw single menu item
-void menu_draw_single_item(SDL_Surface* screen, SDL_Rect* dstrect, SDL_Rect* txtrect,
-                           int alpha,  SDL_Surface* icon, SDL_Surface* text, 
-                           int hide_text, int text_below) 
+void menu_draw_single_item(SDL_Surface* screen,
+                           SDL_Surface* icon, SDL_Rect* icon_rect, 
+                           SDL_Surface* text, SDL_Rect* text_rect,
+                           int alpha, int hide_text, int text_below) 
 {
-    if (!text_below) {
-        txtrect->x = dstrect->x + icon->w;
-    } else {
-        txtrect->x = dstrect->x + icon->w/2 - text->w/2;
-    }
-    
     if (!hide_text) {
         if (!text_below) {
-            txtrect->y = dstrect->y + icon->h/2 - text->h/2;
+            text_rect->x = icon_rect->x + icon->w;
+            text_rect->y = icon_rect->y + icon->h/2 - text->h/2;
         } else {
-            txtrect->y = dstrect->y + icon->h; 
+            text_rect->x = icon_rect->x + icon->w/2 - text->w/2;
+            text_rect->y = icon_rect->y + icon->h; 
         }
-        SDL_SetAlpha(text, SDL_SRCALPHA, alpha);
-        SDL_BlitSurface(text, 0, screen, txtrect);
+
+        blitSurfaceAlpha(text, NULL, screen, text_rect, alpha);
     }
-    SDL_SetAlpha(icon, SDL_SRCALPHA, alpha);
-    SDL_BlitSurface(icon, 0, screen, dstrect);
+
+    blitSurfaceAlpha(icon, NULL, screen, icon_rect, alpha);
 }
 
 
 //Draw vertical menu items
-void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset, SDL_Rect* dstrect, SDL_Rect* txtrect, 
-                     int current_item, int number_of_items, SDL_Surface** icons, SDL_Surface** text,
-                     int is_parent, int child_showing, int lower_offset) {
+void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset, 
+                      SDL_Surface** icons, SDL_Rect* icon_rect, 
+                      SDL_Surface** text,  SDL_Rect* text_rect, 
+                      int current_item,    int number_of_items, 
+                      int child_showing,   int is_parent, int lower_offset) {
   
     int draw_item = 0;
-    dstrect->x = offset->x;
+    icon_rect->x = offset->x;
 
     if (number_of_items > 0 ) {
 
@@ -215,34 +209,33 @@ void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset, SDL_Rect* dstrect, 
         if (current_item > 0 && !child_showing) {
 
             while (1) {
-                dstrect->y = offset->y - (current_item - draw_item)*icons[draw_item]->h;
+                icon_rect->y = offset->y - (current_item - draw_item)*icons[draw_item]->h;
      
-                menu_draw_single_item(screen, dstrect, txtrect, 128,  
-                                      icons[draw_item], text[draw_item], 
-                                      child_showing, 0);
+                menu_draw_single_item(screen, icons[draw_item], icon_rect,   
+                                      text[draw_item], text_rect,
+                                      MENU_ACTIVE_ALPHA, child_showing, 0);
                 --draw_item; 
-                if (dstrect->y < 0 || draw_item < 0) break;
+                if (icon_rect->y < 0 || draw_item < 0) break;
             }
         }
 
         // draw lower items 
         draw_item = current_item;
-        dstrect->y = offset->y + lower_offset;
+        icon_rect->y = offset->y + lower_offset;
 
         while (1) { 
 
-            if (is_parent && draw_item == current_item) {
-                SDL_BlitSurface(cursor, 0, screen, dstrect);
-            }
+            int alpha = (draw_item==current_item) ? 
+                MENU_ACTIVE_ALPHA : MENU_INACTIVE_ALPHA;
 
-            int alpha = (draw_item==current_item)?SDL_ALPHA_OPAQUE:SDL_ALPHA_TRANSPARENT; 
-            menu_draw_single_item(screen, dstrect, txtrect, alpha, 
-                                  icons[draw_item], text[draw_item],
-                                  child_showing, 0); 
-            dstrect->y += icons[draw_item]->h;
+            menu_draw_single_item(screen, 
+                                  icons[draw_item], icon_rect, 
+                                  text[draw_item], text_rect, 
+                                  alpha, child_showing, 0); 
+            icon_rect->y += icons[draw_item]->h;
             draw_item++;
 
-            if (child_showing || dstrect->y > screen->h || draw_item >= number_of_items) {
+            if (child_showing || icon_rect->y > screen->h || draw_item >= number_of_items) {
                 break; //Only draw first item if child showing
             }
         }
@@ -251,36 +244,38 @@ void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset, SDL_Rect* dstrect, 
 
 //Draw horizontal menu items
 void menu_draw_hitems(SDL_Surface* screen, SDL_Rect* child_offset, 
-                      SDL_Rect* dstrect, SDL_Rect* txtrect, 
-                      int current_item, int number_of_items,
-                      SDL_Surface** icons, SDL_Surface** text,
-                      int showing_submenu)
+                      SDL_Surface** icons, SDL_Rect* icon_rect, 
+                      SDL_Surface** text,  SDL_Rect* text_rect, 
+                      int current_item, int number_of_items, int subchild_showing)
 {
     int draw_item = current_item - 1;
 
     //While there are empty slots to the left of the menu
     //   create a gap that is a single icon wide
     while (draw_item<0) {
-        dstrect->x += icons[0]->w; 
+        icon_rect->x += icons[0]->w; 
         draw_item++;
     }
 
     while (1) {
-        menu_draw_single_item(screen, dstrect, txtrect, SDL_ALPHA_OPAQUE, 
-                              icons[draw_item], text[draw_item], 
-                              draw_item != current_item, 1);
+        int alpha = (draw_item==current_item) ? 
+                     MENU_ACTIVE_ALPHA : MENU_INACTIVE_ALPHA;
+        menu_draw_single_item(screen, 
+                              icons[draw_item], icon_rect, 
+                              text[draw_item],  text_rect, 
+                              alpha, draw_item != current_item, 1);
    
         //Store calculated position for current menu items
         if (draw_item == current_item) { 
-            init_rect_pos(child_offset, dstrect->x, dstrect->y);
+            init_rect_pos(child_offset, icon_rect->x, icon_rect->y);
         }
 
-        dstrect->x += icons[draw_item]->w;
+        icon_rect->x += icons[draw_item]->w;
 
         draw_item++;
-        if ((dstrect->x >= screen->w) || 
+        if ((icon_rect->x >= screen->w) || 
            (draw_item >= number_of_items) ||
-           (showing_submenu && draw_item > current_menu_index)) 
+           (subchild_showing && draw_item > current_menu_index)) 
         {
             break;
         }
@@ -289,104 +284,45 @@ void menu_draw_hitems(SDL_Surface* screen, SDL_Rect* child_offset,
 
 void menu_draw(SDL_Surface* screen)
 {
-    SDL_Rect dstrect, txtrect, offset;
+    SDL_Rect icon_rect, text_rect, rect, offset;
 
-    init_rect_pos(&dstrect, 0,0);
-    init_rect_pos(&txtrect, 0,0);
+    init_rect_pos(&icon_rect, 0,0);
+    init_rect_pos(&text_rect, 0,0);
+    init_rect_pos(&rect, 0, 0);
     
     // clear screen
-    //SDL_FillRect(screen, 0, SDL_MapRGB(screen->format, 0, 0, 0));
-    SDL_BlitSurface(background, 0, screen, &dstrect);
+    SDL_BlitSurface(background, 0, screen, &rect);
     
     //Set menu offset
-    dstrect.y = (screen->h - menu_icons[0]->h - 20) / 3; // assuming the font height for menu name is 20
+    icon_rect.y = (screen->h - menu_icons[0]->h - 20) / 3; // assuming the font height for menu name is 20
 
     //Draw main menu items
-    menu_draw_hitems(screen, &offset, &dstrect, &txtrect, current_menu_index, 
-                     number_of_menu, menu_icons, menu_text, number_of_submenuitem > 0); 
+    menu_draw_hitems(screen, &offset, menu_icons, &icon_rect, menu_text, &text_rect, 
+                     current_menu_index,  number_of_menu, number_of_submenuitem > 0); 
 
     //Draw menu items, starting at (x,y)
-    menu_draw_vitems(screen, &offset, &dstrect, &txtrect, 
-                     current_menuitem_index, number_of_menuitem[current_menu_index], 
-                     menuitem_icons[current_menu_index], menuitem_text[current_menu_index], 
-                     1, number_of_submenuitem > 0, menu_icons[current_menu_index]->h + 20); 
+    menu_draw_vitems(screen, &offset, 
+                     menuitem_icons[current_menu_index], &icon_rect, 
+                     menuitem_text[current_menu_index], &text_rect, 
+                     current_menuitem_index, number_of_menuitem[current_menu_index],
+                     number_of_submenuitem > 0, 1, menu_icons[current_menu_index]->h + 20); 
 
     //Draw submenu (will only show if it is active)
-    // at this point, txtrect.x and txtrect.y should be at the position where we want to draw the current
+    // at this point, text_rect.x and text_rect.y should be at the position where we want to draw the current
 
-    //-1 is a hack to push the text above the OSD info
-    init_rect_pos(&offset, txtrect.x, txtrect.y-1); 
-        
-    menu_draw_vitems(screen, &offset, &dstrect, &txtrect, 
-                     current_submenuitem_index, number_of_submenuitem, 
-                     submenuitem_icons, submenuitem_text, 0, 0, 0); 
-}
-
-enum MenuState menu_keypress(SDLKey keysym)
-{
-    enum MenuState state = MAINMENU;
-
-    switch (keysym) {
-        case DINGOO_BUTTON_L:
-            vol_set(-5);
-            SE_out( TEST );
-            break;
-        case DINGOO_BUTTON_R:
-            vol_set(+5);
-            SE_out( TEST );
-            break;
-        case DINGOO_BUTTON_X:
-            bright_set(+1);
-            SE_out( TEST );
-            break;
-        case DINGOO_BUTTON_Y:
-            bright_set(-1);
-            SE_out( TEST );
-            break;
-        case DINGOO_BUTTON_LEFT:
-            menu_move( PREV );
-            break;
-        case DINGOO_BUTTON_RIGHT:
-            menu_move( NEXT );
-            break;
-        case DINGOO_BUTTON_UP:
-            menuitem_move( PREV );
-            break;
-        case DINGOO_BUTTON_DOWN:
-            menuitem_move( NEXT ); 
-            break;
-        case DINGOO_BUTTON_A:
-            m  = cfg_getnsec(cfg, "Menu", current_menu_index);
-            mi = cfg_getnsec(m, "MenuItem", current_menuitem_index);
-
-            if (number_of_submenuitem > 0) 
-            {
-                mi = cfg_getnsec(mi, "SubMenuItem", current_submenuitem_index);
-            }
-
-            if (cfg_getbool(mi, "Selector")) 
-            {
-                char* listdir = cfg_getstr(mi, "SelectorDir");
-                if (!listdir ) listdir = cfg_getstr(mi, "WorkDir");
-                if (!filelist_init(cfg_getstr(mi, "Name"),
-                                   cfg_getstr(mi, "Executable"),
-                                   cfg_getstr(mi, "WorkDir"),
-                                   listdir, 1))
-                {
-                    state = FILELIST;
-                } // else we are not able to initialise the filelist display
-            } 
-            else {
-                state = menuitem_run();
-            }
-            break;
-        case DINGOO_BUTTON_B:
-            if (number_of_submenuitem > 0) submenu_close();
-            break;
-
-        default: break;
+    if (number_of_submenuitem > 0) {
+        icon_rect.x += menu_text[current_menu_index]->w;
+        text_rect.x += menu_text[current_menu_index]->w;
     }
-    return state;
+    
+    //-1 is a hack to push the text above the OSD info
+    init_rect_pos(&offset, text_rect.x, text_rect.y-1); 
+        
+    menu_draw_vitems(screen, &offset, 
+                     submenuitem_icons, &icon_rect, 
+                     submenuitem_text, &text_rect, 
+                     current_submenuitem_index, 
+                     number_of_submenuitem, 0, 0, 0); 
 }
 
 void menu_move(enum Direction dir) 
@@ -421,6 +357,42 @@ void menuitem_move(enum Direction dir )
         current_submenuitem_index = wrap(next_si, 0, nosi-1);
     }
     SE_out( MENUITEM_MOVE );    
+}
+
+void submenu_open()
+{
+    int i;
+    SDL_Color* color = get_theme_font_color();
+    SE_out( DECIDE );
+
+    number_of_submenuitem = cfg_size(mi, "SubMenuItem");
+    submenuitem_icons = new_array(SDL_Surface*, number_of_submenuitem);
+    submenuitem_text  = new_array(SDL_Surface*, number_of_submenuitem);
+    
+    for (i=0;i<number_of_submenuitem;i++) {
+        smi = cfg_getnsec(mi, "SubMenuItem", i);
+        submenuitem_icons[i] = load_theme_image(cfg_getstr(smi, "Icon"));
+        submenuitem_text[i]  = draw_text(cfg_getstr(smi, "Name"), menuitem_font, color);
+    }    
+    
+    free(color);
+    current_submenuitem_index = 0;
+}
+
+void submenu_close()
+{
+    int i;
+
+    SE_out( CANCEL );
+    for (i=0;i<number_of_submenuitem;i++) {
+        SDL_FreeSurface(submenuitem_icons[i]);
+        SDL_FreeSurface(submenuitem_text[i]);
+    }
+
+    free(submenuitem_icons);
+    free(submenuitem_text);
+    
+    number_of_submenuitem = 0;
 }
 
 enum MenuState menuitem_runinternal()
@@ -481,7 +453,7 @@ enum MenuState menuitem_runinternal()
 enum MenuState menuitem_run()
 {
     char* executable = cfg_getstr(mi, "Executable");
-
+    
     if (executable) {
         if (internal_command(executable)) {
             return menuitem_runinternal();
@@ -496,38 +468,69 @@ enum MenuState menuitem_run()
     return MAINMENU;
 }
 
-void submenu_open()
+enum MenuState menu_keypress(SDLKey keysym)
 {
-    int i;
-    SDL_Color* color = get_theme_font_color();
-    SE_out( DECIDE );
-
-    number_of_submenuitem = cfg_size(mi, "SubMenuItem");
-    submenuitem_icons = new_array(SDL_Surface*, number_of_submenuitem);
-    submenuitem_text  = new_array(SDL_Surface*, number_of_submenuitem);
+    enum MenuState state = MAINMENU;
     
-    for (i=0;i<number_of_submenuitem;i++) {
-        smi = cfg_getnsec(mi, "SubMenuItem", i);
-        submenuitem_icons[i] = load_theme_image(cfg_getstr(smi, "Icon"));
-        submenuitem_text[i]  = draw_text(cfg_getstr(smi, "Name"), menuitem_font, color);
-    }    
-    
-    free(color);
-    current_submenuitem_index = 0;
-}
-
-void submenu_close()
-{
-    int i;
-
-    SE_out( CANCEL );
-    for (i=0;i<number_of_submenuitem;i++) {
-        SDL_FreeSurface(submenuitem_icons[i]);
-        SDL_FreeSurface(submenuitem_text[i]);
+    switch (keysym) {
+        case DINGOO_BUTTON_L:
+            vol_set(-5);
+            SE_out( TEST );
+            break;
+        case DINGOO_BUTTON_R:
+            vol_set(+5);
+            SE_out( TEST );
+            break;
+        case DINGOO_BUTTON_X:
+            bright_set(+1);
+            SE_out( TEST );
+            break;
+        case DINGOO_BUTTON_Y:
+            bright_set(-1);
+            SE_out( TEST );
+            break;
+        case DINGOO_BUTTON_LEFT:
+            menu_move( PREV );
+            break;
+        case DINGOO_BUTTON_RIGHT:
+            menu_move( NEXT );
+            break;
+        case DINGOO_BUTTON_UP:
+            menuitem_move( PREV );
+            break;
+        case DINGOO_BUTTON_DOWN:
+            menuitem_move( NEXT ); 
+            break;
+        case DINGOO_BUTTON_A:
+            m  = cfg_getnsec(cfg, "Menu", current_menu_index);
+            mi = cfg_getnsec(m, "MenuItem", current_menuitem_index);
+            
+            if (number_of_submenuitem > 0) 
+            {
+                mi = cfg_getnsec(mi, "SubMenuItem", current_submenuitem_index);
+            }
+            
+            if (cfg_getbool(mi, "Selector")) 
+            {
+                char* listdir = cfg_getstr(mi, "SelectorDir");
+                if (!listdir ) listdir = cfg_getstr(mi, "WorkDir");
+                if (!filelist_init(cfg_getstr(mi, "Name"),
+                    cfg_getstr(mi, "Executable"),
+                                   cfg_getstr(mi, "WorkDir"),
+                                   listdir, 1))
+                {
+                    state = FILELIST;
+                } // else we are not able to initialise the filelist display
+            } 
+            else {
+                state = menuitem_run();
+            }
+            break;
+        case DINGOO_BUTTON_B:
+            if (number_of_submenuitem > 0) submenu_close();
+            break;
+            
+        default: break;
     }
-
-    free(submenuitem_icons);
-    free(submenuitem_text);
-    
-    number_of_submenuitem = 0;
+    return state;
 }

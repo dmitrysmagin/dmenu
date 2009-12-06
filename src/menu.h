@@ -12,5 +12,6 @@ void menuitem_move( enum Direction dir);
 
 enum MenuState menu_keypress(SDLKey);
 enum MenuState menuitem_run();
-
+void submenu_close();
+void submenu_open();
 #endif
