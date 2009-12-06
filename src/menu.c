@@ -173,10 +173,10 @@ void menu_deinit()
 void menu_draw_single_item(SDL_Surface* screen,
                            SDL_Surface* icon, SDL_Rect* icon_rect, 
                            SDL_Surface* text, SDL_Rect* text_rect,
-                           int alpha, int hide_text, int text_below) 
+                           int alpha, int position) 
 {
-    if (!hide_text) {
-        if (!text_below) {
+    if (position >= 0) {
+        if (position == 0) {
             text_rect->x = icon_rect->x + icon->w;
             text_rect->y = icon_rect->y + icon->h/2 - text->h/2;
         } else {
@@ -213,7 +213,7 @@ void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset,
      
                 menu_draw_single_item(screen, icons[draw_item], icon_rect,   
                                       text[draw_item], text_rect,
-                                      MENU_ACTIVE_ALPHA, child_showing, 0);
+                                      MENU_ACTIVE_ALPHA, child_showing ? -1 : 0);
                 --draw_item; 
                 if (icon_rect->y < 0 || draw_item < 0) break;
             }
@@ -231,7 +231,7 @@ void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset,
             menu_draw_single_item(screen, 
                                   icons[draw_item], icon_rect, 
                                   text[draw_item], text_rect, 
-                                  alpha, child_showing, 0); 
+                                  alpha, child_showing ? -1 : 0); 
             icon_rect->y += icons[draw_item]->h;
             draw_item++;
 
@@ -263,7 +263,7 @@ void menu_draw_hitems(SDL_Surface* screen, SDL_Rect* child_offset,
         menu_draw_single_item(screen, 
                               icons[draw_item], icon_rect, 
                               text[draw_item],  text_rect, 
-                              alpha, draw_item != current_item, 1);
+                              alpha, draw_item != current_item ? -1 : 1);
    
         //Store calculated position for current menu items
         if (draw_item == current_item) { 
