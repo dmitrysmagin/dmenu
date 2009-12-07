@@ -3,7 +3,10 @@
 
 #include "common.h"
 
+#define item_alpha(act, cur) (MENU_ACTIVE_ALPHA >> abs(cur-act));
+
 int menu_init();
+void menu_state_changed();
 void menu_reload_background();
 void menu_deinit();
 void menu_draw(SDL_Surface*);

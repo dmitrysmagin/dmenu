@@ -210,6 +210,7 @@ void listen() {
     program_done = 0;
     SDLKey key;
     SDL_Event event;
+    enum MenuState prevstate;
     
     //Allow for easier menu nav
     SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
@@ -239,6 +240,7 @@ void listen() {
                     if (dosd_is_locked())
                         break;
                     
+                    prevstate = state;
                     switch (state) {
                         case MAINMENU:
                             state = menu_keypress(key);
@@ -253,7 +255,9 @@ void listen() {
                             state = colorpicker_keypress(key);
                             break;
                     }
+                    if (state == MAINMENU && prevstate != state) menu_state_changed();
                     break;
+                    
             } // end switch
         } // end of message processing
         

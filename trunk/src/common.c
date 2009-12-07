@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2009 Rookie1 <mr.rookie1@gmail.com>, <timothy.soehnlin@gmail.com>
+ *  Copyright (C) 2009 Rookie1 <mr.rookie1@gmail.com>, 
+                       Timothy Soehnlin <timothy.soehnlin@gmail.com>
  *
  *  Authors: <mr.rookie1@gmail.com>,
  *           <timothy.soehnlin@gmail.com>
@@ -324,10 +325,76 @@ SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a)
     return tmp;
 }
 
+/**
+ *  Alpha blends a 32bit Surface using per pixel alpha blending. It will 
+ *  take any given surface and scale each pixel's alpha value down 
+ *  by alpha. If alpha is a power of 2 it should scale much faster than any
+ *  other values as it can use bitwise shifting instead of multiplication. The
+ *  following alpha values are the special values.
+ *     255 ->  Does nothing (alpha blending by 100% is just ignored)
+ *     127, 63, 31, 15, 7, 3, 1 -> Quick divide using bitwise shifting
+ *     0 -> no math, just clears out alpha channel
+ *     Everything else -> alpha/255 * pixel alpha
+ */
+void alphaBlendSurface( SDL_Surface* s, int alpha ) 
+{
+            
+    if (alpha == 255) return;
 
+    Uint32 *pixels = (Uint32*)s->pixels, *p;
+
+    float alpha_ratio;
+    const register int pitch = s->pitch;
+    register int off = 0;
+    register int x = 0;
+    int max_off = s->h*pitch,
+        max_x= pitch,
+        msk = s->format->Amask,
+        alpha_step = 8;
+
+    #define map_pixel(op)\
+        while (off<max_off) {\
+            while (x<max_x) {\
+                p = (Uint32*)((int)pixels + x);\
+                *p = op; x+=4; }\
+                off += pitch;max_x = off+pitch;}
+    
+    switch (alpha) {
+        case 127: --alpha_step;
+        case 63:  --alpha_step;
+        case 31:  --alpha_step;
+        case 15:  --alpha_step;
+        case 7:   --alpha_step;
+        case 3:   --alpha_step;
+        case 1:   --alpha_step;
+            map_pixel((*p & ~msk) | (*p>>alpha_step & msk));
+            break;
+        case 0:
+            map_pixel((*p & ~msk));
+            break;
+        default:
+            alpha_ratio = alpha/255.0f;
+            #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+                map_pixel((*p & ~msk) | (int)((*p>>24) * alpha_ratio) << 24);
+            #else
+                map_pixel((*p & ~msk) | ((int)(*p * alpha_ratio) & 0xFF));
+            #endif
+            break;
+    }
+    #undef map_pixel
+}
+
+/** 
+ * Blits Alpha Blended Surface (scales opacity by alpha/255)
+ */
 void blitSurfaceAlpha ( SDL_Surface* src, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect, int alpha)
 {
-    SDL_BlitSurface(src,  src_rect, dst, dst_rect);
+    if (alpha == 0) return;
+    
+    SDL_Surface* tmp = copy_surface(src);
+    alphaBlendSurface(tmp, alpha);
+    SDL_BlitSurface(tmp,  src_rect, dst, dst_rect);
+    SDL_FreeSurface(tmp);
 }
 
 /**
@@ -345,14 +412,14 @@ SDL_Surface* shrink_surface(SDL_Surface *src, int width, int height)
     int y,x;
     
     SDL_Surface *dst = SDL_CreateRGBSurface(
-        src->flags, width, height, SCREEN_COLOR_DEPTH,
+        src->flags, width, height, 16,
         src->format->Rmask, src->format->Gmask, 
         src->format->Bmask, src->format->Amask);
 
     register int src_pitch = src->pitch, dst_pitch = dst->pitch;
     register int src_y_off = 0, dst_y_off = 0, dst_x_off=0;
     Uint16 *src_pixels = (Uint16*)src->pixels, *dst_pixels = (Uint16*)dst->pixels;
-    int max_w = SCREEN_BPP*width;
+    int max_w = 2*width;
     
     y = height;
     while (y--) {
@@ -363,9 +430,9 @@ SDL_Surface* shrink_surface(SDL_Surface *src, int width, int height)
         
         x= width;
         while (x--) {
-            dst_x_off -= SCREEN_BPP;
+            dst_x_off -= 2;
             *(Uint16*)((int)dst_pixels + dst_y_off+dst_x_off) = 
-                *(Uint16*)((int)src_pixels + src_y_off+(int)(x*fpx)*SCREEN_BPP);
+                *(Uint16*)((int)src_pixels + src_y_off+(int)(x*fpx)*2);
         }
     }
     
@@ -375,7 +442,7 @@ SDL_Surface* shrink_surface(SDL_Surface *src, int width, int height)
 SDL_Surface* tint_surface(SDL_Surface* src, int color, int alpha) {
     
     SDL_Surface *out;
-    Uint32 rm=0xFF&(color>>16), gm=0xFF&(color>>8), bm=0xFF&(color), am=0xFF;
+    Uint32 rm=0xFF&(color>>16), gm=0xFF&(color>>8), bm=0xFF&(color), am=0xFF&alpha;
     
     /* SDL interprets each pixel as a 32-bit number, so our masks must depend
     on the endianness (byte order) of the machine */
@@ -402,7 +469,10 @@ SDL_Surface* copy_surface(SDL_Surface* src) {
     #endif
     
     SDL_Surface *out =  SDL_CreateRGBSurface(SDL_SWSURFACE, src->w, src->h, 32, rm, gm, bm, am);
+    SDL_SetAlpha(src, 0, src->format->alpha);
+    SDL_SetAlpha(out, SDL_SRCALPHA, out->format->alpha);
     SDL_BlitSurface(src, NULL, out, NULL);
+    SDL_SetAlpha(src, SDL_SRCALPHA, src->format->alpha);
     return out;
 }
 

@@ -64,6 +64,7 @@ SDL_Color*   load_color_file( char* file );
 void  init_rect(SDL_Rect* rect, int x, int y, int w, int h);
 void  init_rect_pos(SDL_Rect* rect, int x, int y);
 SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a);
+void alphaBlendSurface( SDL_Surface* s, int alpha );
 void blitSurfaceAlpha ( SDL_Surface* src, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect, int alpha);
 SDL_Surface* shrink_surface(SDL_Surface *src, int width, int height);
 int export_surface_as_bmp(char* file_name, SDL_Surface* surface);

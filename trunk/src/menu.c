@@ -35,6 +35,8 @@ cfg_t *m;
 cfg_t *mi;
 cfg_t *smi;
 
+int menu_needs_redraw = 1; //First draw
+
 SDL_Surface* background;
 
 SDL_Surface** menu_icons;
@@ -62,6 +64,11 @@ void menu_reload_background()
 {
     free_surface(background);
     background = get_theme_background();
+}
+
+void menu_state_changed()
+{
+    menu_needs_redraw = 1;
 }
 
 int menu_init()
@@ -198,7 +205,8 @@ void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset,
                       int current_item,    int number_of_items, 
                       int child_showing,   int is_parent, int lower_offset) {
   
-    int draw_item = 0;
+    int draw_item = 0, alpha = 0, ypos = 0;
+    
     icon_rect->x = offset->x;
 
     if (number_of_items > 0 ) {
@@ -209,13 +217,15 @@ void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset,
         if (current_item > 0 && !child_showing) {
 
             while (1) {
+                
+                alpha = item_alpha(current_item, draw_item); 
                 icon_rect->y = offset->y - (current_item - draw_item)*icons[draw_item]->h;
-     
+                ypos = icon_rect->y; //icon_rect's position is overwritten by blitting 
                 menu_draw_single_item(screen, icons[draw_item], icon_rect,   
                                       text[draw_item], text_rect,
-                                      MENU_ACTIVE_ALPHA, child_showing ? -1 : 0);
+                                      alpha, child_showing ? -1 : 0);
                 --draw_item; 
-                if (icon_rect->y < 0 || draw_item < 0) break;
+                if (ypos < 0 || draw_item < 0) break;
             }
         }
 
@@ -224,16 +234,14 @@ void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset,
         icon_rect->y = offset->y + lower_offset;
 
         while (1) { 
-
-            int alpha = (draw_item==current_item) ? 
-                MENU_ACTIVE_ALPHA : MENU_INACTIVE_ALPHA;
-
+            alpha = item_alpha(current_item, draw_item); 
             menu_draw_single_item(screen, 
                                   icons[draw_item], icon_rect, 
                                   text[draw_item], text_rect, 
                                   alpha, child_showing ? -1 : 0); 
             icon_rect->y += icons[draw_item]->h;
             draw_item++;
+            alpha--;
 
             if (child_showing || icon_rect->y > screen->h || draw_item >= number_of_items) {
                 break; //Only draw first item if child showing
@@ -256,10 +264,9 @@ void menu_draw_hitems(SDL_Surface* screen, SDL_Rect* child_offset,
         icon_rect->x += icons[0]->w; 
         draw_item++;
     }
-
+    
     while (1) {
-        int alpha = (draw_item==current_item) ? 
-                     MENU_ACTIVE_ALPHA : MENU_INACTIVE_ALPHA;
+        int alpha = item_alpha(current_item, draw_item); 
         menu_draw_single_item(screen, 
                               icons[draw_item], icon_rect, 
                               text[draw_item],  text_rect, 
@@ -273,6 +280,8 @@ void menu_draw_hitems(SDL_Surface* screen, SDL_Rect* child_offset,
         icon_rect->x += icons[draw_item]->w;
 
         draw_item++;
+        alpha --;
+        
         if ((icon_rect->x >= screen->w) || 
            (draw_item >= number_of_items) ||
            (subchild_showing && draw_item > current_menu_index)) 
@@ -284,6 +293,9 @@ void menu_draw_hitems(SDL_Surface* screen, SDL_Rect* child_offset,
 
 void menu_draw(SDL_Surface* screen)
 {
+    if (!menu_needs_redraw) return;
+    menu_needs_redraw = 0;
+    
     SDL_Rect icon_rect, text_rect, rect, offset;
 
     init_rect_pos(&icon_rect, 0,0);
@@ -337,6 +349,9 @@ void menu_move(enum Direction dir)
         }
         return;
     }
+    
+    menu_state_changed();
+    
     current_menu_index = wrap(current_menu_index+ delta, 0, number_of_menu-1);
     SE_out( MENU_MOVE );
     current_menuitem_index = 0;
@@ -344,6 +359,8 @@ void menu_move(enum Direction dir)
 
 void menuitem_move(enum Direction dir ) 
 {
+    menu_state_changed();
+    
     int delta = dir == PREV ? -1 : 1;
     int nosi = number_of_submenuitem;
     int nomi = number_of_menuitem[current_menu_index];
@@ -361,6 +378,8 @@ void menuitem_move(enum Direction dir )
 
 void submenu_open()
 {
+    menu_state_changed();
+    
     int i;
     SDL_Color* color = get_theme_font_color();
     SE_out( DECIDE );
@@ -381,6 +400,8 @@ void submenu_open()
 
 void submenu_close()
 {
+    menu_state_changed();
+    
     int i;
 
     SE_out( CANCEL );
@@ -408,6 +429,11 @@ enum MenuState menuitem_runinternal()
     switch (get_command(executable))
     {
         case THEMESELECT:
+            //A lot of string manipulation happens to convert the file names
+            // Of the theme directories to the proper paths for the thumbnails
+            // and the theme titles.  This is why we handle so much malloc
+            // and free in this case.  The goal is to ensure no memory
+            // is leaked.
             files = get_theme_previews();
             while (files[count] != NULL) count++;
             images = new_array(ImageEntry*, count+1);
@@ -474,32 +500,27 @@ enum MenuState menu_keypress(SDLKey keysym)
     
     switch (keysym) {
         case DINGOO_BUTTON_L:
-            vol_set(-5);
-            SE_out( TEST );
-            break;
         case DINGOO_BUTTON_R:
-            vol_set(+5);
+            vol_set(keysym==DINGOO_BUTTON_L?-5:5);
+            menu_state_changed();
             SE_out( TEST );
             break;
         case DINGOO_BUTTON_X:
-            bright_set(+1);
-            SE_out( TEST );
-            break;
         case DINGOO_BUTTON_Y:
-            bright_set(-1);
+            bright_set(keysym==DINGOO_BUTTON_X?-1:1);
+            menu_state_changed();
             SE_out( TEST );
             break;
         case DINGOO_BUTTON_LEFT:
-            menu_move( PREV );
-            break;
         case DINGOO_BUTTON_RIGHT:
-            menu_move( NEXT );
+            menu_move(keysym==DINGOO_BUTTON_LEFT?PREV:NEXT);
             break;
         case DINGOO_BUTTON_UP:
-            menuitem_move( PREV );
-            break;
         case DINGOO_BUTTON_DOWN:
-            menuitem_move( NEXT ); 
+            menuitem_move(keysym==DINGOO_BUTTON_UP?PREV:NEXT);
+            break;
+        case DINGOO_BUTTON_B:
+            if (number_of_submenuitem > 0) submenu_close();
             break;
         case DINGOO_BUTTON_A:
             m  = cfg_getnsec(cfg, "Menu", current_menu_index);
@@ -515,9 +536,9 @@ enum MenuState menu_keypress(SDLKey keysym)
                 char* listdir = cfg_getstr(mi, "SelectorDir");
                 if (!listdir ) listdir = cfg_getstr(mi, "WorkDir");
                 if (!filelist_init(cfg_getstr(mi, "Name"),
-                    cfg_getstr(mi, "Executable"),
-                                   cfg_getstr(mi, "WorkDir"),
-                                   listdir, 1))
+                        cfg_getstr(mi, "Executable"),
+                        cfg_getstr(mi, "WorkDir"),
+                        listdir, 1))
                 {
                     state = FILELIST;
                 } // else we are not able to initialise the filelist display
@@ -526,10 +547,6 @@ enum MenuState menu_keypress(SDLKey keysym)
                 state = menuitem_run();
             }
             break;
-        case DINGOO_BUTTON_B:
-            if (number_of_submenuitem > 0) submenu_close();
-            break;
-            
         default: break;
     }
     return state;
