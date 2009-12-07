@@ -36,6 +36,7 @@ SDL_Color*   imageviewer_font_color;
 
 typedef struct ImageViewerGlobal {
     int total_size;
+    int max_pages;
     int set_size;
     int page;
     int is_ready;
@@ -110,6 +111,12 @@ int get_imagelist(char* path, ImageEntry** files)
             }
         }
     }
+    
+    //Calculate page max, remember to remove 1 page when number 
+    //  of entries is perfect mod of set size
+    iv_global.max_pages = iv_global.total_size/iv_global.set_size -
+        (iv_global.total_size % iv_global.set_size == 0 ? 1 : 0);
+        
     return iv_global.total_size == 0 ? 1 : 0;
 }
 
@@ -312,7 +319,7 @@ void imageviewer_move_page(enum Direction dir)
 {
     int delta = (dir == PREV) ? -1 : 1;
     int prev_p = iv_global.page;
-    iv_global.page = bound(iv_global.page + delta, 0, iv_global.total_size/iv_global.set_size);
+    iv_global.page = bound(iv_global.page + delta, 0, iv_global.max_pages);
     
     SE_out( MENU_MOVE );
     
