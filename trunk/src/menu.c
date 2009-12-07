@@ -570,7 +570,7 @@ enum MenuState menu_keypress(SDLKey keysym)
             break;
         case DINGOO_BUTTON_X:
         case DINGOO_BUTTON_Y:
-            bright_set(keysym==DINGOO_BUTTON_X?-1:1);
+            bright_set(keysym==DINGOO_BUTTON_X?1:-1);
             menu_state_changed();
             SE_out( TEST );
             break;
