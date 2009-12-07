@@ -59,11 +59,6 @@ TTF_Font* get_theme_font(int size)
     return load_theme_font(get_user_attr("Font"), size);
 }
 
-TTF_Font* get_osd_font()
-{
-    return load_global_font(DOSD_FONT, DOSD_FONT_SIZE);
-}
-
 SDL_Surface* get_theme_background()
 {
     return load_theme_background(get_user_attr("Background"));

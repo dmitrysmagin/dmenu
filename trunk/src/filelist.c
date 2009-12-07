@@ -215,12 +215,12 @@ void filelist_deinit()
     clear_list();
 }
 
-void filelist_draw(SDL_Surface* screen)
+int filelist_draw(SDL_Surface* screen)
 {
     int i;
     SDL_Rect dstrect, txtrect;
 
-    if (!status_changed) return;
+    if (!status_changed) return 0;
     init_rect_pos(&dstrect, 0,0);
     init_rect_pos(&txtrect, 0,0);
 
@@ -249,6 +249,12 @@ void filelist_draw(SDL_Surface* screen)
     }
 
     status_changed = 0;
+    return 1;
+}
+
+int filelist_animate(SDL_Surface* screen)
+{
+    return 0;
 }
 
 void shift_highlight(enum Direction dir) 

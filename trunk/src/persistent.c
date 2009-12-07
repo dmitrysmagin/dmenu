@@ -14,8 +14,19 @@
 #include <stdio.h>
 #include <errno.h>
 #include "persistent.h"
+#include "menu.h"
 
 persistent_t* g_persistent;
+
+void persistent_store_menu_position()
+{
+    menu_get_position(&g_persistent->current_menu, &g_persistent->current_menuitem);
+}
+
+void persistent_restore_menu_position()
+{
+    menu_set_position(g_persistent->current_menu, g_persistent->current_menuitem);
+}
 
 int persistent_init() {
     key_t key = PERSISTENT_ID;
@@ -59,3 +70,4 @@ init_failed:
     memset(g_persistent, 0, sizeof(persistent_t));
     return 0;
 }
+

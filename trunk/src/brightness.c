@@ -11,9 +11,11 @@ SDL_Rect bright_dst_icon;
 
 extern cfg_t *cfg_main;
 
-void load_image(char* file, int pos) 
+void load_image(char* file, int pos, int color) 
 {
-    bright_status[pos] = load_global_image(file);
+    SDL_Surface* tmp = load_global_image(file);
+    bright_status[pos] = tint_surface(tmp, color, 0xFF);
+    free_surface(tmp);
 }
 
 int bright_enabled()
@@ -21,7 +23,7 @@ int bright_enabled()
     return cfg_getbool(cfg_main,"BrightDisp");
 }
 
-void bright_init() 
+void bright_init(int color) 
 {
     log_debug("Initializing");
     
@@ -29,7 +31,7 @@ void bright_init()
     int i;
     for (i=0;i<5;i++) {
         sprintf(file, "STATbright%d.png", i);
-        load_image(file, i);
+        load_image(file, i, color);
     }
     
     bright_level = bound((int)cfg_getint(cfg_main, "Bright"), 0, 4);

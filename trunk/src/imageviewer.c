@@ -211,19 +211,14 @@ void imageviewer_deinit()
     iv_global.is_ready = 0;
 }
 
-void imageviewer_draw(SDL_Surface* screen)
+int imageviewer_draw(SDL_Surface* screen)
 {
     iv_global.title_ticks++;    
     
-    if (!iv_global.state_changed) {
-        if (iv_global.title_ticks >= 10 && iv_global.title_ticks <= 16) ;
-        else
-            return;
-    }
+    if (!iv_global.state_changed) return 0;
     
     int i;
     SDL_Rect dstrect, txtrect;
-
     SDL_BlitSurface(imageviewer_background, NULL, screen, NULL);
     
     //Draw thumbnails
@@ -244,22 +239,6 @@ void imageviewer_draw(SDL_Surface* screen)
     init_rect_pos(&dstrect, screen->w/2-imageviewer_preview->w/2, (screen->h-IMAGE_THUMB_HEIGHT)/2-imageviewer_preview->h/2);
     SDL_BlitSurface(imageviewer_preview, 0, screen, &dstrect);
 
-    //Wait to show title as a time delayed feature, practicing animation skills
-    if (imageviewer_preview_title && iv_global.title_ticks >= 10) {
-        int h= imageviewer_preview_title->h;
-        
-        dstrect.x += 35; dstrect.y=screen->h-IMAGE_THUMB_HEIGHT-h*2;
-        
-        //Alpha is function of time
-        int alpha = (int)(0xaa * ((iv_global.title_ticks-10.0)/6.0));
-        
-        SDL_Surface* tmp = create_surface(imageviewer_preview->w, h*1.2, 32, 0,0,0,alpha);
-        SDL_BlitSurface(tmp, 0, screen, &dstrect);
-        free_surface(tmp);
-        dstrect.x += imageviewer_preview->w - imageviewer_preview_title->w - 10;
-        dstrect.y += h*.1;
-        SDL_BlitSurface(imageviewer_preview_title, 0, screen, &dstrect);
-    }
     
     //Draw top message
     init_rect_pos(&txtrect, 0,0);
@@ -268,8 +247,32 @@ void imageviewer_draw(SDL_Surface* screen)
     SDL_BlitSurface(imageviewer_title, 0, screen, &txtrect);
     
     iv_global.state_changed = 0;
+    
+    return 1;
 }
 
+int imageviewer_animate(SDL_Surface* screen)
+{
+    if  (!imageviewer_preview_title || iv_global.title_ticks < 10 || iv_global.title_ticks > 16) return 0;
+    
+    int h= imageviewer_preview_title->h;
+    SDL_Rect overlay_rect;
+    
+    //Draw imageviewer_preview
+    init_rect_pos(&overlay_rect, screen->w/2-imageviewer_preview->w/2 + 35, screen->h-IMAGE_THUMB_HEIGHT-h*2);
+    
+    //Alpha is function of time
+    int alpha = (int)(0xaa * ((iv_global.title_ticks-10.0)/6.0));
+    
+    SDL_Surface* tmp = create_surface(imageviewer_preview->w, h*1.2, 32, 0,0,0,alpha);
+    SDL_BlitSurface(tmp, 0, screen, &overlay_rect);
+    free_surface(tmp);
+    overlay_rect.x += imageviewer_preview->w - imageviewer_preview_title->w - 10;
+    overlay_rect.y += h*.1;
+    SDL_BlitSurface(imageviewer_preview_title, 0, screen, &overlay_rect);
+    
+    return iv_global.title_ticks == 16; //Only recache on last frame;
+}
 
 void imageviewer_update_list()
 {

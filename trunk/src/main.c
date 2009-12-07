@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2009 Rookie1 <mr.rookie1@gmail.com>
+ *                     Timothy Soehnlin <timothy.soehnlin@gmail.com>
  *
  *  Author: <mr.rookie1@gmail.com>
  *
@@ -26,25 +27,18 @@
 #include "conf.h"
 #include "persistent.h"
 #include "dosd/dosd.h"
-#include "volume.h"
-#include "brightness.h"
 
 extern cfg_t *cfg;
 
 static Uint32 next_time;
-SDL_Surface* screen;
+SDL_Surface *screen, *screen_cache;
 enum MenuState state = MAINMENU;
 int program_done;
 
 Uint32 time_left(void)
 {
-    Uint32 now;
-
-    now = SDL_GetTicks();
-    if(next_time <= now)
-        return 0;
-    else
-        return next_time - now;
+    Uint32 now = SDL_GetTicks();
+    return next_time <= now ? 0 : next_time - now;
 }
 
 int init_system() {
@@ -63,7 +57,7 @@ int init_system() {
     {
         log_error("Unable to initialize persistent memory");
     }
-    
+        
     // init menu config
     if (menu_init())
     {
@@ -71,13 +65,8 @@ int init_system() {
         return 1;
     }
     
-    // Init OSD
-    if (!dosd_init(DOSD_COLOR))
-    {
-        log_error("Unable to initialize OSD");
-        return 1;
-    }
-    
+    persistent_restore_menu_position();
+       
     return 0;
 }
 
@@ -103,6 +92,8 @@ int init_display() {
         log_error("Unable to set %dx%d video: %s", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_GetError());
         return 1;
     }
+    
+    screen_cache = create_surface(SCREEN_WIDTH, SCREEN_HEIGHT, 24, 0xFF,0xFF,0xFF,0);
     
     //Show saved image as soon as possible to help hide startup times
     show_menu_snapshot(screen);
@@ -149,16 +140,17 @@ void deinit() {
     update_display();
     save_menu_snapshot(screen, 1);
     
+    // Save current menu state
+    persistent_store_menu_position();
+    
     menu_deinit();
     conf_unload();
-    dosd_deinit();
 }
 
 void reload() {
     deinit();
     conf_load();
     menu_init();
-    dosd_init(DOSD_COLOR);
 }
 
 void quick_quit() {
@@ -172,25 +164,48 @@ void quick_quit() {
 void update_display() {
 
     // DRAWING STARTS HERE
+    int recache = 0;
     switch (state) {
         case MAINMENU:
-            menu_draw(screen);
+            recache = menu_draw(screen);
             break;
         case FILELIST:
-            filelist_draw(screen);
+            recache = filelist_draw(screen);
             break;
         case IMAGEVIEWER:
-            imageviewer_draw(screen);
+            recache = imageviewer_draw(screen);
             break;
         case COLORPICKER:
-            colorpicker_draw(screen);
+            recache = colorpicker_draw(screen);
             break;
     }
     
-    dosd_show(screen);
+    if (!recache) {
+        SDL_BlitSurface(screen_cache, NULL, screen, NULL);
+    } else {
+        SDL_BlitSurface(screen, NULL, screen_cache, NULL);
+    }
     
-    if (vol_enabled())    vol_show(screen);
-    if (bright_enabled()) bright_show(screen);
+    switch (state) {
+        case MAINMENU:
+            recache = menu_animate(screen);
+            break;
+        case FILELIST:
+            recache = filelist_animate(screen);
+            break;
+        case IMAGEVIEWER:
+            recache = imageviewer_animate(screen);
+            break;
+        case COLORPICKER:
+            recache = colorpicker_animate(screen);
+            break;
+    }
+    
+    if (recache) {
+        SDL_BlitSurface(screen, NULL, screen_cache, NULL);
+    }
+    
+    menu_draw_osd(screen);
     
     // finally, update the screen :)
     SDL_Flip(screen);
@@ -237,7 +252,7 @@ void listen() {
                         break;
                     }
                     
-                    if (dosd_is_locked())
+                    if (dosd_is_locked()) 
                         break;
                     
                     prevstate = state;

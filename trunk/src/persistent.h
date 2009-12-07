@@ -19,5 +19,7 @@ typedef struct {
 extern persistent_t* g_persistent;
 
 int persistent_init();
+void persistent_store_menu_position();
+void persistent_restore_menu_position();
 
 #endif//__PERSISTENT_H__
