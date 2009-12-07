@@ -375,9 +375,9 @@ void alphaBlendSurface( SDL_Surface* s, int alpha )
         default:
             alpha_ratio = alpha/255.0f;
             #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-                map_pixel((*p & ~msk) | (int)((*p>>24) * alpha_ratio) << 24);
-            #else
                 map_pixel((*p & ~msk) | ((int)(*p * alpha_ratio) & 0xFF));
+            #else
+                map_pixel((*p & ~msk) | (int)((*p>>24) * alpha_ratio) << 24);
             #endif
             break;
     }
@@ -452,8 +452,11 @@ SDL_Surface* tint_surface(SDL_Surface* src, int color, int alpha) {
     gm<<=8; bm<<=16; am<<=24;
     #endif
     
-    out =  SDL_CreateRGBSurface(SDL_SWSURFACE, src->w, src->h, 24, rm, gm, bm, alpha?am:0);
+    out =  SDL_CreateRGBSurface(SDL_SWSURFACE, src->w, src->h, 32, rm, gm, bm, alpha?am:0);
+    SDL_SetAlpha(src, 0, src->format->alpha);
+    SDL_SetAlpha(out, SDL_SRCALPHA, out->format->alpha);
     SDL_BlitSurface(src, NULL, out, NULL);
+    SDL_SetAlpha(src, SDL_SRCALPHA, src->format->alpha);
     return out;
 }
 

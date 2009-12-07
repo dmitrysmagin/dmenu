@@ -3,13 +3,17 @@
 
 #include "common.h"
 
-#define item_alpha(act, cur) (MENU_ACTIVE_ALPHA >> abs(cur-act));
+#define item_alpha(act, cur) (MENU_ACTIVE_ALPHA >> abs(cur-act))
 
-int menu_init();
+int  menu_init();
+void menu_get_position(int* menu_index, int* menu_item_index);
+void menu_set_position(int menu_index, int menu_item_index);
 void menu_state_changed();
 void menu_reload_background();
 void menu_deinit();
-void menu_draw(SDL_Surface*);
+int  menu_draw(SDL_Surface* screen);
+int  menu_animate(SDL_Surface* screen);
+void menu_draw_osd(SDL_Surface* screen);
 void menu_move( enum Direction dir);
 void menuitem_move( enum Direction dir);
 

@@ -1,5 +1,10 @@
 #include <limits.h>
 
+// the system ARG_MAX might be too large. just use a fixed
+// value here.
+#define MAX_CMD_LEN   4096
+#define TICK_INTERVAL 100 // this is 1000/100 = 10 fps
+
 //Currently the hardcoded defaults are intended for Dingoo A320
 #ifndef DMENU_PATH
 #define DMENU_PATH           "/usr/local/dmenu/"
@@ -29,6 +34,8 @@ char THEME_PATH[PATH_MAX];
 #define BATTERY_DEVICE       "/proc/jz/battery"
 #define CHARGE_STATUS_DEVICE "/proc/jz/gpio1_pxpin"
 #define LOCK_STATUS_DEVICE   "/proc/jz/gpio3_pxpin"
+#define GPIO_LOCK_MASK       (0x400000)
+#define GPIO_POWER_MASK      (0x40000000)
 
 #define SCREEN_WIDTH         320
 #define SCREEN_HEIGHT        240
@@ -64,17 +71,13 @@ char THEME_PATH[PATH_MAX];
 
 #define EXIT_TINT_COLOR      0,0,0,0xAA
 
-#define DOSD_COLOR           0xffffff
-#define DOSD_COLOR_RGB       255,255,255
-#define DOSD_COLOR_RGBA      255,255,255,255
+#define DOSD_COLOR           0xFFFFFF
 #define DOSD_UPDATE_INTERVAL 500
 #define DOSD_PADDING         4
 #define DOSD_BATTERY_WIDTH   19
 #define DOSD_LOCK_WIDTH      7
 #define DOSD_HEIGHT          9
-#define DOSD_START_X         (SCREEN_WIDTH-DOSD_BATTERY_WIDTH-DOSD_LOCK_WIDTH)
-#define DOSD_FONT            "FreeSans.ttf"
-#define DOSD_FONT_SIZE       13
+#define DOSD_START_X         (SCREEN_WIDTH-DOSD_PADDING*2-DOSD_BATTERY_WIDTH-DOSD_LOCK_WIDTH)
 
 //Volume Positioning
 #define VOLUME_ICON_MIN_W    9
@@ -103,8 +106,3 @@ char THEME_PATH[PATH_MAX];
 #define BRIGHTNESS_ICON_H DOSD_HEIGHT
 #define BRIGHTNESS_ICON_X (VOLUME_ICON_X - BRIGHTNESS_ICON_W - DOSD_PADDING)
 #define BRIGHTNESS_ICON_Y DOSD_PADDING
-
-// the system ARG_MAX might be too large. just use a fixed
-// value here.
-#define MAX_CMD_LEN   4096
-#define TICK_INTERVAL 100 // this is 1000/100 = 10 fps

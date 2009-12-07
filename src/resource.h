@@ -8,7 +8,6 @@
 
 char* get_user_attr(char*attr);
 TTF_Font* get_theme_font(int size);
-TTF_Font* get_osd_font();
 char** get_theme_previews();
 SDL_Color* get_theme_font_color();
 char* get_theme_font_color_string();

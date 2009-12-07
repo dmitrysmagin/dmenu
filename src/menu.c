@@ -20,11 +20,11 @@
 #include "env.h"
 #include "common.h"
 #include "conf.h"
+#include "dosd/dosd.h"
 #include "resource.h"
 #include "colorpicker.h"
 #include "filelist.h"
 #include "imageviewer.h"
-#include "persistent.h"
 #include "sound.h"
 #include "dingoo.h"
 #include "brightness.h"
@@ -71,6 +71,19 @@ void menu_state_changed()
     menu_needs_redraw = 1;
 }
 
+void menu_get_position(int* menu_index, int* menu_item_index)
+{
+    *menu_index = current_menu_index;
+    *menu_item_index = current_menuitem_index;
+}
+
+void menu_set_position(int menu_index, int menu_item_index) 
+{
+    // Restore menu position
+    current_menu_index     = menu_index;
+    current_menuitem_index = menu_item_index;
+}
+
 int menu_init()
 {
     log_debug("Initializing");
@@ -112,10 +125,6 @@ int menu_init()
     
     free(color);
     
-    // Restore menu position
-    current_menu_index     = g_persistent->current_menu;
-    current_menuitem_index = g_persistent->current_menuitem;
-
     if (!in_bounds(current_menu_index, 0, number_of_menu)) {
         current_menu_index     = 0;
         current_menuitem_index = 0;
@@ -127,9 +136,17 @@ int menu_init()
     SE_Init();
 
     //load volume and brightness
-    bright_init();
-    vol_init();
-
+    bright_init(DOSD_COLOR);
+    vol_init(DOSD_COLOR);
+    
+    // Init OSD
+    if (!dosd_init(DOSD_COLOR))
+    {
+        log_error("Unable to initialize OSD");
+        return 1;
+    }
+    
+    
     return 0;
 }
 
@@ -141,14 +158,11 @@ void menu_deinit()
 
     bright_deinit();
     vol_deinit();
+    dosd_deinit();
 
     // De-init sound
     SE_deInit();
     
-    // Save current menu state
-    g_persistent->current_menu     = current_menu_index;
-    g_persistent->current_menuitem = current_menuitem_index;
-
     free_surface(background);
     
     for (i=0;i<number_of_menu;i++) {
@@ -177,10 +191,11 @@ void menu_deinit()
 }
 
 //Draw single menu item
-void menu_draw_single_item(SDL_Surface* screen,
-                           SDL_Surface* icon, SDL_Rect* icon_rect, 
-                           SDL_Surface* text, SDL_Rect* text_rect,
-                           int alpha, int position) 
+void menu_draw_single_item(
+    SDL_Surface* screen,
+    SDL_Surface* icon, SDL_Rect* icon_rect, 
+    SDL_Surface* text, SDL_Rect* text_rect,
+    int alpha, int position) 
 {
     if (position >= 0) {
         if (position == 0) {
@@ -199,11 +214,12 @@ void menu_draw_single_item(SDL_Surface* screen,
 
 
 //Draw vertical menu items
-void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset, 
-                      SDL_Surface** icons, SDL_Rect* icon_rect, 
-                      SDL_Surface** text,  SDL_Rect* text_rect, 
-                      int current_item,    int number_of_items, 
-                      int child_showing,   int is_parent, int lower_offset) {
+void menu_draw_vitems(
+    SDL_Surface* screen, SDL_Rect* offset, 
+    SDL_Surface** icons, SDL_Rect* icon_rect, 
+    SDL_Surface** text,  SDL_Rect* text_rect, 
+    int current_item,    int number_of_items, 
+    int child_showing,   int is_parent, int lower_offset) {
   
     int draw_item = 0, alpha = 0, ypos = 0;
     
@@ -221,9 +237,10 @@ void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset,
                 alpha = item_alpha(current_item, draw_item); 
                 icon_rect->y = offset->y - (current_item - draw_item)*icons[draw_item]->h;
                 ypos = icon_rect->y; //icon_rect's position is overwritten by blitting 
-                menu_draw_single_item(screen, icons[draw_item], icon_rect,   
-                                      text[draw_item], text_rect,
-                                      alpha, child_showing ? -1 : 0);
+                menu_draw_single_item(
+                    screen, icons[draw_item], icon_rect,   
+                    text[draw_item], text_rect,
+                    alpha, child_showing ? -1 : 0);
                 --draw_item; 
                 if (ypos < 0 || draw_item < 0) break;
             }
@@ -234,11 +251,12 @@ void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset,
         icon_rect->y = offset->y + lower_offset;
 
         while (1) { 
-            alpha = item_alpha(current_item, draw_item); 
-            menu_draw_single_item(screen, 
-                                  icons[draw_item], icon_rect, 
-                                  text[draw_item], text_rect, 
-                                  alpha, child_showing ? -1 : 0); 
+            alpha = item_alpha(current_item, draw_item)>>(child_showing?1:0);
+            menu_draw_single_item(
+                screen, 
+                icons[draw_item], icon_rect, 
+                text[draw_item], text_rect, 
+                alpha, child_showing ? -1 : 0); 
             icon_rect->y += icons[draw_item]->h;
             draw_item++;
             alpha--;
@@ -251,10 +269,11 @@ void menu_draw_vitems(SDL_Surface* screen, SDL_Rect* offset,
 }
 
 //Draw horizontal menu items
-void menu_draw_hitems(SDL_Surface* screen, SDL_Rect* child_offset, 
-                      SDL_Surface** icons, SDL_Rect* icon_rect, 
-                      SDL_Surface** text,  SDL_Rect* text_rect, 
-                      int current_item, int number_of_items, int subchild_showing)
+void menu_draw_hitems(
+    SDL_Surface* screen, SDL_Rect* child_offset, 
+    SDL_Surface** icons, SDL_Rect* icon_rect, 
+    SDL_Surface** text,  SDL_Rect* text_rect, 
+    int current_item, int number_of_items, int subchild_showing)
 {
     int draw_item = current_item - 1;
 
@@ -267,10 +286,11 @@ void menu_draw_hitems(SDL_Surface* screen, SDL_Rect* child_offset,
     
     while (1) {
         int alpha = item_alpha(current_item, draw_item); 
-        menu_draw_single_item(screen, 
-                              icons[draw_item], icon_rect, 
-                              text[draw_item],  text_rect, 
-                              alpha, draw_item != current_item ? -1 : 1);
+        menu_draw_single_item(
+            screen, 
+            icons[draw_item], icon_rect, 
+            text[draw_item],  text_rect, 
+            alpha, draw_item != current_item ? -1 : 1);
    
         //Store calculated position for current menu items
         if (draw_item == current_item) { 
@@ -291,10 +311,11 @@ void menu_draw_hitems(SDL_Surface* screen, SDL_Rect* child_offset,
     }
 }
 
-void menu_draw(SDL_Surface* screen)
+int menu_draw(SDL_Surface* screen)
 {
-    if (!menu_needs_redraw) return;
+    if (!menu_needs_redraw) return 0;
     menu_needs_redraw = 0;
+    int subshow = number_of_submenuitem > 0;
     
     SDL_Rect icon_rect, text_rect, rect, offset;
 
@@ -309,32 +330,50 @@ void menu_draw(SDL_Surface* screen)
     icon_rect.y = (screen->h - menu_icons[0]->h - 20) / 3; // assuming the font height for menu name is 20
 
     //Draw main menu items
-    menu_draw_hitems(screen, &offset, menu_icons, &icon_rect, menu_text, &text_rect, 
-                     current_menu_index,  number_of_menu, number_of_submenuitem > 0); 
+    menu_draw_hitems(screen, &offset, 
+                     menu_icons, &icon_rect, 
+                     menu_text, &text_rect, 
+                     current_menu_index,  number_of_menu, subshow); 
 
     //Draw menu items, starting at (x,y)
     menu_draw_vitems(screen, &offset, 
                      menuitem_icons[current_menu_index], &icon_rect, 
                      menuitem_text[current_menu_index], &text_rect, 
                      current_menuitem_index, number_of_menuitem[current_menu_index],
-                     number_of_submenuitem > 0, 1, menu_icons[current_menu_index]->h + 20); 
+                     subshow, 1, menu_icons[current_menu_index]->h + 20); 
 
     //Draw submenu (will only show if it is active)
     // at this point, text_rect.x and text_rect.y should be at the position where we want to draw the current
 
-    if (number_of_submenuitem > 0) {
-        icon_rect.x += menu_text[current_menu_index]->w;
-        text_rect.x += menu_text[current_menu_index]->w;
+    if (subshow) {
+        int new_w = max(menuitem_icons[current_menu_index][current_menuitem_index]->w, menu_text[current_menu_index]->w);
+        icon_rect.x += new_w;
+        text_rect.x += new_w;
     }
     
-    //-1 is a hack to push the text above the OSD info
-    init_rect_pos(&offset, text_rect.x, text_rect.y-1); 
+    init_rect_pos(&offset, text_rect.x, text_rect.y+20); 
         
     menu_draw_vitems(screen, &offset, 
                      submenuitem_icons, &icon_rect, 
                      submenuitem_text, &text_rect, 
                      current_submenuitem_index, 
                      number_of_submenuitem, 0, 0, 0); 
+                     
+    return 1;
+}
+
+int menu_animate(SDL_Surface* screen)
+{
+    //menu_draw_single_item();
+    return 0;
+}
+
+void menu_draw_osd(SDL_Surface* screen) 
+{    
+    dosd_show(screen);
+    
+    if (vol_enabled())    vol_show(screen);
+    if (bright_enabled()) bright_show(screen);
 }
 
 void menu_move(enum Direction dir) 

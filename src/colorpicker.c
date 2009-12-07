@@ -135,8 +135,8 @@ void colorpicker_deinit() {
     cp_global.color_changed = 0;
 }
 
-void colorpicker_draw(SDL_Surface* screen) {
-    if (!cp_global.state_changed) return;
+int colorpicker_draw(SDL_Surface* screen) {
+    if (!cp_global.state_changed) return 0;
     
     SDL_Rect dstrect, txtrect, dhtrect;
   
@@ -174,6 +174,13 @@ void colorpicker_draw(SDL_Surface* screen) {
     SDL_BlitSurface(cp_title, 0, screen, &txtrect);
     
     cp_global.state_changed = 0;
+    
+    return 1;
+}
+
+int colorpicker_animate(SDL_Surface* screen)
+{
+    return 0;
 }
 
 enum MenuState colorpicker_select()

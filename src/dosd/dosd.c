@@ -12,9 +12,6 @@
 #include "env.h"
 #include "common.h"
 
-#define GPIO_LOCK_MASK    (0x400000)
-#define GPIO_POWER_MASK (0x40000000)
-
 extern int image_pallette[3];
 
 typedef enum {
