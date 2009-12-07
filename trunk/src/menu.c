@@ -36,6 +36,7 @@ cfg_t *mi;
 cfg_t *smi;
 
 int menu_needs_redraw = 1; //First draw
+SDL_Rect menu_active_rect;
 
 SDL_Surface* background;
 
@@ -96,8 +97,8 @@ int menu_init()
 
     // load font
     TTF_Init();
-    menu_font     = get_theme_font(18);
-    menuitem_font = get_theme_font(14);
+    menu_font     = get_theme_font(MENU_TEXT_FONT_SIZE);
+    menuitem_font = get_theme_font(MENU_ITEM_FONT_SIZE);
 
     // load menu
     number_of_menu     = cfg_size(cfg, "Menu");
@@ -106,7 +107,7 @@ int menu_init()
     menu_text          = new_array(SDL_Surface*,  number_of_menu);
     menuitem_icons     = new_array(SDL_Surface**, number_of_menu);
     menuitem_text      = new_array(SDL_Surface**, number_of_menu);
-
+    
     for (i=0;i<number_of_menu;i++) {
         m = cfg_getnsec(cfg, "Menu", i);
         menu_icons[i] = load_theme_image(cfg_getstr(m, "Icon"));
@@ -122,7 +123,7 @@ int menu_init()
             menuitem_text[i][j]  = draw_text(cfg_getstr(mi, "Name"), menuitem_font, color);
         }
     }
-    
+
     free(color);
     
     if (!in_bounds(current_menu_index, 0, number_of_menu)) {
@@ -195,10 +196,10 @@ void menu_draw_single_item(
     SDL_Surface* screen,
     SDL_Surface* icon, SDL_Rect* icon_rect, 
     SDL_Surface* text, SDL_Rect* text_rect,
-    int alpha, int position) 
+    int alpha, int text_position) 
 {
-    if (position >= 0) {
-        if (position == 0) {
+    if (text_position >= 0) {
+        if (text_position == 0) {
             text_rect->x = icon_rect->x + icon->w;
             text_rect->y = icon_rect->y + icon->h/2 - text->h/2;
         } else {
@@ -231,7 +232,7 @@ void menu_draw_vitems(
         draw_item = current_item - 1;
         
         if (current_item > 0 && !child_showing) {
-
+            
             while (1) {
                 
                 alpha = item_alpha(current_item, draw_item); 
@@ -249,6 +250,11 @@ void menu_draw_vitems(
         // draw lower items 
         draw_item = current_item;
         icon_rect->y = offset->y + lower_offset;
+
+        //Will store most recent active menu item (if submenu 
+        //   is active, it will overwrite these values)
+        menu_active_rect.x = icon_rect->x;
+        menu_active_rect.y = icon_rect->y;
 
         while (1) { 
             alpha = item_alpha(current_item, draw_item)>>(child_showing?1:0);
@@ -327,7 +333,7 @@ int menu_draw(SDL_Surface* screen)
     SDL_BlitSurface(background, 0, screen, &rect);
     
     //Set menu offset
-    icon_rect.y = (screen->h - menu_icons[0]->h - 20) / 3; // assuming the font height for menu name is 20
+    icon_rect.y = (screen->h - menu_icons[0]->h - MENU_TEXT_HEIGHT) / 3; // assuming the font height for menu name is 20
 
     //Draw main menu items
     menu_draw_hitems(screen, &offset, 
@@ -340,7 +346,7 @@ int menu_draw(SDL_Surface* screen)
                      menuitem_icons[current_menu_index], &icon_rect, 
                      menuitem_text[current_menu_index], &text_rect, 
                      current_menuitem_index, number_of_menuitem[current_menu_index],
-                     subshow, 1, menu_icons[current_menu_index]->h + 20); 
+                     subshow, 1, menu_icons[current_menu_index]->h + MENU_TEXT_HEIGHT); 
 
     //Draw submenu (will only show if it is active)
     // at this point, text_rect.x and text_rect.y should be at the position where we want to draw the current
@@ -351,7 +357,7 @@ int menu_draw(SDL_Surface* screen)
         text_rect.x += new_w;
     }
     
-    init_rect_pos(&offset, text_rect.x, text_rect.y+20); 
+    init_rect_pos(&offset, text_rect.x, text_rect.y+MENU_TEXT_HEIGHT); 
         
     menu_draw_vitems(screen, &offset, 
                      submenuitem_icons, &icon_rect, 
@@ -364,7 +370,25 @@ int menu_draw(SDL_Surface* screen)
 
 int menu_animate(SDL_Surface* screen)
 {
-    //menu_draw_single_item();
+    /* Menu animation, but it isn't a good use
+    
+    static int animate_pos = 0;
+    SDL_Surface *active_icon;
+    if (number_of_submenuitem > 0) {
+        active_icon = submenuitem_icons[current_submenuitem_index];
+    } else {
+        active_icon = menuitem_icons[current_menu_index][current_menuitem_index];
+    }
+    
+    SDL_Rect rect = {menu_active_rect.x,menu_active_rect.y,active_icon->w,active_icon->h};    
+    SDL_BlitSurface(background, &rect, screen, &rect); //Clear icon
+
+    //Need to animate better
+    SDL_BlitSurface(active_icon, NULL, screen, &rect);
+    
+    */
+
+    
     return 0;
 }
 
