@@ -12,8 +12,8 @@ int vol_enabled()
     return cfg_getbool(cfg_main, "VolDisp");
 }
 
-void vol_init(int color) {
-    
+void vol_init(int color) 
+{    
     log_debug("Initializing");
     
     volume_level = (int)cfg_getint(cfg_main, "SndVol");
@@ -30,13 +30,18 @@ void vol_init(int color) {
         VOLUME_ICON_MIN_W, VOLUME_ICON_H);
               
     //Set volume
-    vol_set(0);
+    vol_set(volume_level);
 }
 
-void vol_set(int change) {
-    
+void vol_change(enum Direction dir) 
+{
+    vol_set(volume_level + (dir==PREV?-5:5));
+}
+
+void vol_set(int level) 
+{    
     int min = VOLUME_ICON_MIN_W, max = VOLUME_ICON_MAX_W;
-    volume_level = bound(volume_level + change, 0, 100);
+    volume_level = bound(level, 0, 100);
     vol_src_rect.w = min+(int)((max-min)*(volume_level/100.0f));
     
     int oss_volume = volume_level | (volume_level << 8); // set volume for both channels

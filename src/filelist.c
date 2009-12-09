@@ -259,7 +259,7 @@ int filelist_animate(SDL_Surface* screen)
 
 void shift_highlight(enum Direction dir) 
 {
-    current_highlight += (UP==dir ? -1 : 1);
+    current_highlight += (PREV==dir ? -1 : 1);
 }
 
 void shift_page_surfaces(enum Direction dir) 
@@ -269,7 +269,7 @@ void shift_page_surfaces(enum Direction dir)
         end = FILES_PER_PAGE-1, 
         delta = 1;
 
-    if (dir == UP) 
+    if (dir == PREV) 
     {
         start = FILES_PER_PAGE-1;
         end = 0;
@@ -290,7 +290,7 @@ void wrap_page_surfaces(enum Direction dir)
 {
     int size = FILES_PER_PAGE;
 
-    if (dir != UP) 
+    if (dir != PREV) 
     { //start at top
         current_list_start = 0; 
         current_highlight  = 0;
@@ -304,7 +304,7 @@ void wrap_page_surfaces(enum Direction dir)
 
 void filelist_move_single(enum Direction dir) 
 {
-    int delta    = (dir == UP) ? -1 : 1;
+    int delta    = (dir == PREV) ? -1 : 1;
     int size     = FILES_PER_PAGE;
     int max      = num_of_files;
     int next_pos = current_highlight + delta;
@@ -331,7 +331,7 @@ void filelist_move_single(enum Direction dir)
 
 void filelist_move_page(enum Direction dir)
 {
-    int size = FILES_PER_PAGE, delta = (dir==UP?-size:size);;
+    int size = FILES_PER_PAGE, delta = (dir==PREV?-size:size);;
     int start = current_list_start;
     int next = start + delta;
     SE_out( MENU_MOVE );
@@ -427,7 +427,8 @@ enum MenuState filelist_run()
 enum MenuState filelist_keypress(SDLKey key)
 {
     Uint8 *keystate = SDL_GetKeyState(NULL);
- 
+    enum Direction dir = getKeyDir(key);
+    
     switch (key) {
 
         case DINGOO_BUTTON_B:
@@ -439,31 +440,22 @@ enum MenuState filelist_keypress(SDLKey key)
             if (can_change_dir) 
                 conf_selectordir(mi, current_path);
             break;
-        case DINGOO_BUTTON_R:
-            filelist_move_page(DOWN);
-            break;
         case DINGOO_BUTTON_L:
-            filelist_move_page(UP);
+        case DINGOO_BUTTON_R:
+            filelist_move_page(dir);
             break;
         case DINGOO_BUTTON_UP:
-            if (keystate[DINGOO_BUTTON_Y]) 
-                filelist_move_page(UP);
-            else 
-                filelist_move_single(UP);
-            break;
         case DINGOO_BUTTON_DOWN:
             if (keystate[DINGOO_BUTTON_Y]) 
-                filelist_move_page(DOWN);
+                filelist_move_page(dir);
             else 
-                filelist_move_single(DOWN);
+                filelist_move_single(dir);
             break;
         case DINGOO_BUTTON_RIGHT:
-            if (can_change_dir) 
-                filelist_right();
+            if (can_change_dir) filelist_right();
             break;
         case DINGOO_BUTTON_LEFT:
-            if (can_change_dir) 
-                filelist_left();
+            if (can_change_dir) filelist_left();
             break;
 
         default:break;

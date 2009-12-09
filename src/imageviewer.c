@@ -34,7 +34,8 @@ SDL_Surface* imageviewer_title;
 TTF_Font*    imageviewer_font;
 SDL_Color*   imageviewer_font_color;
 
-typedef struct ImageViewerGlobal {
+typedef struct ImageViewerGlobal 
+{
     int total_size;
     int max_pages;
     int set_size;
@@ -66,7 +67,8 @@ ImageViewerGlobal iv_global;
     };\
     strcat(buff, iv_global.files[i])
 
-SDL_Surface* render_imageviewer_text(char* text) {
+SDL_Surface* render_imageviewer_text(char* text) 
+{
     return draw_text(text, imageviewer_font, imageviewer_font_color);
 }
 
@@ -225,33 +227,33 @@ int imageviewer_draw(SDL_Surface* screen)
     if (!iv_global.state_changed) return 0;
     
     int i;
-    SDL_Rect dstrect, txtrect;
+    SDL_Rect image_rect, text_rect;
     SDL_BlitSurface(imageviewer_background, NULL, screen, NULL);
     
     //Draw thumbnails
-    init_rect_pos(&dstrect, IMAGE_THUMB_PAD_X,IMAGE_THUMB_TOP+IMAGE_THUMB_PAD_Y);
+    init_rect_pos(&image_rect, IMAGE_THUMB_PAD_X,IMAGE_THUMB_TOP+IMAGE_THUMB_PAD_Y);
     for (i = 0; i < iv_global.set_size;i++) 
     {
         if (iv_global.entries[i]) {
-            SDL_BlitSurface(iv_global.entries[i],   0, screen, &dstrect);
+            SDL_BlitSurface(iv_global.entries[i],   0, screen, &image_rect);
         }
-        dstrect.x += IMAGE_THUMB_WIDTH;
+        image_rect.x += IMAGE_THUMB_WIDTH;
     }
-    
+
     //Draw highlight for active item
-    init_rect_pos(&dstrect, (iv_global.relative_pos)*IMAGE_THUMB_WIDTH, IMAGE_THUMB_TOP);
-    SDL_BlitSurface(imageviewer_highlight, 0, screen, &dstrect);
-    
+    init_rect_pos(&image_rect, (iv_global.relative_pos)*IMAGE_THUMB_WIDTH, IMAGE_THUMB_TOP);
+    SDL_BlitSurface(imageviewer_highlight, 0, screen, &image_rect);
+
     //Draw imageviewer_preview
-    init_rect_pos(&dstrect, screen->w/2-imageviewer_preview->w/2, (screen->h-IMAGE_THUMB_HEIGHT)/2-imageviewer_preview->h/2);
-    SDL_BlitSurface(imageviewer_preview, 0, screen, &dstrect);
+    init_rect_pos(&image_rect, screen->w/2-imageviewer_preview->w/2, (screen->h-IMAGE_THUMB_HEIGHT)/2-imageviewer_preview->h/2);
+    SDL_BlitSurface(imageviewer_preview, 0, screen, &image_rect);
 
     
     //Draw top message
-    init_rect_pos(&txtrect, 0,0);
-    SDL_BlitSurface(imageviewer_title_bg, 0, screen, &txtrect);
-    txtrect.x += DOSD_PADDING;
-    SDL_BlitSurface(imageviewer_title, 0, screen, &txtrect);
+    init_rect_pos(&text_rect, 0,0);
+    SDL_BlitSurface(imageviewer_title_bg, 0, screen, &text_rect);
+    text_rect.x += DOSD_PADDING;
+    SDL_BlitSurface(imageviewer_title, 0, screen, &text_rect);
     
     iv_global.state_changed = 0;
     
@@ -260,25 +262,30 @@ int imageviewer_draw(SDL_Surface* screen)
 
 int imageviewer_animate(SDL_Surface* screen)
 {
-    if  (!imageviewer_preview_title || iv_global.title_ticks < 10 || iv_global.title_ticks > 16) return 0;
+    SDL_Rect rect;
     
-    int h= imageviewer_preview_title->h;
-    SDL_Rect overlay_rect;
+    //Draw Text Overlay
+    if  (imageviewer_preview_title && iv_global.title_ticks >= 10)
+    {
+        int h= imageviewer_preview_title->h;
+        
+        //Draw imageviewer_preview
+        init_rect_pos(&rect, screen->w/2-imageviewer_preview->w/2 + 35, screen->h-IMAGE_THUMB_HEIGHT-h*2);
+        
+        //Alpha is function of time
+        int alpha = (int)(0xbb * ((iv_global.title_ticks-10.0)/6.0)) + 0x11;
+        alpha = min(alpha, 0xaa);
+        
+        //Draw text overlay
+        SDL_Surface* tmp = create_surface(imageviewer_preview->w, h*1.2, 32, 0,0,0,alpha);
+        SDL_BlitSurface(tmp, 0, screen, &rect);
+        free_surface(tmp);
+        rect.x += imageviewer_preview->w - imageviewer_preview_title->w - 10;
+        rect.y += h*.1;
+        SDL_BlitSurface(imageviewer_preview_title, 0, screen, &rect);
+    }
     
-    //Draw imageviewer_preview
-    init_rect_pos(&overlay_rect, screen->w/2-imageviewer_preview->w/2 + 35, screen->h-IMAGE_THUMB_HEIGHT-h*2);
-    
-    //Alpha is function of time
-    int alpha = (int)(0xaa * ((iv_global.title_ticks-10.0)/6.0));
-    
-    SDL_Surface* tmp = create_surface(imageviewer_preview->w, h*1.2, 32, 0,0,0,alpha);
-    SDL_BlitSurface(tmp, 0, screen, &overlay_rect);
-    free_surface(tmp);
-    overlay_rect.x += imageviewer_preview->w - imageviewer_preview_title->w - 10;
-    overlay_rect.y += h*.1;
-    SDL_BlitSurface(imageviewer_preview_title, 0, screen, &overlay_rect);
-    
-    return iv_global.title_ticks == 16; //Only recache on last frame;
+    return 0;
 }
 
 void imageviewer_update_list()
@@ -322,11 +329,16 @@ void imageviewer_move_page(enum Direction dir)
     iv_global.page = bound(iv_global.page + delta, 0, iv_global.max_pages);
     
     SE_out( MENU_MOVE );
-    
-    if (prev_p != iv_global.page)
+
+    if (prev_p == iv_global.page)
     {
-        iv_global.absolute_pos  = iv_global.page*iv_global.set_size;
-        iv_global.relative_pos  = 0;
+        iv_global.relative_pos = dir == PREV ? 0 :  (iv_global.total_size-1)%iv_global.set_size;
+    }
+
+    int oldpos = iv_global.absolute_pos;
+    iv_global.absolute_pos  = iv_global.page*iv_global.set_size + iv_global.relative_pos;
+    if (iv_global.absolute_pos != oldpos) 
+    {
         iv_global.state_changed = 1;
         imageviewer_update_list();
         imageviewer_update_preview();
@@ -374,27 +386,25 @@ enum MenuState imageviewer_select()
     return MAINMENU;
 }
 
-enum MenuState imageviewer_keypress(SDLKey keysym)
+enum MenuState imageviewer_keypress(SDLKey key)
 {
-    switch (keysym) {
+    enum Direction dir = getKeyDir(key);
+
+    switch (key) {
+        case DINGOO_BUTTON_LEFT:
+        case DINGOO_BUTTON_RIGHT:
+            imageviewer_move(dir);
+            break;
+        case DINGOO_BUTTON_L:
+        case DINGOO_BUTTON_R:
+            imageviewer_move_page(dir);
+            break;
         case DINGOO_BUTTON_B:
             SE_out( CANCEL );
             imageviewer_deinit();
             return MAINMENU;
         case DINGOO_BUTTON_A:
             return imageviewer_select();
-        case DINGOO_BUTTON_RIGHT:
-            imageviewer_move(NEXT);
-            break;
-        case DINGOO_BUTTON_LEFT:
-            imageviewer_move(PREV);
-            break;
-        case DINGOO_BUTTON_L:
-            imageviewer_move_page(PREV);
-            break;
-        case DINGOO_BUTTON_R:
-            imageviewer_move_page(NEXT);
-            break;            
         default: break;
     }
     iv_global.title_ticks = 0;

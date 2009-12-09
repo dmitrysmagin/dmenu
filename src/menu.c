@@ -557,30 +557,29 @@ enum MenuState menuitem_run()
     return MAINMENU;
 }
 
-enum MenuState menu_keypress(SDLKey keysym)
+enum MenuState menu_keypress(SDLKey key)
 {
     enum MenuState state = MAINMENU;
+    enum Direction dir = getKeyDir(key);
     
-    switch (keysym) {
+    switch (key) {
         case DINGOO_BUTTON_L:
         case DINGOO_BUTTON_R:
-            vol_set(keysym==DINGOO_BUTTON_L?-5:5);
-            menu_state_changed();
+            vol_change(dir);
             SE_out( TEST );
             break;
         case DINGOO_BUTTON_X:
         case DINGOO_BUTTON_Y:
-            bright_set(keysym==DINGOO_BUTTON_X?1:-1);
-            menu_state_changed();
+            bright_change(dir);
             SE_out( TEST );
             break;
         case DINGOO_BUTTON_LEFT:
         case DINGOO_BUTTON_RIGHT:
-            menu_move(keysym==DINGOO_BUTTON_LEFT?PREV:NEXT);
+            menu_move(dir);
             break;
         case DINGOO_BUTTON_UP:
         case DINGOO_BUTTON_DOWN:
-            menuitem_move(keysym==DINGOO_BUTTON_UP?PREV:NEXT);
+            menuitem_move(dir);
             break;
         case DINGOO_BUTTON_B:
             if (number_of_submenuitem > 0) submenu_close();
