@@ -439,8 +439,8 @@ SDL_Surface* shrink_surface(SDL_Surface *src, int width, int height)
     return dst;
 }
 
-SDL_Surface* tint_surface(SDL_Surface* src, int color, int alpha) {
-    
+SDL_Surface* tint_surface(SDL_Surface* src, int color, int alpha) 
+{    
     SDL_Surface *out;
     Uint32 rm=0xFF&(color>>16), gm=0xFF&(color>>8), bm=0xFF&(color), am=0xFF&alpha;
     
@@ -460,7 +460,8 @@ SDL_Surface* tint_surface(SDL_Surface* src, int color, int alpha) {
     return out;
 }
 
-SDL_Surface* copy_surface(SDL_Surface* src) {
+SDL_Surface* copy_surface(SDL_Surface* src)
+{
     Uint32 rm=0xFF, gm=0xFF, bm=0xFF, am=0xFF;
     
     /* SDL interprets each pixel as a 32-bit number, so our masks must depend
@@ -532,7 +533,8 @@ done: //Cleanup
 }
 
 
-int export_surface_as_bmp(char *filename, SDL_Surface *surface) {
+int export_surface_as_bmp(char *filename, SDL_Surface *surface) 
+{
     return SDL_SaveBMP(surface, filename);
 }
 
