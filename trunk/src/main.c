@@ -29,7 +29,7 @@
 #include "persistent.h"
 #include "dosd/dosd.h"
 
-extern cfg_t *cfg;
+extern cfg_t *cfg_main;
 
 static Uint32 next_time;
 SDL_Surface *screen, *screen_cache;
@@ -215,6 +215,7 @@ void listen() {
     MenuState prevstate;
     
     int last_key_time = SDL_GetTicks();
+    int inactive_delay = cfg_getint(cfg_main, "DimmerDelay");
     
     //Allow for easier menu nav
     SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
@@ -258,7 +259,7 @@ void listen() {
             } // end switch
         } // end of message processing
         
-        if ((SDL_GetTicks()-last_key_time) > (INACTIVITY_DELAY*1000)) 
+        if ((SDL_GetTicks()-last_key_time) > (inactive_delay*1000)) 
         {
             bright_dim(1);
         }
