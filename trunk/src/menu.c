@@ -368,7 +368,7 @@ int menu_draw(SDL_Surface* screen)
     return 1;
 }
 
-int menu_animate(SDL_Surface* screen)
+void menu_animate(SDL_Surface* screen)
 {
     /* Menu animation, but it isn't a good use
     
@@ -387,12 +387,9 @@ int menu_animate(SDL_Surface* screen)
     SDL_BlitSurface(active_icon, NULL, screen, &rect);
     
     */
-
-    
-    return 0;
 }
 
-void menu_draw_osd(SDL_Surface* screen) 
+void menu_osd(SDL_Surface* screen) 
 {    
     dosd_show(screen);
     

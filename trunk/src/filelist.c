@@ -31,6 +31,7 @@
 extern cfg_t* mi;
 extern cfg_t *cfg;
 extern SDL_Surface* background;
+
 SDL_Surface* list_bg;
 SDL_Surface* list_sel;
 SDL_Surface* list_title;
@@ -40,21 +41,29 @@ SDL_Surface* list_file_icon;
 
 TTF_Font* list_font;
 SDL_Color* list_font_color;
-int status_changed;
 
-struct dirent **namelist;
-struct stat *statlist;
-SDL_Surface* list_filename[FILES_PER_PAGE]; 
-int num_of_files; // total number of files under current directory
-int current_list_start; // index of the file at top of current page
-int current_highlight; // index of the file being highlighted
-int at_root; //Whether or not the listing is at the root of the file system
-int can_change_dir = 0;
-int is_initted = 0;
 
-char current_path[PATH_MAX];
-char work_path[PATH_MAX];
-char current_executable[PATH_MAX];
+typedef struct FileListGlobal 
+{
+    int status_changed;
+    
+    struct dirent **namelist;
+    struct stat *statlist;
+    SDL_Surface* list_filename[FILES_PER_PAGE]; 
+    int num_of_files; // total number of files under current directory
+    int current_list_start; // index of the file at top of current page
+    int current_highlight; // index of the file being highlighted
+    int at_root; //Whether or not the listing is at the root of the file system
+    int can_change_dir;
+    int is_initted;
+    
+    char current_path[PATH_MAX];
+    char work_path[PATH_MAX];
+    char current_executable[PATH_MAX];
+    
+} FileListGlobal;
+
+FileListGlobal fl_global;
 
 SDL_Surface* render_list_text(char* text) {
     return draw_text(text, list_font, list_font_color);
@@ -65,16 +74,17 @@ void filelist_fill()
     int i, j;
     //Clear old entries
     for (i=0;i<FILES_PER_PAGE;i++) {
-        if (list_filename[i]) {
-            SDL_FreeSurface(list_filename[i]);
-            list_filename[i] = NULL;
+        if (fl_global.list_filename[i]) {
+            SDL_FreeSurface(fl_global.list_filename[i]);
+            fl_global.list_filename[i] = NULL;
         }
     }
     
     //Write new entries
-    for (i=0,j=current_list_start; i<FILES_PER_PAGE; i++,j++) {
-        if (j < num_of_files) {
-            list_filename[i] = render_list_text(namelist[j]->d_name);
+    for (i=0,j=fl_global.current_list_start; i<FILES_PER_PAGE; i++,j++) {
+        if (j < fl_global.num_of_files) {
+            fl_global.list_filename[i] = 
+                render_list_text(fl_global.namelist[j]->d_name);
         }
     }
 }
@@ -86,7 +96,7 @@ int is_back_dir(const struct dirent *dr) {
 
 int list_filter(const struct dirent *dptr)
 {
-    return (can_change_dir && !at_root && is_back_dir(dptr)) 
+    return (fl_global.can_change_dir && !fl_global.at_root && is_back_dir(dptr)) 
             || dptr->d_name[0] != '.';
 }
 
@@ -108,26 +118,26 @@ int get_list(char* path)
 {
     int i = 0;
 
-    at_root = !strcmp(path,"/");
-    num_of_files = scandir(path, &namelist, list_filter, (void*)sort_files);
-    current_list_start = current_highlight = 0;
+    fl_global.at_root = !strcmp(path,"/");
+    fl_global.num_of_files = scandir(path, &fl_global.namelist, list_filter, (void*)sort_files);
+    fl_global.current_list_start = fl_global.current_highlight = 0;
 
-    if (num_of_files < 0) {
-        num_of_files = 0;
+    if (fl_global.num_of_files < 0) {
+        fl_global.num_of_files = 0;
         return -1;
     }
     else {
-        statlist = new_array(struct stat, num_of_files);
-        for (i=0;i<num_of_files;i++) {
-            char *filename = new_str(strlen(path) + strlen(namelist[i]->d_name) + 2);
+        fl_global.statlist = new_array(struct stat, fl_global.num_of_files);
+        for (i=0;i<fl_global.num_of_files;i++) {
+            char *filename = new_str(strlen(path) + strlen(fl_global.namelist[i]->d_name) + 2);
             strcpy(filename, path);
             strcat(filename, "/");
-            strcat(filename, namelist[i]->d_name);
-            stat(filename, &statlist[i]);
+            strcat(filename, fl_global.namelist[i]->d_name);
+            stat(filename, &fl_global.statlist[i]);
             free(filename);
         }
 
-        strcpy(current_path, path);
+        strcpy(fl_global.current_path, path);
         filelist_fill();
         return 0;
     }
@@ -135,22 +145,22 @@ int get_list(char* path)
 
 void clear_list()
 {
-    free_erase(statlist);
+    free_erase(fl_global.statlist);
     
-    if (namelist) {
+    if (fl_global.namelist) {
         int i, j;
-        for (i=0;i<num_of_files;i++) free_erase(namelist[i]);
+        for (i=0;i<fl_global.num_of_files;i++) free_erase(fl_global.namelist[i]);
         
-        free_erase(namelist);
+        free_erase(fl_global.namelist);
     
-        for (i=0, j=current_list_start;
-            (i < FILES_PER_PAGE) && (j < num_of_files);
+        for (i=0, j=fl_global.current_list_start;
+            (i < FILES_PER_PAGE) && (j < fl_global.num_of_files);
             i++, j++) {
-            free_surface(list_filename[i]);
+            free_surface(fl_global.list_filename[i]);
         }
     }
     
-    current_list_start = current_highlight = num_of_files = 0;
+    fl_global.current_list_start = fl_global.current_highlight = fl_global.num_of_files = 0;
 }
 
 
@@ -172,13 +182,13 @@ int filelist_init(char* title, char* executable, char *exec_path, char* select_p
     list_dir_icon  = load_theme_image(cfg_getstr(cfg, "ListDirIcon"));
     list_file_icon = load_theme_image(cfg_getstr(cfg, "ListFileIcon"));
     list_title     = render_list_text(title);
-    status_changed = 1;
+    fl_global.status_changed = 1;
 
     // Prep path/executable vars, determine filelist_theme status
-    strcpy(current_executable, executable);
-    strcpy(work_path, exec_path);
+    strcpy(fl_global.current_executable, executable);
+    strcpy(fl_global.work_path, exec_path);
 
-    can_change_dir = can_change_dirs;
+    fl_global.can_change_dir = can_change_dirs;
     
     // read files
     char real_path[PATH_MAX];
@@ -192,17 +202,17 @@ int filelist_init(char* title, char* executable, char *exec_path, char* select_p
         return 1;
     }
 
-    is_initted = 1;
+    fl_global.is_initted = 1;
     
     return 0;
 }
 
 void filelist_deinit()
 {
-    if (!is_initted) return;
+    if (!fl_global.is_initted) return;
     log_debug("De-initializing");
     
-    is_initted = 0;
+    fl_global.is_initted = 0;
 
     free_surface(list_bg);
     free_surface(list_sel);
@@ -218,48 +228,52 @@ void filelist_deinit()
 int filelist_draw(SDL_Surface* screen)
 {
     int i;
-    SDL_Rect dstrect, txtrect;
+    SDL_Rect image_rect, text_rect;
 
-    if (!status_changed) return 0;
-    init_rect_pos(&dstrect, 0,0);
-    init_rect_pos(&txtrect, 0,0);
+    if (!fl_global.status_changed) return 0;
+    init_rect_pos(&image_rect, 0,0);
+    init_rect_pos(&text_rect, 0,0);
 
     // clear screen
     //SDL_FillRect(screen, 0, SDL_MapRGB(screen->format, 0, 0, 0));
 
-    SDL_BlitSurface(background, 0, screen, &dstrect);
-    SDL_BlitSurface(list_title, 0, screen, &txtrect);
-    SDL_BlitSurface(list_bg,    0, screen, &dstrect);
+    SDL_BlitSurface(background, 0, screen, &image_rect);
+    SDL_BlitSurface(list_bg,    0, screen, &image_rect);
 
-    txtrect.y = FILE_LIST_OFFSET;
+    text_rect.y = FILE_LIST_OFFSET;
     for (i=0; i<FILES_PER_PAGE; i++) {
-        if (list_filename[i]) {
-            if (i == current_highlight) SDL_BlitSurface(list_sel, 0, screen, &txtrect);
-            if (S_ISDIR(statlist[current_list_start+i].st_mode)) {
-                SDL_BlitSurface(list_dir_icon, 0, screen, &txtrect);
-                txtrect.x += list_dir_icon->w;
-            } else {
-                SDL_BlitSurface(list_file_icon, 0, screen, &txtrect);
-                txtrect.x += list_file_icon->w;
+        if (fl_global.list_filename[i]) {
+            if (i == fl_global.current_highlight) {
+                SDL_BlitSurface(list_sel, 0, screen, &text_rect);
             }
-            SDL_BlitSurface(list_filename[i], 0, screen, &txtrect);
-            txtrect.x = 0;
-            txtrect.y += FILE_ENTRY_HEIGHT;
+            if (S_ISDIR(fl_global.statlist[fl_global.current_list_start+i].st_mode)) {
+                SDL_BlitSurface(list_dir_icon, 0, screen, &text_rect);
+                text_rect.x += list_dir_icon->w;
+            } else {
+                SDL_BlitSurface(list_file_icon, 0, screen, &text_rect);
+                text_rect.x += list_file_icon->w;
+            }
+            SDL_BlitSurface(fl_global.list_filename[i], 0, screen, &text_rect);
+            text_rect.x = 0;
+            text_rect.y += FILE_ENTRY_HEIGHT;
         }
     }
 
-    status_changed = 0;
+    fl_global.status_changed = 0;
     return 1;
 }
 
-int filelist_animate(SDL_Surface* screen)
+void filelist_animate(SDL_Surface* screen) {}
+void filelist_osd(SDL_Surface* screen) 
 {
-    return 0;
+    SDL_Rect rect;
+    init_rect_pos(&rect, 0,0);
+    SDL_BlitSurface(list_title, 0, screen, &rect);
 }
 
 void shift_highlight(enum Direction dir) 
 {
-    current_highlight += (PREV==dir ? -1 : 1);
+    fl_global.current_highlight += (PREV==dir ? -1 : 1);
 }
 
 void shift_page_surfaces(enum Direction dir) 
@@ -276,14 +290,14 @@ void shift_page_surfaces(enum Direction dir)
         delta = -1;
     }
         
-    SDL_FreeSurface(list_filename[start]);
+    SDL_FreeSurface(fl_global.list_filename[start]);
     for (i=start;i!=end;i+=delta) 
     {
-        list_filename[i] = list_filename[i+delta];
+        fl_global.list_filename[i] = fl_global.list_filename[i+delta];
     }
     
-    current_list_start += delta;
-    list_filename[end] = render_list_text(namelist[current_list_start+end]->d_name);
+    fl_global.current_list_start += delta;
+    fl_global.list_filename[end] = render_list_text(fl_global.namelist[fl_global.current_list_start+end]->d_name);
 }
 
 void wrap_page_surfaces(enum Direction dir) 
@@ -292,12 +306,12 @@ void wrap_page_surfaces(enum Direction dir)
 
     if (dir != PREV) 
     { //start at top
-        current_list_start = 0; 
-        current_highlight  = 0;
+    fl_global.current_list_start = 0; 
+        fl_global.current_highlight  = 0;
     } 
     else {
-        current_list_start = max(num_of_files - size, 0);
-        current_highlight  = min(num_of_files - 1, size - 1); 
+        fl_global.current_list_start = max(fl_global.num_of_files - size, 0);
+        fl_global.current_highlight  = min(fl_global.num_of_files - 1, size - 1); 
     }
     filelist_fill();
 }
@@ -306,9 +320,9 @@ void filelist_move_single(enum Direction dir)
 {
     int delta    = (dir == PREV) ? -1 : 1;
     int size     = FILES_PER_PAGE;
-    int max      = num_of_files;
-    int next_pos = current_highlight + delta;
-    int next_abs_pos = current_list_start + next_pos; 
+    int max      = fl_global.num_of_files;
+    int next_pos = fl_global.current_highlight + delta;
+    int next_abs_pos = fl_global.current_list_start + next_pos; 
     
     SE_out( MENUITEM_MOVE );
     
@@ -325,66 +339,84 @@ void filelist_move_single(enum Direction dir)
         wrap_page_surfaces(dir);
     }    
     
-    status_changed = 1;
+    fl_global.status_changed = 1;
 }
 
 
 void filelist_move_page(enum Direction dir)
 {
     int size = FILES_PER_PAGE, delta = (dir==PREV?-size:size);;
-    int start = current_list_start;
+    int start = fl_global.current_list_start;
     int next = start + delta;
     SE_out( MENU_MOVE );
-    current_list_start =  bound(next, 0, max(num_of_files-size, 0));
-    current_highlight = 0;
+    fl_global.current_list_start =  bound(next, 0, max(fl_global.num_of_files-size, 0));
+    fl_global.current_highlight = 0;
     
     filelist_fill();
     
-    status_changed = 1;
+    fl_global.status_changed = 1;
 }
-
-void filelist_right()
-{
-    char temp_path[PATH_MAX];
-    int i = current_list_start+current_highlight;
-
-    SE_out( DECIDE );
-
-    if (S_ISDIR(statlist[i].st_mode) && !is_back_dir(namelist[i])) {
-        strcpy(temp_path, current_path);
-        if (!ends_with_slash(current_path)) 
-        {
-            strcat(temp_path, "/");
-        }
-        strcat(temp_path, namelist[i]->d_name);
-        clear_list();
-        if (get_list(temp_path) != 0)
-            get_list(current_path);
-        status_changed = 1;
-    }
-}    
 
 void filelist_left()
 {
     SE_out( CANCEL );
 
-    if (at_root) {
+    if (fl_global.at_root) {
         return;
     } else {
-        char* last_separator = strrchr(current_path, '/');
+        char* last_separator = strrchr(fl_global.current_path, '/');
         if (!last_separator) {
-            log_error("Unable to find path separator - %s", current_path);
+            log_error("Unable to find path separator - %s", fl_global.current_path);
             return;
-        } else if (last_separator == current_path) {
-            current_path[1] = '\0';
+        } else if (last_separator == fl_global.current_path) {
+            fl_global.current_path[1] = '\0';
         } else {
             *last_separator = '\0';
         }
         clear_list();
-        get_list(current_path);
-        status_changed = 1;
+        get_list(fl_global.current_path);
+        fl_global.status_changed = 1;
     }
 
+}
+
+void filelist_right()
+{
+    char temp_path[PATH_MAX];
+    int i = fl_global.current_list_start+fl_global.current_highlight;
+    
+    SE_out( DECIDE );
+    
+    if (S_ISDIR(fl_global.statlist[i].st_mode) && !is_back_dir(fl_global.namelist[i])) {
+        strcpy(temp_path, fl_global.current_path);
+        if (!ends_with_slash(fl_global.current_path)) 
+        {
+            strcat(temp_path, "/");
+        }
+        strcat(temp_path, fl_global.namelist[i]->d_name);
+        clear_list();
+        if (get_list(temp_path) != 0)
+        {
+            get_list(fl_global.current_path);
+        }
+        fl_global.status_changed = 1;
+    }
+} 
+
+void filelist_changedir(enum Direction dir) 
+{
+    if (fl_global.can_change_dir) 
+    {
+        dir == PREV ? filelist_left() :filelist_right();
+    }
+}
+
+void filelist_store_dir()
+{
+    if (fl_global.can_change_dir) 
+    {
+        conf_selectordir(mi, fl_global.current_path);
+    }
 }
 
 // Since filelist_run() has multiple purpose, the next state
@@ -392,72 +424,59 @@ void filelist_left()
 enum MenuState filelist_run()
 {
     char file_name[PATH_MAX];
-    int i = current_list_start+current_highlight;
+    int i = fl_global.current_list_start+fl_global.current_highlight;
 
-    if (can_change_dir) {
-        if (S_ISDIR(statlist[i].st_mode)) {
-            if (is_back_dir(namelist[i])) {
-                filelist_left();
-            } else { 	 
-                filelist_right();
-            }
+    if (fl_global.can_change_dir) {
+        if (S_ISDIR(fl_global.statlist[i].st_mode)) {
+            filelist_changedir(is_back_dir(fl_global.namelist[i])?PREV:NEXT);
             return FILELIST;
         }
     }
     
-    strcpy(file_name, current_path);
-    if (!ends_with_slash(current_path)) 
+    strcpy(file_name, fl_global.current_path);
+    if (!ends_with_slash(fl_global.current_path)) 
     {
         strcat(file_name, "/");
     }
-    strcat(file_name, namelist[i]->d_name);
+    strcat(file_name, fl_global.namelist[i]->d_name);
     
     // If this is theme selection, we will return here from run_command();
     // If it's running a program, it will not return.
-    if (current_executable[0] != '\0') 
+    if (fl_global.current_executable[0] != '\0') 
     {
-        run_command(current_executable, file_name, work_path);
+        run_command(fl_global.current_executable, file_name, fl_global.work_path);
     }
     else {
-        run_command(file_name, NULL, current_path);
+        run_command(file_name, NULL, fl_global.current_path);
     }
     return MAINMENU;
 }
 
 enum MenuState filelist_keypress(SDLKey key)
 {
-    Uint8 *keystate = SDL_GetKeyState(NULL);
     enum Direction dir = getKeyDir(key);
     
     switch (key) {
-
-        case DINGOO_BUTTON_B:
-            filelist_deinit();
-            return MAINMENU;
-        case DINGOO_BUTTON_A:
-            return filelist_run();
-        case DINGOO_BUTTON_START:
-            if (can_change_dir) 
-                conf_selectordir(mi, current_path);
-            break;
         case DINGOO_BUTTON_L:
         case DINGOO_BUTTON_R:
             filelist_move_page(dir);
             break;
         case DINGOO_BUTTON_UP:
         case DINGOO_BUTTON_DOWN:
-            if (keystate[DINGOO_BUTTON_Y]) 
-                filelist_move_page(dir);
-            else 
-                filelist_move_single(dir);
-            break;
-        case DINGOO_BUTTON_RIGHT:
-            if (can_change_dir) filelist_right();
+            filelist_move_single(dir);
             break;
         case DINGOO_BUTTON_LEFT:
-            if (can_change_dir) filelist_left();
+        case DINGOO_BUTTON_RIGHT:
+            filelist_changedir(dir);
             break;
-
+        case DINGOO_BUTTON_B:
+            filelist_deinit();
+            return MAINMENU;
+        case DINGOO_BUTTON_A:
+            return filelist_run();
+        case DINGOO_BUTTON_START:
+            filelist_store_dir();
+            break;
         default:break;
     }
 

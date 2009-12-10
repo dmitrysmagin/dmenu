@@ -227,7 +227,7 @@ int imageviewer_draw(SDL_Surface* screen)
     if (!iv_global.state_changed) return 0;
     
     int i;
-    SDL_Rect image_rect, text_rect;
+    SDL_Rect image_rect;
     SDL_BlitSurface(imageviewer_background, NULL, screen, NULL);
     
     //Draw thumbnails
@@ -247,45 +247,29 @@ int imageviewer_draw(SDL_Surface* screen)
     //Draw imageviewer_preview
     init_rect_pos(&image_rect, screen->w/2-imageviewer_preview->w/2, (screen->h-IMAGE_THUMB_HEIGHT)/2-imageviewer_preview->h/2);
     SDL_BlitSurface(imageviewer_preview, 0, screen, &image_rect);
-
-    
-    //Draw top message
-    init_rect_pos(&text_rect, 0,0);
-    SDL_BlitSurface(imageviewer_title_bg, 0, screen, &text_rect);
-    text_rect.x += DOSD_PADDING;
-    SDL_BlitSurface(imageviewer_title, 0, screen, &text_rect);
     
     iv_global.state_changed = 0;
     
     return 1;
 }
 
-int imageviewer_animate(SDL_Surface* screen)
+void imageviewer_animate(SDL_Surface* screen) { }
+
+void imageviewer_osd(SDL_Surface* screen) 
 {
-    SDL_Rect rect;
+    SDL_Rect text_rect;
     
-    //Draw Text Overlay
-    if  (imageviewer_preview_title && iv_global.title_ticks >= 10)
+    //Draw top message
+    init_rect_pos(&text_rect, 0,0);
+    SDL_BlitSurface(imageviewer_title_bg, 0, screen, &text_rect);
+    text_rect.x += DOSD_PADDING;
+    SDL_BlitSurface(imageviewer_title, 0, screen, &text_rect);
+ 
+    if (imageviewer_preview_title)
     {
-        int h= imageviewer_preview_title->h;
-        
-        //Draw imageviewer_preview
-        init_rect_pos(&rect, screen->w/2-imageviewer_preview->w/2 + 35, screen->h-IMAGE_THUMB_HEIGHT-h*2);
-        
-        //Alpha is function of time
-        int alpha = (int)(0xbb * ((iv_global.title_ticks-10.0)/6.0)) + 0x11;
-        alpha = min(alpha, 0xaa);
-        
-        //Draw text overlay
-        SDL_Surface* tmp = create_surface(imageviewer_preview->w, h*1.2, 32, 0,0,0,alpha);
-        SDL_BlitSurface(tmp, 0, screen, &rect);
-        free_surface(tmp);
-        rect.x += imageviewer_preview->w - imageviewer_preview_title->w - 10;
-        rect.y += h*.1;
-        SDL_BlitSurface(imageviewer_preview_title, 0, screen, &rect);
+        text_rect.x = SCREEN_WIDTH-imageviewer_preview_title->w - DOSD_PADDING*2;
+        SDL_BlitSurface(imageviewer_preview_title, 0, screen, &text_rect);
     }
-    
-    return 0;
 }
 
 void imageviewer_update_list()

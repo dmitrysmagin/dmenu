@@ -178,10 +178,8 @@ int colorpicker_draw(SDL_Surface* screen) {
     return 1;
 }
 
-int colorpicker_animate(SDL_Surface* screen)
-{
-    return 0;
-}
+void colorpicker_animate(SDL_Surface* screen) { }
+void colorpicker_osd(SDL_Surface* screen)     { }
 
 enum MenuState colorpicker_select()
 {
