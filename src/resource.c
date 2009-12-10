@@ -46,11 +46,11 @@ char** get_theme_previews()
                 append_str(out, pos, strdup(name));
             }
         }
-        free(dir_files[i]);
+        free_erase(dir_files[i]);
     }
     append_str(out, pos, NULL);
     
-    free(dir_files);
+    free_erase(dir_files);
     return out;
 }
 
@@ -121,14 +121,14 @@ SDL_Surface* load_osd_image( char* file ) {
 SDL_Surface* load_global_image( char* file ) {
     char* tmp = global_file(file);
     SDL_Surface* out = load_image_file(tmp);
-    free(tmp); 
+    free_erase(tmp); 
     return out;
 }
 
 SDL_Color* load_global_color ( char* file ) {
     char* tmp = global_file(file);
     SDL_Color* out = load_color_file(tmp);
-    free(tmp);
+    free_erase(tmp);
     return out;
 }
 
@@ -136,34 +136,34 @@ TTF_Font* load_global_font( char* file, int size)
 {   
     char* tmp = global_file(file);
     TTF_Font* out = TTF_OpenFont(tmp, size);
-    free(tmp);
+    free_erase(tmp);
     return out;
 }
 
 SDL_Surface* load_theme_background( char* file ) {
     char* tmp = theme_file(file);
     SDL_Surface* out = load_image_file_no_alpha(tmp);
-    free(tmp); 
+    free_erase(tmp); 
     return out;
 }
 
 SDL_Surface* load_theme_image( char* file ) {
     char* tmp = theme_file(file);
     SDL_Surface* out = load_image_file(tmp);
-    free(tmp); 
+    free_erase(tmp); 
     return out;
 }
 
 Mix_Chunk* load_theme_sound( char* file ) {
     char* tmp = theme_file(file);
     Mix_Chunk* out = Mix_LoadWAV(tmp);
-    free(tmp); 
+    free_erase(tmp); 
     return out;
 }
 
 TTF_Font* load_theme_font( char* file, int size ) {
     char* tmp = theme_file(file);
     TTF_Font* out = TTF_OpenFont(tmp, size);
-    free(tmp); 
+    free_erase(tmp); 
     return out;
 }

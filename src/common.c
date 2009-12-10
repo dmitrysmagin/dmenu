@@ -285,7 +285,7 @@ SDL_Color* parse_color_string(char* str) {
 SDL_Color* load_color_file(char* filename) {
     char *color = read_first_line(filename);
     SDL_Color* out = parse_color_string(color);
-    free(color);
+    free_erase(color);
     return out;
 }
  
@@ -552,9 +552,9 @@ void run_export_job(ImageExportJob* job)
     }
     
     //free_surface(job->surface); 
-    free(job->file); 
-    free(job->orig_stat); 
-    free(job);
+    free_erase(job->file); 
+    free_erase(job->orig_stat); 
+    free_erase(job);
 }
 
 void init_export_job(char* old_filename, char* new_filename, SDL_Surface* sfc) 
@@ -613,7 +613,7 @@ SDL_Surface* load_resized_image(char* file, int width, int height)
         {
             //Clear cache and reload image
             remove(new_file); 
-            free(out);
+            free_surface(out);
             out = load_resized_image(file, width, height);
         }
     }

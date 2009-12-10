@@ -81,10 +81,10 @@ int imageviewer_file_filter(const struct dirent *dptr)
         || strstr(name, IMAGE_TYPES[2]) != NULL;
 }
 
-int get_imagelist(char* path, ImageEntry** files)
+int get_imagelist(char* path, ImageEntry** images)
 {
     int i = 0;
-    if (files == NULL) {
+    if (images == NULL) {
         struct dirent** dir_files;
         iv_global.total_size = max(scandir(path, &dir_files, imageviewer_file_filter, alphasort), 0);
         if (iv_global.total_size > 0) {
@@ -93,20 +93,20 @@ int get_imagelist(char* path, ImageEntry** files)
             for (i=0;i<iv_global.total_size;i++) {
                 iv_global.files[i] = strdup(dir_files[i]->d_name);
                 iv_global.file_titles[i] = NULL;
-                free(dir_files[i]);
+                free_erase(dir_files[i]);
             }
         }
-        free(dir_files);
+        free_erase(dir_files);
     } else {
-        while (files[i] != NULL) i++;
+        while (images[i] != NULL) i++;
         iv_global.total_size = i;
         if (i > 0) {
             iv_global.files       = new_array(char*, iv_global.total_size);
             iv_global.file_titles = new_array(char*, iv_global.total_size);
             for (i=0;i<iv_global.total_size;i++) {
-                iv_global.files[i] = strdup(files[i]->file);
-                if (strlen(files[i]->title)>0) {
-                    iv_global.file_titles[i] = strdup(files[i]->title);
+                iv_global.files[i] = strdup(images[i]->file);
+                if (strlen(images[i]->title)>0) {
+                    iv_global.file_titles[i] = strdup(images[i]->title);
                 } else {
                     iv_global.file_titles[i] = NULL;
                 }
@@ -136,7 +136,7 @@ void reset_pagination()
     free_erase(iv_global.executable);
 }
 
-int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** files)
+int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** images)
 {
     log_debug("Initializing");
     
@@ -144,13 +144,15 @@ int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** fi
     
     // try to read files before we do anything else
     char root[PATH_MAX];
-    if (!realpath(path, root)) {
+    if (!realpath(path, root)) 
+    {
         log_error("Failed to get real path of directory %s", path);
         return 1;
     }
     iv_global.root = strdup(root);
     
-    if (get_imagelist(iv_global.root, files)) {
+    if (get_imagelist(iv_global.root, images)) 
+    {
         log_error("Failed to read/find files in %s", iv_global.root);
         return 1;
     }
@@ -207,7 +209,7 @@ void imageviewer_deinit()
     free_font(imageviewer_font);
     
     for (i=0;i<iv_global.total_size;i++) {
-        free(iv_global.files[i]);        
+        free_erase(iv_global.files[i]);        
         free_erase(iv_global.file_titles[i]);
     }
     for (i=0;i<iv_global.set_size;i++) free_surface(iv_global.entries[i]);

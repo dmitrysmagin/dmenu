@@ -182,7 +182,7 @@ int conf_to_file(cfg_t* cfg, char* file) {
     if (fp == NULL) return 0;
     close_conf_file(fp);
     move_file(tmp, file);    
-    free(tmp);
+    free_erase(tmp);
 
     return 1;
 }
@@ -249,7 +249,7 @@ int conf_load()
         } else { // SearchPath is relative to dmenu directory
             char * tmp = dmenu_file(search_path_in_conf);
             strcpy(search_path, tmp);
-            free(tmp);
+            free_erase(tmp);
         }
 
         num_of_files = scandir(search_path, &namelist, path_filter, alphasort);
@@ -258,10 +258,10 @@ int conf_load()
             strcat(work_path, "/");
             strcat(work_path, namelist[i]->d_name);
             strcat(work_path, "/dmenu.cfg");
-            free(namelist[i]);
+            free_erase(namelist[i]);
             conf_merge_standalone(work_path);
         }
-        free(namelist);
+        free_erase(namelist);
     }
     
     //Process selectordir items
@@ -281,7 +281,7 @@ void conf_unload()
 {
     log_debug("De-initializing");
     
-    free(THEME_CONF_FILE);
+    free_erase(THEME_CONF_FILE);
     
     cfg_free(cfg);
 
@@ -515,7 +515,9 @@ void conf_themeselect(char* themedir)
     strcpy(orig, themedir);
     free_erase(orig);
     
-    if (conf_to_file(cfg_main, DMENU_CONF_FILE)) reload();
+    if (conf_to_file(cfg_main, DMENU_CONF_FILE)) {
+        reload();
+    }
 }
 
 void conf_backgroundselect(char* bgimage)
@@ -561,7 +563,7 @@ void conf_selectordir(cfg_t* menu_item, char* dir)
         }
     }
     
-    free(keys);
+    free_erase(keys);
     
     //Persist data
     FILE* fp = open_conf_file(cfg_main, DMENU_CONF_FILE ".tmp");
@@ -575,7 +577,7 @@ void conf_selectordir(cfg_t* menu_item, char* dir)
     
     if (i == cnt)
     {
-        free(cfg_main);
+        free_erase(cfg_main);
         cfg_main = conf_from_file(main_opts, DMENU_CONF_FILE);
     }
 }

@@ -5,14 +5,14 @@ extern cfg_t *cfg_main;
 
 int volume_level;
 SDL_Surface* volume_status;
-SDL_Rect vol_src_rect, vol_dst_rect;
+SDL_Rect volume_src_rect, volume_dst_rect;
 
-int vol_enabled()
+int volume_enabled()
 {
     return cfg_getbool(cfg_main, "VolDisp");
 }
 
-void vol_init() 
+void volume_init() 
 {    
     log_debug("Initializing");
     
@@ -20,29 +20,29 @@ void vol_init()
     volume_status = load_osd_image("STATspeaker.png");
     
     //Initialize OSD positions
-    init_rect(&vol_dst_rect, 
+    init_rect(&volume_dst_rect, 
         VOLUME_ICON_X, VOLUME_ICON_Y,
         VOLUME_ICON_MAX_W, VOLUME_ICON_H);
     
-    init_rect(&vol_src_rect, 0, 0,
+    init_rect(&volume_src_rect, 0, 0,
         VOLUME_ICON_MIN_W, VOLUME_ICON_H);
               
     //Set volume
-    vol_set(volume_level);
+    volume_set(volume_level);
 }
 
-void vol_change(Direction dir) 
+void volume_change(Direction dir) 
 {
-    vol_set(volume_level + (dir==PREV?-5:5));
+    volume_set(volume_level + (dir==PREV?-5:5));
 }
 
-void vol_set(int level) 
+void volume_set(int level) 
 {
     int min = VOLUME_ICON_MIN_W, max = VOLUME_ICON_MAX_W;
     volume_level = bound(level, 0, 100);
 
     //Calculate clipping of volume rect
-    vol_src_rect.w = min+(int)((max-min)*(volume_level/100.0f));
+    volume_src_rect.w = min+(int)((max-min)*(volume_level/100.0f));
 
     int oss_volume = volume_level | (volume_level << 8); // set volume for both channels
 
@@ -55,12 +55,12 @@ void vol_set(int level)
     cfg_setint( cfg_main, "SndVol", (long)volume_level );
 }
 
-void vol_show(SDL_Surface* surface) 
+void volume_show(SDL_Surface* surface) 
 {
-    SDL_BlitSurface(volume_status, &vol_src_rect, surface, &vol_dst_rect );    
+    SDL_BlitSurface(volume_status, &volume_src_rect, surface, &volume_dst_rect );    
 }
 
-void vol_deinit() 
+void volume_deinit() 
 {
     log_debug("De-initializing");
     free_surface(volume_status);
