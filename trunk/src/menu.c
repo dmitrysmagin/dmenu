@@ -27,8 +27,7 @@
 #include "imageviewer.h"
 #include "sound.h"
 #include "dingoo.h"
-#include "brightness.h"
-#include "volume.h"
+
 
 extern cfg_t *cfg;
 cfg_t *m;
@@ -132,21 +131,6 @@ int menu_init()
     } else if (!in_bounds(current_menuitem_index, 0, number_of_menuitem[current_menu_index])) {
         current_menuitem_index = 0;
     }
-
-    //load volume and brightness
-    bright_init();
-    vol_init();
-
-    // Init sound
-    sound_init();
-    
-    // Init OSD
-    if (!dosd_init())
-    {
-        log_error("Unable to initialize OSD");
-        return 1;
-    }
-    
     
     return 0;
 }
@@ -156,14 +140,6 @@ void menu_deinit()
     log_debug("De-initializing");
     
     int i, j;
-
-    // De-init sound
-    sound_deinit();
-    
-    bright_deinit();
-    vol_deinit();
-    dosd_deinit();
-
     
     free_surface(background);
     
@@ -389,13 +365,7 @@ void menu_animate(SDL_Surface* screen)
     */
 }
 
-void menu_osd(SDL_Surface* screen) 
-{    
-    dosd_show(screen);
-    
-    if (vol_enabled())    vol_show(screen);
-    if (bright_enabled()) bright_show(screen);
-}
+void menu_osd(SDL_Surface* screen)  {}
 
 void menu_move(Direction dir) 
 {
@@ -560,16 +530,6 @@ MenuState menu_keypress(SDLKey key)
     Direction dir = getKeyDir(key);
     
     switch (key) {
-        case DINGOO_BUTTON_L:
-        case DINGOO_BUTTON_R:
-            vol_change(dir);
-            sound_out( GLOBAL_KEY );
-            break;
-        case DINGOO_BUTTON_X:
-        case DINGOO_BUTTON_Y:
-            bright_change(dir);
-            sound_out( GLOBAL_KEY );
-            break;
         case DINGOO_BUTTON_LEFT:
         case DINGOO_BUTTON_RIGHT:
             menu_move(dir);

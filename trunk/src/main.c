@@ -15,6 +15,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include "env.h" 
+#include "dingoo.h"
 #include "common.h"
 #include "resource.h"
 
@@ -26,6 +27,8 @@
 
 #include "conf.h"
 #include "brightness.h"
+#include "volume.h"
+#include "sound.h"
 #include "persistent.h"
 #include "dosd/dosd.h"
 
@@ -48,17 +51,14 @@ int init_system() {
     change_dir(DMENU_PATH);
     
     // load config
-    if (conf_load()) 
-    {
-        return 1;
-    }
+    if (conf_load()) return 1;
     
     // Read saved persistent state
     if (!persistent_init())
     {
         log_error("Unable to initialize persistent memory");
     }
-        
+    
     // init menu config
     if (menu_init())
     {
@@ -66,8 +66,22 @@ int init_system() {
         return 1;
     }
     
+    //load volume and brightness
+    bright_init();
+    vol_init();
+    
+    // Init sound
+    sound_init();
+    
+    // Init OSD
+    if (!dosd_init())
+    {
+        log_error("Unable to initialize OSD");
+        return 1;
+    }
+    
     persistent_restore_menu_position();
-       
+    
     return 0;
 }
 
@@ -123,33 +137,37 @@ int init() {
     return rc;
 }
 
-void deinit() {
+void deinit(int hard) {
     log_debug("De-initializing");
-    /* Call destructors, otherwise open FDs will be leaked to the
-    exec()'ed process.
-    Yes, this is ugly. If another situation like this arises we should write
-    a custom atexit implementation.
-    */ 
     
     // de-init everything
     colorpicker_deinit();
     filelist_deinit();
     imageviewer_deinit();
     
-    // Save snapshot on menu deinit
+    // Save snapshot, and set menu state
     state = MAINMENU;
-    update_display();
+    menu_state_changed();
+    menu_draw(screen);
+    draw_osd(screen);
     save_menu_snapshot(screen, 1);
     
-    // Save current menu state
-    persistent_store_menu_position();
+    if (hard) {
+        // Save current menu state
+        persistent_store_menu_position();
+        
+        sound_deinit();
+        bright_deinit();
+        vol_deinit();
+        dosd_deinit();
+    }
     
     menu_deinit();
     conf_unload();
 }
 
 void reload() {
-    deinit();
+    deinit(0);
     conf_load();
     menu_init();
 }
@@ -157,6 +175,12 @@ void reload() {
 void quick_quit() {
     // Exit without calling any atexit() functions
     _exit(1);
+}
+
+void draw_osd(SDL_Surface* screen) {
+    dosd_show(screen);    
+    if (vol_enabled())    vol_show(screen);
+    if (bright_enabled()) bright_show(screen);
 }
 
 /**
@@ -180,14 +204,14 @@ void update_display() {
     }
     
     switch (state) {
-        case MAINMENU: menu_animate(screen); break; 
+        case MAINMENU: menu_animate(screen); break;
         case FILELIST: filelist_animate(screen); break;
         case IMAGEVIEWER: imageviewer_animate(screen); break;
         case COLORPICKER: colorpicker_animate(screen); break;
     }
     
     switch (state) {
-        case MAINMENU: menu_osd(screen); break;
+        case MAINMENU: menu_osd(screen); draw_osd(screen);break;
         case FILELIST: filelist_osd(screen); break;
         case IMAGEVIEWER: imageviewer_osd(screen); break;
         case COLORPICKER: colorpicker_osd(screen); break;
@@ -199,6 +223,28 @@ void update_display() {
     // wait for remaining time of the frame
     SDL_Delay(time_left());
     next_time += TICK_INTERVAL;    
+}
+
+void handle_global_key(SDLKey key) {
+    //Handle OSD activity
+    Direction dir  = getKeyDir(key);
+    switch (key) {
+        case DINGOO_BUTTON_L:
+        case DINGOO_BUTTON_R:
+            if (state == MAINMENU) {
+                vol_change(dir);
+                sound_out( GLOBAL_KEY );
+            }
+            break;
+        case DINGOO_BUTTON_X:
+        case DINGOO_BUTTON_Y:
+            if (state == MAINMENU) {
+                bright_change(dir);
+                sound_out( GLOBAL_KEY );
+            }
+            break;
+        default: break;
+    }
 }
 
 void quit()
@@ -251,8 +297,12 @@ void listen() {
                         case IMAGEVIEWER: state = imageviewer_keypress(key); break;
                         case COLORPICKER: state = colorpicker_keypress(key); break;
                     }
-                    if (state == MAINMENU && prevstate != state) menu_state_changed();
-
+                    if (state == MAINMENU && prevstate != state) {
+                        menu_state_changed();
+                    }
+                    
+                    handle_global_key(key);
+                    
                     bright_dim(0);
                     last_key_time = SDL_GetTicks();
                     break;
@@ -275,7 +325,7 @@ int main ( int argc, char** argv )
 
     if (rc==0) {
         listen(); //main loop
-        deinit();
+        deinit(1);
         // all is well ;)
         log_debug("Exited cleanly");
     }

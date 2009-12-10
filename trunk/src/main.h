@@ -6,5 +6,6 @@ void reload();
 void quick_quit();
 void quit();
 void update_display();
+void draw_osd(SDL_Surface* screen);
 
 #endif
