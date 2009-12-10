@@ -496,8 +496,8 @@ MenuState menuitem_runinternal()
                 free_erase(images[i]->title);
                 free_erase(images[i]);
             }
-            //For some reason, this is causing a segfault on my
-            //   machine.  
+            //TODO: Figure this out. For some reason, this is 
+            // causing a segfault on my machine.  
             //free_erase(images);
             break;
         case BACKGROUNDSELECT:
