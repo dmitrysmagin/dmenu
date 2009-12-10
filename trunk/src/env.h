@@ -28,6 +28,8 @@
 char THEME_PATH[PATH_MAX];
 #define THUMBNAILS_PATH      "/.thumb"
 
+#define INACTIVITY_DELAY     10
+
 //Device Info
 #define BACKLIGHT_DEVICE     "/proc/jz/lcd_backlight"
 #define MIXER_DEVICE         "/dev/mixer"

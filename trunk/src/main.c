@@ -25,6 +25,7 @@
 #include "imageviewer.h"
 
 #include "conf.h"
+#include "brightness.h"
 #include "persistent.h"
 #include "dosd/dosd.h"
 
@@ -213,6 +214,8 @@ void listen() {
     SDL_Event event;
     MenuState prevstate;
     
+    int last_key_time = SDL_GetTicks();
+    
     //Allow for easier menu nav
     SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
         
@@ -228,7 +231,7 @@ void listen() {
                 case SDL_QUIT:
                     quit();
                     break;
-                    
+
                 // check for keypresses
                 case SDL_KEYDOWN:
                     key = event.key.keysym.sym;
@@ -237,33 +240,30 @@ void listen() {
                         quit();
                         break;
                     }
-                    
-                    if (dosd_is_locked()) 
-                        break;
-                    
+
+                    if (dosd_is_locked()) break;
+
                     prevstate = state;
                     switch (state) {
-                        case MAINMENU:
-                            state = menu_keypress(key);
-                            break;
-                        case FILELIST:
-                            state = filelist_keypress(key);
-                            break;
-                        case IMAGEVIEWER:
-                            state = imageviewer_keypress(key);
-                            break;
-                        case COLORPICKER:
-                            state = colorpicker_keypress(key);
-                            break;
+                        case MAINMENU: state = menu_keypress(key); break;
+                        case FILELIST: state = filelist_keypress(key); break;
+                        case IMAGEVIEWER: state = imageviewer_keypress(key); break;
+                        case COLORPICKER: state = colorpicker_keypress(key); break;
                     }
                     if (state == MAINMENU && prevstate != state) menu_state_changed();
+
+                    bright_dim(0);
+                    last_key_time = SDL_GetTicks();
                     break;
-                    
             } // end switch
         } // end of message processing
         
+        if ((SDL_GetTicks()-last_key_time) > (INACTIVITY_DELAY*1000)) 
+        {
+            bright_dim(1);
+        }
+
         update_display(screen, state);
-        
     } // end main loop
 }
 
