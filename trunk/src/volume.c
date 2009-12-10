@@ -12,13 +12,13 @@ int vol_enabled()
     return cfg_getbool(cfg_main, "VolDisp");
 }
 
-void vol_init(int color) 
+void vol_init() 
 {    
     log_debug("Initializing");
     
     volume_level = (int)cfg_getint(cfg_main, "SndVol");
     SDL_Surface* tmp = load_global_image("STATspeaker.png");
-    volume_status = tint_surface(tmp, color, 0xFF);
+    volume_status = tint_surface(tmp, DOSD_COLOR, 0xFF);
     free_surface(tmp);
     
     //Initialize OSD positions
@@ -33,7 +33,7 @@ void vol_init(int color)
     vol_set(volume_level);
 }
 
-void vol_change(enum Direction dir) 
+void vol_change(Direction dir) 
 {
     vol_set(volume_level + (dir==PREV?-5:5));
 }

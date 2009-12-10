@@ -6,7 +6,7 @@
 extern cfg_t *cfg;
 Mix_Chunk* sound_effects[6];
 
-void load_sound(char* file, enum MenuSound snd) 
+void load_sound(char* file, MenuSound snd) 
 {
     sound_effects[snd] = load_theme_sound(cfg_getstr(cfg, file));
 }
@@ -29,7 +29,7 @@ void sound_init()
 #endif
 }
 
-void sound_out(enum MenuSound se)
+void sound_out(MenuSound se)
 {
 #if SOUND_ENABLED
     Mix_PlayChannel( -1, sound_effects[se], 0 );

@@ -13,15 +13,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-int dosd_init(uint32_t color);
+int dosd_init();
 void dosd_deinit();
 void dosd_show(SDL_Surface *surface);
 
 inline bool dosd_is_locked();
 
-enum BatteryLevel {
-    BEST_LEVEL=3739,
-    FAIR_LEVEL=3675,
-    LOW_LEVEL=3611
-};
+typedef enum {
+    BAT_LEVEL_BEST=3739,
+    BAT_LEVEL_FAIR=3675,
+    BAT_LEVEL_LOW=3611
+} BatteryLevel;
+
+typedef enum {
+    BAT_STATE_EMPTY = 0,
+    BAT_STATE_LEVEL1,
+    BAT_STATE_LEVEL2,
+    BAT_STATE_FULL,
+    BAT_STATE_MAX
+} BatteryState;
+
 #endif//__DOSD_H__

@@ -22,7 +22,7 @@ int bright_enabled()
     return cfg_getbool(cfg_main,"BrightDisp");
 }
 
-void bright_init(int color) 
+void bright_init() 
 {
     log_debug("Initializing");
     
@@ -30,7 +30,7 @@ void bright_init(int color)
     int i;
     for (i=0;i<5;i++) {
         sprintf(file, "STATbright%d.png", i);
-        load_image(file, i, color);
+        load_image(file, i, DOSD_COLOR);
     }
     
     bright_level = bound((int)cfg_getint(cfg_main, "Bright"), 0, 4);
@@ -43,7 +43,7 @@ void bright_init(int color)
     bright_set(bright_level);
 }
 
-void bright_change(enum Direction dir)
+void bright_change(Direction dir)
 {
     bright_set(bright_level + (dir==PREV?-1:1));
 }

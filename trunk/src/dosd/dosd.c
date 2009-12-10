@@ -14,13 +14,6 @@
 
 extern int image_pallette[3];
 
-typedef enum {
-    BAT_EMPTY = 0,
-    BAT_LV1,
-    BAT_LV2,
-    BAT_FULL,
-    BAT_MAX
-} battery_state_e;
 
 // ___ Globals ___________________________________________
 // Global state
@@ -30,7 +23,7 @@ struct {
     FILE* proc_gpio1;
     bool is_locked;
     bool is_charging;
-    battery_state_e battery;
+    BatteryState battery;
     int battery_anim;
     unsigned int update_counter;
     // Measured in SDL_GetTick()s
@@ -45,7 +38,7 @@ void _blit(SDL_Surface *surface, image_e which_image, ...);
 void _update();
 
 // Color should be passed in RRGGBB format, e.g. 0xFFFFFF for white
-int dosd_init(uint32_t color)
+int dosd_init()
 {
     log_debug("Initializing");
     int i;
@@ -63,6 +56,8 @@ int dosd_init(uint32_t color)
     g_state.proc_gpio3 = fopen(LOCK_STATUS_DEVICE, "rb");
     if (!g_state.proc_gpio3) goto init_error;
 #endif
+    
+    int color = DOSD_COLOR;
     
     // Make room for alpha "channel"
     color <<= 8; // RRGGBBAA
@@ -92,8 +87,7 @@ int dosd_init(uint32_t color)
         //Let the surface handle coloring
         surface = SDL_CreateRGBSurfaceFrom(
             buf, image->w, image->h, 32, image->w * 4,
-            (0xFF<<24) & color, (0xFF<<16) & color, (0xFF<<8) & color, 0xFF
-        );
+            (0xFF<<24) & color, (0xFF<<16) & color, (0xFF<<8) & color, 0xFF);
         
         if (!surface) goto init_error;
         
@@ -146,7 +140,9 @@ void dosd_show(SDL_Surface* surface)
     image_e battery_status;
     
     if (SDL_GetTicks() >= g_state.next_update)
+    {
         _update();
+    }
     
     // Battery
     _blit(surface, IMG_BATTERY, -1);
@@ -154,12 +150,16 @@ void dosd_show(SDL_Surface* surface)
     // This is a bit of a hack, as it relies on battery_state_e
     // To have the same index as image_e
     battery_status = g_state.is_charging ? g_state.battery_anim : g_state.battery;
-    if (battery_status != BAT_EMPTY)
+    if (battery_status != BAT_STATE_EMPTY)
+    {
         _blit(surface, battery_status, -1);
+    }
     
     // Lock
     if (g_state.is_locked)
+    {
         _blit(surface, IMG_LOCK, IMG_BATTERY, -1);
+    }
 }
 
 inline bool dosd_is_locked()
@@ -230,14 +230,14 @@ void _update()
     g_state.is_locked = ((gpio & GPIO_LOCK_MASK) == 0);
     
     // Battery charge level
-    if      (mvolts >= BEST_LEVEL) g_state.battery = BAT_FULL;
-    else if (mvolts >= FAIR_LEVEL) g_state.battery = BAT_LV2;
-    else if (mvolts >= LOW_LEVEL ) g_state.battery = BAT_LV1;
-    else                           g_state.battery = BAT_EMPTY;
+    if      (mvolts >= BAT_LEVEL_BEST) g_state.battery = BAT_STATE_FULL;
+    else if (mvolts >= BAT_LEVEL_FAIR) g_state.battery = BAT_STATE_LEVEL2;
+    else if (mvolts >= BAT_LEVEL_LOW ) g_state.battery = BAT_STATE_LEVEL1;
+    else                                  g_state.battery = BAT_STATE_EMPTY;
 #else
     g_state.is_locked   = false;
     g_state.is_charging = true;
-    g_state.battery     = BAT_EMPTY;
+    g_state.battery     = BAT_STATE_EMPTY;
 #endif
     
     // Next update
@@ -248,7 +248,9 @@ void _update()
     {
         // This happens every 2 * DOSD_UPDATE_INTERVAL ticks
         g_state.battery_anim++;
-        if (g_state.battery_anim >= BAT_MAX)
-            g_state.battery_anim = BAT_EMPTY;
+        if (g_state.battery_anim >= BAT_STATE_MAX)
+        {
+            g_state.battery_anim =  BAT_STATE_EMPTY;
+        }
     }
 }

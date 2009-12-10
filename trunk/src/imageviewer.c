@@ -306,7 +306,7 @@ void imageviewer_update_preview()
     }
 }
 
-void imageviewer_move_page(enum Direction dir)
+void imageviewer_move_page(Direction dir)
 {
     int delta = (dir == PREV) ? -1 : 1;
     int prev_p = iv_global.page;
@@ -329,7 +329,7 @@ void imageviewer_move_page(enum Direction dir)
     }
 }
 
-void imageviewer_move(enum Direction dir) 
+void imageviewer_move(Direction dir) 
 {
     int delta = (dir == PREV) ? -1 : 1;
     int prev = iv_global.absolute_pos;
@@ -353,7 +353,7 @@ void imageviewer_move(enum Direction dir)
     }
 }
 
-enum MenuState imageviewer_select()
+MenuState imageviewer_select()
 {
     sound_out( DECIDE );
     
@@ -370,9 +370,9 @@ enum MenuState imageviewer_select()
     return MAINMENU;
 }
 
-enum MenuState imageviewer_keypress(SDLKey key)
+MenuState imageviewer_keypress(SDLKey key)
 {
-    enum Direction dir = getKeyDir(key);
+    Direction dir = getKeyDir(key);
 
     switch (key) {
         case DINGOO_BUTTON_LEFT:

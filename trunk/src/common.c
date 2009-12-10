@@ -158,7 +158,7 @@ void execute_command(char* dir, char** args)
 }
 
 #define IF_CMD_THEN(c, k) if (strcmp(c, COMMAND_##k)==0) return k;
-enum InternalCommand get_command(char* cmd) {
+InternalCommand get_command(char* cmd) {
     IF_CMD_THEN(cmd, THEMESELECT);
     IF_CMD_THEN(cmd, BACKGROUNDSELECT);
     IF_CMD_THEN(cmd, COLORSELECT);

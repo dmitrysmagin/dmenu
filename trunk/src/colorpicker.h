@@ -10,6 +10,6 @@ void colorpicker_animate(SDL_Surface* screen);
 void colorpicker_osd(SDL_Surface* screen);
 void colorpicker_update_preview();
 void colorpicker_update_color();
-enum MenuState colorpicker_keypress(SDLKey keysym);
+MenuState colorpicker_keypress(SDLKey key);
 
 #endif

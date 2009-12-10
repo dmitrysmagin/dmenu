@@ -9,6 +9,6 @@ int  filelist_draw(SDL_Surface* screen);
 void filelist_animate(SDL_Surface* screen);
 void filelist_osd(SDL_Surface* screen);
 
-enum MenuState filelist_keypress(SDLKey keysym);
+MenuState filelist_keypress(SDLKey key);
 
 #endif

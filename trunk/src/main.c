@@ -32,7 +32,7 @@ extern cfg_t *cfg;
 
 static Uint32 next_time;
 SDL_Surface *screen, *screen_cache;
-enum MenuState state = MAINMENU;
+MenuState state = MAINMENU;
 int program_done;
 
 Uint32 time_left(void)
@@ -211,7 +211,7 @@ void listen() {
     program_done = 0;
     SDLKey key;
     SDL_Event event;
-    enum MenuState prevstate;
+    MenuState prevstate;
     
     //Allow for easier menu nav
     SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
