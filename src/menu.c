@@ -134,14 +134,14 @@ int menu_init()
     }
 
     //load volume and brightness
-    bright_init(DOSD_COLOR);
-    vol_init(DOSD_COLOR);
+    bright_init();
+    vol_init();
 
     // Init sound
     sound_init();
     
     // Init OSD
-    if (!dosd_init(DOSD_COLOR))
+    if (!dosd_init())
     {
         log_error("Unable to initialize OSD");
         return 1;

@@ -111,6 +111,13 @@ char* theme_file(char* file)
     return relative_file(THEME_PATH, file);
 }
 
+SDL_Surface* load_osd_image( char* file ) {
+    SDL_Surface* tmp = load_global_image(file);
+    SDL_Surface* ret = tint_surface(tmp, DOSD_COLOR, 0xFF);
+    free_surface(tmp);
+    return ret;
+}
+
 SDL_Surface* load_global_image( char* file ) {
     char* tmp = global_file(file);
     SDL_Surface* out = load_image_file(tmp);

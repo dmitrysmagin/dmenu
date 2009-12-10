@@ -10,13 +10,6 @@ SDL_Rect bright_icon_rect;
 
 extern cfg_t *cfg_main;
 
-void load_image(char* file, int pos, int color) 
-{
-    SDL_Surface* tmp = load_global_image(file);
-    bright_icons[pos] = tint_surface(tmp, color, 0xFF);
-    free_surface(tmp);
-}
-
 int bright_enabled()
 {
     return cfg_getbool(cfg_main,"BrightDisp");
@@ -30,7 +23,7 @@ void bright_init()
     int i;
     for (i=0;i<5;i++) {
         sprintf(file, "STATbright%d.png", i);
-        load_image(file, i, DOSD_COLOR);
+        bright_icons[i] = load_osd_image(file);
     }
     
     bright_level = bound((int)cfg_getint(cfg_main, "Bright"), 0, 4);

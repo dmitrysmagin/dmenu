@@ -16,10 +16,8 @@ void vol_init()
 {    
     log_debug("Initializing");
     
-    volume_level = (int)cfg_getint(cfg_main, "SndVol");
-    SDL_Surface* tmp = load_global_image("STATspeaker.png");
-    volume_status = tint_surface(tmp, DOSD_COLOR, 0xFF);
-    free_surface(tmp);
+    volume_level  = (int)cfg_getint(cfg_main, "SndVol");
+    volume_status = load_osd_image("STATspeaker.png");
     
     //Initialize OSD positions
     init_rect(&vol_dst_rect, 
