@@ -397,7 +397,7 @@ void menu_osd(SDL_Surface* screen)
     if (bright_enabled()) bright_show(screen);
 }
 
-void menu_move(enum Direction dir) 
+void menu_move(Direction dir) 
 {
     int delta =  dir==PREV ? -1 : 1;
     
@@ -417,7 +417,7 @@ void menu_move(enum Direction dir)
     current_menuitem_index = 0;
 }
 
-void menuitem_move(enum Direction dir ) 
+void menuitem_move(Direction dir ) 
 {
     menu_state_changed();
     
@@ -476,14 +476,14 @@ void submenu_close()
     number_of_submenuitem = 0;
 }
 
-enum MenuState menuitem_runinternal()
+MenuState menuitem_runinternal()
 {
     char* executable = cfg_getstr(mi, "Executable");
     char* name       = cfg_getstr(mi, "Name");
     char* tmp;
     char **files;
     ImageEntry** images;
-    enum MenuState state = MAINMENU;
+    MenuState state = MAINMENU;
     int rc=0, i=0, count=0;
     
     switch (get_command(executable))
@@ -536,7 +536,7 @@ enum MenuState menuitem_runinternal()
     return state;
 }
 
-enum MenuState menuitem_run()
+MenuState menuitem_run()
 {
     char* executable = cfg_getstr(mi, "Executable");
     
@@ -554,10 +554,10 @@ enum MenuState menuitem_run()
     return MAINMENU;
 }
 
-enum MenuState menu_keypress(SDLKey key)
+MenuState menu_keypress(SDLKey key)
 {
-    enum MenuState state = MAINMENU;
-    enum Direction dir = getKeyDir(key);
+    MenuState state = MAINMENU;
+    Direction dir = getKeyDir(key);
     
     switch (key) {
         case DINGOO_BUTTON_L:

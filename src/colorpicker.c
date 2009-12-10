@@ -181,7 +181,7 @@ int colorpicker_draw(SDL_Surface* screen) {
 void colorpicker_animate(SDL_Surface* screen) { }
 void colorpicker_osd(SDL_Surface* screen)     { }
 
-enum MenuState colorpicker_select()
+MenuState colorpicker_select()
 {
     sound_out( DECIDE );
  
@@ -198,9 +198,9 @@ enum MenuState colorpicker_select()
     return MAINMENU;
 }
 
-void colorpicker_change_color_set(enum Direction dir) 
+void colorpicker_change_color_set(Direction dir) 
 {
-    int delta = (dir == UP) ? -1 : 1;
+    int delta = (dir == PREV) ? -1 : 1;
     sound_out ( MENUITEM_MOVE );
     cp_global.active = wrap(cp_global.active+delta,0,2);
     cp_global.state_changed = 1;
@@ -235,7 +235,7 @@ void colorpicker_update_preview()
     }
 }
 
-void colorpicker_change_color_value(enum Direction dir, int amt)
+void colorpicker_change_color_value(Direction dir, int amt)
 {
     int delta = (dir == PREV) ? -1 : 1, i = cp_global.active;
     cp_global.colors[i] = bound(cp_global.colors[i]+delta*amt,0,0xFF);
@@ -243,8 +243,9 @@ void colorpicker_change_color_value(enum Direction dir, int amt)
     cp_global.state_changed = 1;
 }
 
-enum MenuState colorpicker_keypress(SDLKey keysym) {
-    switch (keysym) {
+MenuState colorpicker_keypress(SDLKey key) {
+    Direction dir = getKeyDir(key);
+    switch (key) {
         case DINGOO_BUTTON_B:
             sound_out( CANCEL );
             colorpicker_deinit();
@@ -253,15 +254,15 @@ enum MenuState colorpicker_keypress(SDLKey keysym) {
             return colorpicker_select();
         case DINGOO_BUTTON_L:
         case DINGOO_BUTTON_R:
-            colorpicker_change_color_value(DINGOO_BUTTON_L==keysym?PREV:NEXT,1);
+            colorpicker_change_color_value(dir,1);
             break;
         case DINGOO_BUTTON_RIGHT:
         case DINGOO_BUTTON_LEFT:
-            colorpicker_change_color_value(DINGOO_BUTTON_LEFT==keysym?PREV:NEXT,4);
+            colorpicker_change_color_value(dir,4);
             break;
         case DINGOO_BUTTON_UP:
         case DINGOO_BUTTON_DOWN:
-            colorpicker_change_color_set(DINGOO_BUTTON_UP==keysym?UP:DOWN);
+            colorpicker_change_color_set(dir);
             break;            
         default: break;
     }

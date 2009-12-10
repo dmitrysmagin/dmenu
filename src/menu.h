@@ -14,11 +14,11 @@ void menu_deinit();
 int  menu_draw(SDL_Surface* screen);
 void menu_animate(SDL_Surface* screen);
 void menu_osd(SDL_Surface* screen);
-void menu_move( enum Direction dir);
-void menuitem_move( enum Direction dir);
+void menu_move( Direction dir);
+void menuitem_move( Direction dir);
 
-enum MenuState menu_keypress(SDLKey);
-enum MenuState menuitem_run();
+MenuState menu_keypress(SDLKey);
+MenuState menuitem_run();
 void submenu_close();
 void submenu_open();
 #endif

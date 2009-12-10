@@ -25,11 +25,11 @@
 
 #define getKeyDir(k) ((k==DINGOO_BUTTON_L || k==DINGOO_BUTTON_Y || k==DINGOO_BUTTON_LEFT || k==DINGOO_BUTTON_UP)?PREV:NEXT)
 
-enum MenuState { MAINMENU, FILELIST, IMAGEVIEWER, COLORPICKER };
-enum InternalCommand { THEMESELECT, BACKGROUNDSELECT, COLORSELECT }; 
-enum Direction { PREV, NEXT, UP, DOWN, RIGHT, LEFT };
+typedef enum { MAINMENU, FILELIST, IMAGEVIEWER, COLORPICKER } MenuState;
+typedef enum { THEMESELECT, BACKGROUNDSELECT, COLORSELECT } InternalCommand; 
+typedef enum { PREV, NEXT, UP, DOWN, RIGHT, LEFT } Direction;
 
-enum InternalCommand get_command(char* cmd);
+InternalCommand get_command(char* cmd);
 
 typedef struct {
     char* file;

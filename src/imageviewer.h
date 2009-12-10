@@ -13,7 +13,7 @@ void imageviewer_deinit();
 int  imageviewer_draw(SDL_Surface* screen);
 void imageviewer_animate(SDL_Surface* screen);
 void imageviewer_osd(SDL_Surface* screen);
-enum MenuState imageviewer_keypress(SDLKey keysym);
+MenuState imageviewer_keypress(SDLKey keysym);
 void imageviewer_update_preview();
 void imageviewer_update_list();
 

@@ -12,8 +12,8 @@
 #include "menu.h"
 
 int  bright_enabled();
-void bright_init(int color);
-void bright_change(enum Direction dir);
+void bright_init();
+void bright_change(Direction dir);
 void bright_set(int bright);
 void bright_show(SDL_Surface *surface);
 void bright_deinit();
