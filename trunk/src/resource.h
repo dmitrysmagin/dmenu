@@ -19,6 +19,7 @@ char* dmenu_file(char* file);
 char* global_file(char* file);
 char* theme_file(char* file);
 
+SDL_Surface* load_osd_image( char* file );
 SDL_Surface* load_global_image( char* file );
 SDL_Color*   load_global_color( char* file );
 TTF_Font*    load_global_font( char* file, int size);
