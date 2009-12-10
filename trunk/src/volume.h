@@ -14,12 +14,12 @@
 #include "common.h"
 #include "env.h"
 
-int  vol_enabled();
-void vol_init();
-void vol_change(Direction dir);
-void vol_set(int vol);
-void vol_show(SDL_Surface *surface);
-void vol_set_text(int);
-void vol_deinit();
+int  volume_enabled();
+void volume_init();
+void volume_change(Direction dir);
+void volume_set(int vol);
+void volume_show(SDL_Surface *surface);
+void volume_set_text(int);
+void volume_deinit();
 
 #endif

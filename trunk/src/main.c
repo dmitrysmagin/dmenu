@@ -58,25 +58,25 @@ int init_system() {
     {
         log_error("Unable to initialize persistent memory");
     }
-    
-    // init menu config
-    if (menu_init())
+        
+    //Init OSD 
     {
-        log_error("Unable to load menu");
-        return 1;
+        brightness_init();
+        volume_init();
+        if (!dosd_init())
+        {
+            log_error("Unable to initialize OSD");
+            return 1;
+        }
     }
-    
-    //load volume and brightness
-    bright_init();
-    vol_init();
     
     // Init sound
     sound_init();
     
-    // Init OSD
-    if (!dosd_init())
+    // init menu
+    if (menu_init())
     {
-        log_error("Unable to initialize OSD");
+        log_error("Unable to load menu");
         return 1;
     }
     
@@ -157,8 +157,8 @@ void deinit(int hard) {
         persistent_store_menu_position();
         
         sound_deinit();
-        bright_deinit();
-        vol_deinit();
+        brightness_deinit();
+        volume_deinit();
         dosd_deinit();
     }
     
@@ -179,8 +179,8 @@ void quick_quit() {
 
 void draw_osd(SDL_Surface* screen) {
     dosd_show(screen);    
-    if (vol_enabled())    vol_show(screen);
-    if (bright_enabled()) bright_show(screen);
+    if (volume_enabled())    volume_show(screen);
+    if (brightness_enabled()) brightness_show(screen);
 }
 
 /**
@@ -232,14 +232,14 @@ void handle_global_key(SDLKey key) {
         case DINGOO_BUTTON_L:
         case DINGOO_BUTTON_R:
             if (state == MAINMENU) {
-                vol_change(dir);
+                volume_change(dir);
                 sound_out( GLOBAL_KEY );
             }
             break;
         case DINGOO_BUTTON_X:
         case DINGOO_BUTTON_Y:
             if (state == MAINMENU) {
-                bright_change(dir);
+                brightness_change(dir);
                 sound_out( GLOBAL_KEY );
             }
             break;
@@ -303,7 +303,7 @@ void listen() {
                     
                     handle_global_key(key);
                     
-                    bright_dim(0);
+                    brightness_dim(0);
                     last_key_time = SDL_GetTicks();
                     break;
             } // end switch
@@ -311,7 +311,7 @@ void listen() {
         
         if ((SDL_GetTicks()-last_key_time) > (inactive_delay*1000)) 
         {
-            bright_dim(1);
+            brightness_dim(1);
         }
 
         update_display(screen, state);

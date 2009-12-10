@@ -144,7 +144,7 @@ int get_list(char* path)
             strcat(filename, "/");
             strcat(filename, fl_global.namelist[i]->d_name);
             stat(filename, &fl_global.statlist[i]);
-            free(filename);
+            free_erase(filename);
         }
 
         strcpy(fl_global.current_path, path);

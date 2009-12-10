@@ -11,12 +11,12 @@
 #include "conf.h"
 #include "menu.h"
 
-int  bright_enabled();
-void bright_init();
-void bright_change(Direction dir);
-void bright_dim(int on);
-void bright_set(int bright);
-void bright_show(SDL_Surface *surface);
-void bright_deinit();
+int  brightness_enabled();
+void brightness_init();
+void brightness_change(Direction dir);
+void brightness_dim(int on);
+void brightness_set(int bright);
+void brightness_show(SDL_Surface *surface);
+void brightness_deinit();
 
 #endif

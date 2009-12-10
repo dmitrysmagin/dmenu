@@ -80,8 +80,11 @@ void menu_get_position(int* menu_index, int* menu_item_index)
 void menu_set_position(int menu_index, int menu_item_index) 
 {
     // Restore menu position
-    current_menu_index     = menu_index;
-    current_menuitem_index = menu_item_index;
+    if (menu_index < number_of_menu && menu_item_index < number_of_menuitem[menu_index]) 
+    {
+        current_menu_index     = menu_index;
+        current_menuitem_index = menu_item_index;
+    }
 }
 
 int menu_init()
@@ -123,7 +126,7 @@ int menu_init()
         }
     }
 
-    free(color);
+    free_color(color);
     
     if (!in_bounds(current_menu_index, 0, number_of_menu)) {
         current_menu_index     = 0;
@@ -147,11 +150,11 @@ void menu_deinit()
         SDL_FreeSurface(menu_icons[i]);
         SDL_FreeSurface(menu_text[i]);
         for (j=0;j<number_of_menuitem[i];j++) {
-            SDL_FreeSurface(menuitem_icons[i][j]);
-            SDL_FreeSurface(menuitem_text[i][j]);
+            free_surface(menuitem_icons[i][j]);
+            free_surface(menuitem_text[i][j]);
         }
-        free(menuitem_icons[i]);
-        free(menuitem_text[i]);
+        free_erase(menuitem_icons[i]);
+        free_erase(menuitem_text[i]);
     }
 
     free_erase(menuitem_icons);
@@ -299,30 +302,32 @@ int menu_draw(SDL_Surface* screen)
     menu_needs_redraw = 0;
     int subshow = number_of_submenuitem > 0;
     
-    SDL_Rect icon_rect, text_rect, rect, offset;
+    SDL_Rect icon_rect, text_rect, offset;
 
     init_rect_pos(&icon_rect, 0,0);
     init_rect_pos(&text_rect, 0,0);
-    init_rect_pos(&rect, 0, 0);
+    init_rect_pos(&offset, 0,0);
     
     // clear screen
-    SDL_BlitSurface(background, 0, screen, &rect);
+    SDL_BlitSurface(background, 0, screen, &offset);
     
     //Set menu offset
     icon_rect.y = (screen->h - menu_icons[0]->h - MENU_TEXT_HEIGHT) / 3; // assuming the font height for menu name is 20
 
     //Draw main menu items
-    menu_draw_hitems(screen, &offset, 
-                     menu_icons, &icon_rect, 
-                     menu_text, &text_rect, 
-                     current_menu_index,  number_of_menu, subshow); 
+    menu_draw_hitems(
+        screen, &offset, 
+        menu_icons, &icon_rect, 
+        menu_text, &text_rect, 
+        current_menu_index,  number_of_menu, subshow); 
 
     //Draw menu items, starting at (x,y)
-    menu_draw_vitems(screen, &offset, 
-                     menuitem_icons[current_menu_index], &icon_rect, 
-                     menuitem_text[current_menu_index], &text_rect, 
-                     current_menuitem_index, number_of_menuitem[current_menu_index],
-                     subshow, 1, menu_icons[current_menu_index]->h + MENU_TEXT_HEIGHT); 
+    menu_draw_vitems(
+        screen, &offset, 
+        menuitem_icons[current_menu_index], &icon_rect, 
+        menuitem_text[current_menu_index], &text_rect, 
+        current_menuitem_index, number_of_menuitem[current_menu_index],
+        subshow, 1, menu_icons[current_menu_index]->h + MENU_TEXT_HEIGHT); 
 
     //Draw submenu (will only show if it is active)
     // at this point, text_rect.x and text_rect.y should be at the position where we want to draw the current
@@ -335,11 +340,12 @@ int menu_draw(SDL_Surface* screen)
     
     init_rect_pos(&offset, text_rect.x, text_rect.y+MENU_TEXT_HEIGHT); 
         
-    menu_draw_vitems(screen, &offset, 
-                     submenuitem_icons, &icon_rect, 
-                     submenuitem_text, &text_rect, 
-                     current_submenuitem_index, 
-                     number_of_submenuitem, 0, 0, 0); 
+    menu_draw_vitems(
+        screen, &offset, 
+        submenuitem_icons, &icon_rect, 
+        submenuitem_text, &text_rect, 
+        current_submenuitem_index, 
+        number_of_submenuitem, 0, 0, 0); 
                      
     return 1;
 }
@@ -424,7 +430,7 @@ void submenu_open()
         submenuitem_text[i]  = draw_text(cfg_getstr(smi, "Name"), menuitem_font, color);
     }    
     
-    free(color);
+    free_color(color);
     current_submenuitem_index = 0;
 }
 
@@ -436,12 +442,12 @@ void submenu_close()
 
     sound_out( CANCEL );
     for (i=0;i<number_of_submenuitem;i++) {
-        SDL_FreeSurface(submenuitem_icons[i]);
-        SDL_FreeSurface(submenuitem_text[i]);
+        free_surface(submenuitem_icons[i]);
+        free_surface(submenuitem_text[i]);
     }
 
-    free(submenuitem_icons);
-    free(submenuitem_text);
+    free_erase(submenuitem_icons);
+    free_erase(submenuitem_text);
     
     number_of_submenuitem = 0;
 }
@@ -468,12 +474,14 @@ MenuState menuitem_runinternal()
             while (files[count] != NULL) count++;
             images = new_array(ImageEntry*, count+1);
             
-            for (i=0;i<count;i++) {
-                images[i] = new_item(ImageEntry); {
+            for (i=0;i<count;i++) 
+            {
+                images[i] = new_item(ImageEntry); 
+                {
                     images[i]->file = strdup(files[i]);
                     tmp = strndup(files[i], strrpos(files[i], '/'));
                     images[i]->title = strdup(strrchr(tmp,'/')+1);
-                    free(tmp);
+                    free_erase(tmp);
                 }
                 free_erase(files[i]);
             }
@@ -482,14 +490,13 @@ MenuState menuitem_runinternal()
             
             rc = imageviewer_init(name, executable, DMENU_THEMES, images);
             if (!rc) state = IMAGEVIEWER;
-            
-            for (i=0;i<count;i++) {
-                free(images[i]->file);
-                free(images[i]->title);
-                free(images[i]);
+            for (i=0;i<count;i++) 
+            {
+                free_erase(images[i]->file);
+                free_erase(images[i]->title);
+                free_erase(images[i]);
             }
-            free(images);
-            
+            free_erase(images);
             break;
         case BACKGROUNDSELECT:
             rc = imageviewer_init(name, executable, DMENU_BACKGROUNDS, NULL);
@@ -499,7 +506,7 @@ MenuState menuitem_runinternal()
             tmp = theme_file(get_user_attr("Background"));
             rc = colorpicker_init(name, executable, NULL, get_theme_font_color_string(), tmp);
             if (!rc) state = COLORPICKER;
-            free(tmp);
+            free_erase(tmp);
             break;
     }
     
