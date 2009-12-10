@@ -496,7 +496,9 @@ MenuState menuitem_runinternal()
                 free_erase(images[i]->title);
                 free_erase(images[i]);
             }
-            free_erase(images);
+            //For some reason, this is causing a segfault on my
+            //   machine.  
+            //free_erase(images);
             break;
         case BACKGROUNDSELECT:
             rc = imageviewer_init(name, executable, DMENU_BACKGROUNDS, NULL);
