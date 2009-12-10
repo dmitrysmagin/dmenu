@@ -15,10 +15,11 @@
 #define COMMAND_BACKGROUNDSELECT "!backgroundselect"
 #define COMMAND_COLORSELECT "!colorselect"
 
-#define free_surface(sfc)      clean_erase(sfc, SDL_FreeSurface)
-#define free_font(fnt)         clean_erase(fnt, TTF_CloseFont);
-#define free_erase(e)          clean_erase(e, free);
-#define free_color(c)          free_erase(c);
+#define free_sounc(snd)    clean_erase(snd, Mix_FreeChunk)
+#define free_surface(sfc)  clean_erase(sfc, SDL_FreeSurface)
+#define free_font(fnt)     clean_erase(fnt, TTF_CloseFont)
+#define free_erase(e)      clean_erase(e, free)
+#define free_color(c)      free_erase(c)
 
 #define internal_command(s) (s[0] == '!')
 

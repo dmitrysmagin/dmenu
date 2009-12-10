@@ -4,11 +4,11 @@
 #include "resource.h"
 
 extern cfg_t *cfg;
-Mix_Chunk* gSE[6];
+Mix_Chunk* sound_effects[6];
 
 void load_sound(char* file, enum MenuSound snd) 
 {
-    gSE[snd] = load_theme_sound(cfg_getstr(cfg, file));
+    sound_effects[snd] = load_theme_sound(cfg_getstr(cfg, file));
 }
 
 void sound_init()
@@ -32,7 +32,7 @@ void sound_init()
 void sound_out(enum MenuSound se)
 {
 #if SOUND_ENABLED
-    Mix_PlayChannel( -1, gSE[se], 0 );
+    Mix_PlayChannel( -1, sound_effects[se], 0 );
 #endif
 }
 
@@ -42,10 +42,7 @@ void sound_deinit()
     log_debug("De-initializing");
     int i = 0;
     Mix_HaltChannel(-1);
-    for(;i<6;i++){
-         Mix_FreeChunk(gSE[i]);
-         gSE[i] = NULL;
-    }
+    for(;i<6;i++) free_sound(sound_effects[i]);
     Mix_CloseAudio();
 #endif
 }
