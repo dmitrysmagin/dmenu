@@ -183,7 +183,7 @@ void colorpicker_osd(SDL_Surface* screen)     { }
 
 enum MenuState colorpicker_select()
 {
-    SE_out( DECIDE );
+    sound_out( DECIDE );
  
     sprintf(cp_global.color_string, "%3d,%3d,%3d", 
         cp_global.colors[0], cp_global.colors[1], cp_global.colors[2]);
@@ -201,7 +201,7 @@ enum MenuState colorpicker_select()
 void colorpicker_change_color_set(enum Direction dir) 
 {
     int delta = (dir == UP) ? -1 : 1;
-    SE_out ( MENUITEM_MOVE );
+    sound_out ( MENUITEM_MOVE );
     cp_global.active = wrap(cp_global.active+delta,0,2);
     cp_global.state_changed = 1;
 }
@@ -246,7 +246,7 @@ void colorpicker_change_color_value(enum Direction dir, int amt)
 enum MenuState colorpicker_keypress(SDLKey keysym) {
     switch (keysym) {
         case DINGOO_BUTTON_B:
-            SE_out( CANCEL );
+            sound_out( CANCEL );
             colorpicker_deinit();
             return MAINMENU;
         case DINGOO_BUTTON_A:

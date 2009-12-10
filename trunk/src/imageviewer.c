@@ -312,7 +312,7 @@ void imageviewer_move_page(enum Direction dir)
     int prev_p = iv_global.page;
     iv_global.page = bound(iv_global.page + delta, 0, iv_global.max_pages);
     
-    SE_out( MENU_MOVE );
+    sound_out( MENU_MOVE );
 
     if (prev_p == iv_global.page)
     {
@@ -338,7 +338,7 @@ void imageviewer_move(enum Direction dir)
     iv_global.absolute_pos = bound(iv_global.absolute_pos + delta, 0, iv_global.total_size-1);
     iv_global.page = iv_global.absolute_pos/iv_global.set_size;
  
-    SE_out( MENUITEM_MOVE );
+    sound_out( MENUITEM_MOVE );
     
     if (prev_p == iv_global.page) {
         iv_global.relative_pos = iv_global.absolute_pos % iv_global.set_size;
@@ -355,7 +355,7 @@ void imageviewer_move(enum Direction dir)
 
 enum MenuState imageviewer_select()
 {
-    SE_out( DECIDE );
+    sound_out( DECIDE );
     
     char tmp[PATH_MAX];
     get_root_file(tmp, iv_global.absolute_pos);
@@ -384,7 +384,7 @@ enum MenuState imageviewer_keypress(SDLKey key)
             imageviewer_move_page(dir);
             break;
         case DINGOO_BUTTON_B:
-            SE_out( CANCEL );
+            sound_out( CANCEL );
             imageviewer_deinit();
             return MAINMENU;
         case DINGOO_BUTTON_A:

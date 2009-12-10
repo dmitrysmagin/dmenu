@@ -133,12 +133,12 @@ int menu_init()
         current_menuitem_index = 0;
     }
 
-    // Init sound
-    SE_Init();
-
     //load volume and brightness
     bright_init(DOSD_COLOR);
     vol_init(DOSD_COLOR);
+
+    // Init sound
+    sound_init();
     
     // Init OSD
     if (!dosd_init(DOSD_COLOR))
@@ -157,12 +157,13 @@ void menu_deinit()
     
     int i, j;
 
+    // De-init sound
+    sound_deinit();
+    
     bright_deinit();
     vol_deinit();
     dosd_deinit();
 
-    // De-init sound
-    SE_deInit();
     
     free_surface(background);
     
@@ -296,7 +297,7 @@ void menu_draw_hitems(
             screen, 
             icons[draw_item], icon_rect, 
             text[draw_item],  text_rect, 
-            alpha, draw_item != current_item ? -1 : 1);
+            alpha>>(subchild_showing?1:0), draw_item != current_item ? -1 : 1);
    
         //Store calculated position for current menu items
         if (draw_item == current_item) { 
@@ -306,7 +307,6 @@ void menu_draw_hitems(
         icon_rect->x += icons[draw_item]->w;
 
         draw_item++;
-        alpha --;
         
         if ((icon_rect->x >= screen->w) || 
            (draw_item >= number_of_items) ||
@@ -405,7 +405,7 @@ void menu_move(enum Direction dir)
         if (dir == PREV) {
             submenu_close();
         } else {
-            SE_out( OUT );
+            sound_out( OUT );
         }
         return;
     }
@@ -413,7 +413,7 @@ void menu_move(enum Direction dir)
     menu_state_changed();
     
     current_menu_index = wrap(current_menu_index+ delta, 0, number_of_menu-1);
-    SE_out( MENU_MOVE );
+    sound_out( MENU_MOVE );
     current_menuitem_index = 0;
 }
 
@@ -433,7 +433,7 @@ void menuitem_move(enum Direction dir )
     else {
         current_submenuitem_index = wrap(next_si, 0, nosi-1);
     }
-    SE_out( MENUITEM_MOVE );    
+    sound_out( MENUITEM_MOVE );    
 }
 
 void submenu_open()
@@ -442,7 +442,7 @@ void submenu_open()
     
     int i;
     SDL_Color* color = get_theme_font_color();
-    SE_out( DECIDE );
+    sound_out( DECIDE );
 
     number_of_submenuitem = cfg_size(mi, "SubMenuItem");
     submenuitem_icons = new_array(SDL_Surface*, number_of_submenuitem);
@@ -464,7 +464,7 @@ void submenu_close()
     
     int i;
 
-    SE_out( CANCEL );
+    sound_out( CANCEL );
     for (i=0;i<number_of_submenuitem;i++) {
         SDL_FreeSurface(submenuitem_icons[i]);
         SDL_FreeSurface(submenuitem_text[i]);
@@ -563,12 +563,12 @@ enum MenuState menu_keypress(SDLKey key)
         case DINGOO_BUTTON_L:
         case DINGOO_BUTTON_R:
             vol_change(dir);
-            SE_out( TEST );
+            sound_out( GLOBAL_KEY );
             break;
         case DINGOO_BUTTON_X:
         case DINGOO_BUTTON_Y:
             bright_change(dir);
-            SE_out( TEST );
+            sound_out( GLOBAL_KEY );
             break;
         case DINGOO_BUTTON_LEFT:
         case DINGOO_BUTTON_RIGHT:
