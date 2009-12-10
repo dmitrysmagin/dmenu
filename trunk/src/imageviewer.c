@@ -67,7 +67,7 @@ ImageViewerGlobal iv_global;
     };\
     strcat(buff, iv_global.files[i])
 
-SDL_Surface* render_imageviewer_text(char* text) 
+SDL_Surface* imageviewer_render_text(char* text) 
 {
     return draw_text(text, imageviewer_font, imageviewer_font_color);
 }
@@ -166,7 +166,7 @@ int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** im
         // load font
         imageviewer_font       = get_theme_font(14);
         imageviewer_font_color = get_theme_font_color();
-        imageviewer_title      = render_imageviewer_text(title);
+        imageviewer_title      = imageviewer_render_text(title);
         imageviewer_title_bg   = create_surface(
             SCREEN_WIDTH, SELECT_TITLE_HEIGHT, 32, 
             SELECT_TITLE_COLOR, 
@@ -303,7 +303,7 @@ void imageviewer_update_preview()
         
     if (iv_global.file_titles[iv_global.absolute_pos]) {
         free_surface(imageviewer_preview_title);
-        imageviewer_preview_title = render_imageviewer_text(
+        imageviewer_preview_title = imageviewer_render_text(
             iv_global.file_titles[iv_global.absolute_pos]);
     }
 }

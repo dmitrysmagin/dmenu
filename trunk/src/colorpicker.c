@@ -19,7 +19,7 @@ SDL_Surface* cp_demo_text;
 TTF_Font*    cp_font;
 SDL_Color*   cp_fontcolor;
 
-char* colorpicker_demo_text = "Lorem ipsum dolor sit amet, consectetur adipisicing elit";
+char* CP_DEMO_TEXT = "Lorem ipsum dolor sit amet, consectetur adipisicing elit";
 
 typedef struct ColorPickerGLobal {
     char executable[PATH_MAX];
@@ -35,7 +35,7 @@ typedef struct ColorPickerGLobal {
 
 ColorPickerGlobal cp_global;
 
-SDL_Surface* render_colorpicker_text(char* text) {
+SDL_Surface* colorpicker_render_text(char* text) {
     return draw_text(text, cp_font, cp_fontcolor);
 }
 
@@ -69,7 +69,7 @@ int  colorpicker_init(char* title, char* executable,  char* path, char* color, c
         
     if (strlen(cp_global.title) > 0) 
     {
-        cp_title     = render_colorpicker_text(title);
+        cp_title    = colorpicker_render_text(title);
         cp_title_bg = create_surface(
             SCREEN_WIDTH, SELECT_TITLE_HEIGHT, 32, 
             SELECT_TITLE_COLOR, SELECT_TITLE_ALPHA);
@@ -103,6 +103,7 @@ int  colorpicker_init(char* title, char* executable,  char* path, char* color, c
     
     colorpicker_update_color();
 
+    cp_global.is_ready      = 1;
     cp_global.color_changed = 1;
     cp_global.state_changed = 1;
     
@@ -114,7 +115,7 @@ void colorpicker_deinit() {
     log_debug("De-initializing");
     
     free_surface(cp_highlight_active);
-    free_surface(cp_highlight_inactive);    
+    free_surface(cp_highlight_inactive);
     
     int i = 0;
     for (;i<3;i++) {
@@ -138,7 +139,7 @@ void colorpicker_deinit() {
 int colorpicker_draw(SDL_Surface* screen) {
     if (!cp_global.state_changed) return 0;
     
-    SDL_Rect dstrect, txtrect, dhtrect;
+    SDL_Rect preview_rect, text_rect, highlight_rect;
   
     // clear screen
     SDL_BlitSurface(cp_background, NULL, screen, NULL);
@@ -146,32 +147,32 @@ int colorpicker_draw(SDL_Surface* screen) {
     int i = 0;
     SDL_Surface *high;
     
-    init_rect_pos(&dstrect, COLORPICKER_COLOR_X, COLORPICKER_COLOR_Y);
-    init_rect_pos(&dhtrect, 0, COLORPICKER_COLOR_Y - COLORPICKER_PAD/4);
+    init_rect_pos(&preview_rect, COLORPICKER_COLOR_X, COLORPICKER_COLOR_Y);
+    init_rect_pos(&highlight_rect, 0, COLORPICKER_COLOR_Y - COLORPICKER_PAD/4);
     
     for (;i<3;i++) 
     {
         high = cp_highlight_inactive;
         if ( i==cp_global.active ) high = cp_highlight_active;
-        dhtrect.x = COLORPICKER_COLOR_X + cp_global.colors[i];
-        SDL_BlitSurface(cp_gradient[i], NULL, screen, &dstrect);
-        SDL_BlitSurface(high, NULL, screen, &dhtrect);
-        dstrect.y += COLORPICKER_COLOR_FULL;
-        dhtrect.y += COLORPICKER_COLOR_FULL;
+        highlight_rect.x = COLORPICKER_COLOR_X + cp_global.colors[i];
+        SDL_BlitSurface(cp_gradient[i], NULL, screen, &preview_rect);
+        SDL_BlitSurface(high, NULL, screen, &highlight_rect);
+        preview_rect.y += COLORPICKER_COLOR_FULL;
+        highlight_rect.y += COLORPICKER_COLOR_FULL;
     }
     
     colorpicker_update_preview();
     
-    init_rect(&dstrect, 
+    init_rect(&preview_rect, 
         COLORPICKER_PREVIEW_X, COLORPICKER_PREVIEW_Y, 
         COLORPICKER_PREVIEW_W, COLORPICKER_PREVIEW_H);
-    SDL_BlitSurface(cp_preview, 0, screen, &dstrect);
+    SDL_BlitSurface(cp_preview, 0, screen, &preview_rect);
         
     //Draw top message
-    init_rect_pos(&txtrect, 0,0);
-    SDL_BlitSurface(cp_title_bg, 0, screen, &txtrect);
-    txtrect.x += DOSD_PADDING;
-    SDL_BlitSurface(cp_title, 0, screen, &txtrect);
+    init_rect_pos(&text_rect, 0,0);
+    SDL_BlitSurface(cp_title_bg, 0, screen, &text_rect);
+    text_rect.x += DOSD_PADDING;
+    SDL_BlitSurface(cp_title, 0, screen, &text_rect);
     
     cp_global.state_changed = 0;
     
@@ -224,11 +225,12 @@ void colorpicker_update_preview()
     cp_global.color_changed = 0;
     
     if (strlen(cp_global.background) == 0) {
-        SDL_FillRect(cp_preview, NULL, SDL_MapRGB(cp_preview->format,cols[0],cols[1],cols[2]));
+        SDL_FillRect(cp_preview, NULL, 
+            SDL_MapRGB(cp_preview->format,cols[0],cols[1],cols[2]));
     } else {
         SDL_BlitSurface(cp_preview_bg, NULL, cp_preview, NULL);
         free_surface(cp_demo_text);
-        cp_demo_text = render_colorpicker_text(colorpicker_demo_text);
+        cp_demo_text = colorpicker_render_text(CP_DEMO_TEXT);
         SDL_Rect pos = {4,cp_preview->h/2-cp_demo_text->h/2,
             COLORPICKER_PREVIEW_W,COLORPICKER_PREVIEW_H};
         SDL_BlitSurface(cp_demo_text,  NULL, cp_preview, &pos);
