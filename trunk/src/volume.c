@@ -37,13 +37,15 @@ void vol_change(Direction dir)
 }
 
 void vol_set(int level) 
-{    
+{
     int min = VOLUME_ICON_MIN_W, max = VOLUME_ICON_MAX_W;
     volume_level = bound(level, 0, 100);
+
+    //Calculate clipping of volume rect
     vol_src_rect.w = min+(int)((max-min)*(volume_level/100.0f));
-    
+
     int oss_volume = volume_level | (volume_level << 8); // set volume for both channels
-    
+
 	int mixer = open(MIXER_DEVICE, O_WRONLY);
 	if (ioctl(mixer, SOUND_MIXER_WRITE_VOLUME, &oss_volume) == -1) {
         log_error("Failed opening mixer for write - VOLUME");
@@ -54,7 +56,7 @@ void vol_set(int level)
 }
 
 void vol_show(SDL_Surface* surface) 
-{    
+{
     SDL_BlitSurface(volume_status, &vol_src_rect, surface, &vol_dst_rect );    
 }
 
