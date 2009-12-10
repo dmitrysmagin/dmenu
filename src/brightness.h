@@ -14,6 +14,7 @@
 int  bright_enabled();
 void bright_init();
 void bright_change(Direction dir);
+void bright_dim(int on);
 void bright_set(int bright);
 void bright_show(SDL_Surface *surface);
 void bright_deinit();

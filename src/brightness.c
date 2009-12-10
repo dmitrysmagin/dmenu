@@ -4,6 +4,7 @@
 
 int bright_levels[5]={10,25,50,75,99};
 int bright_level;
+int bright_dimmed;
 
 SDL_Surface* bright_icons[5];
 SDL_Rect bright_icon_rect;
@@ -36,24 +37,39 @@ void bright_init()
     bright_set(bright_level);
 }
 
+void bright_write(int level)
+{
+    #ifdef DINGOO_BUILD
+    int file_no;
+    FILE *brt_fd = load_file_or_die(BACKLIGHT_DEVICE, "w");
+    fprintf(brt_fd, "%d", bright_levels[level] );
+    file_no = fileno(brt_fd);
+    fsync(file_no);
+    fclose(brt_fd);
+    #endif
+    
+}
+
 void bright_change(Direction dir)
 {
     bright_set(bright_level + (dir==PREV?-1:1));
 }
 
+void bright_dim(int on) 
+{
+    if (bright_dimmed != on)
+    {
+        log_debug("Setting Dim to %d", on);
+        bright_dimmed = on;
+        bright_write(on?0:bright_level);
+    }
+}
+
 void bright_set(int level) 
 {
+    bright_dimmed = 0;
     bright_level = bound(level, 0, 4);
-
-    #ifdef DINGOO_BUILD
-        int file_no;
-        FILE *brt_fd = load_file_or_die(BACKLIGHT_DEVICE, "w");
-        fprintf(brt_fd, "%d", bright_levels[bright_level] );
-        file_no = fileno(brt_fd);
-        fsync(file_no);
-        fclose(brt_fd);
-    #endif
-
+    bright_write(bright_level);
     cfg_setint( cfg_main, "Bright", (long)bright_level );
 }
 
