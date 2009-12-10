@@ -11,7 +11,8 @@ typedef struct {
 int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** files);
 void imageviewer_deinit();
 int  imageviewer_draw(SDL_Surface* screen);
-int  imageviewer_animate(SDL_Surface* screen);
+void imageviewer_animate(SDL_Surface* screen);
+void imageviewer_osd(SDL_Surface* screen);
 enum MenuState imageviewer_keypress(SDLKey keysym);
 void imageviewer_update_preview();
 void imageviewer_update_list();

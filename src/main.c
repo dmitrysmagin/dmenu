@@ -166,18 +166,10 @@ void update_display() {
     // DRAWING STARTS HERE
     int recache = 0;
     switch (state) {
-        case MAINMENU:
-            recache = menu_draw(screen);
-            break;
-        case FILELIST:
-            recache = filelist_draw(screen);
-            break;
-        case IMAGEVIEWER:
-            recache = imageviewer_draw(screen);
-            break;
-        case COLORPICKER:
-            recache = colorpicker_draw(screen);
-            break;
+        case MAINMENU: recache = menu_draw(screen); break;
+        case FILELIST: recache = filelist_draw(screen); break;
+        case IMAGEVIEWER: recache = imageviewer_draw(screen); break;
+        case COLORPICKER: recache = colorpicker_draw(screen); break;
     }
     
     if (!recache) {
@@ -187,25 +179,18 @@ void update_display() {
     }
     
     switch (state) {
-        case MAINMENU:
-            recache = menu_animate(screen);
-            break;
-        case FILELIST:
-            recache = filelist_animate(screen);
-            break;
-        case IMAGEVIEWER:
-            recache = imageviewer_animate(screen);
-            break;
-        case COLORPICKER:
-            recache = colorpicker_animate(screen);
-            break;
+        case MAINMENU: menu_animate(screen); break; 
+        case FILELIST: filelist_animate(screen); break;
+        case IMAGEVIEWER: imageviewer_animate(screen); break;
+        case COLORPICKER: colorpicker_animate(screen); break;
     }
     
-    if (recache) {
-        SDL_BlitSurface(screen, NULL, screen_cache, NULL);
+    switch (state) {
+        case MAINMENU: menu_osd(screen); break;
+        case FILELIST: filelist_osd(screen); break;
+        case IMAGEVIEWER: imageviewer_osd(screen); break;
+        case COLORPICKER: colorpicker_osd(screen); break;
     }
-    
-    menu_draw_osd(screen);
     
     // finally, update the screen :)
     SDL_Flip(screen);
@@ -215,7 +200,8 @@ void update_display() {
     next_time += TICK_INTERVAL;    
 }
 
-void quit() {
+void quit()
+{
     program_done = 1;
 }
 
