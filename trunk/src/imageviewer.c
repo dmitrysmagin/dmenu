@@ -313,10 +313,12 @@ void imageviewer_move_page(Direction dir)
     iv_global.page = bound(iv_global.page + delta, 0, iv_global.max_pages);
     
     sound_out( MENU_MOVE );
+    int iop = iv_global.set_size;
+    if (iv_global.page == iv_global.max_pages) iop = (iv_global.total_size-1)%iv_global.set_size;
 
     if (prev_p == iv_global.page)
     {
-        iv_global.relative_pos = dir == PREV ? 0 :  (iv_global.total_size-1)%iv_global.set_size;
+        iv_global.relative_pos = dir == PREV ? 0 :  iop;
     }
 
     int oldpos = iv_global.absolute_pos;
@@ -324,6 +326,7 @@ void imageviewer_move_page(Direction dir)
     if (iv_global.absolute_pos != oldpos) 
     {
         iv_global.state_changed = 1;
+        iv_global.relative_pos = bound(iv_global.relative_pos, 0, iop);
         imageviewer_update_list();
         imageviewer_update_preview();
     }
