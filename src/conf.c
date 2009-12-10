@@ -109,6 +109,7 @@ cfg_opt_t main_opts[] = {
     CFG_INT("SndVol", 50, CFGF_NONE),
     CFG_INT("Bright", 3, CFGF_NONE),
     CFG_STR("Background", 0, CFGF_NONE),
+    CFG_INT("DimmerDelay", DIMMER_DELAY, CFGF_NONE),
     CFG_STR("FontColor", 0, CFGF_NONE),
     CFG_STR("Font", 0, CFGF_NONE),
     

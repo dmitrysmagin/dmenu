@@ -18,6 +18,7 @@
 #define SOUND_ENABLED        1
 #endif
 
+#define DIMMER_DELAY         5
 #define DMENU_THEMES         DMENU_PATH "themes/"
 #define DMENU_CONF_FILE      DMENU_PATH DMENU_CONF_FILE_NAME
 #define DMENU_CONF_TEMP      DMENU_PATH DMENU_CONF_FILE_NAME ".tmp"
@@ -27,8 +28,6 @@
 #define GLOBAL_RESOURCE_PATH DMENU_PATH "resources/"
 char THEME_PATH[PATH_MAX];
 #define THUMBNAILS_PATH      "/.thumb"
-
-#define INACTIVITY_DELAY     10
 
 //Device Info
 #define BACKLIGHT_DEVICE     "/proc/jz/lcd_backlight"
