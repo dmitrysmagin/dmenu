@@ -11,8 +11,8 @@ void load_sound(char* file, enum MenuSound snd)
     gSE[snd] = load_theme_sound(cfg_getstr(cfg, file));
 }
 
-void SE_Init()
-{
+void sound_init()
+{ 
 #if SOUND_ENABLED
     log_debug("Initializing");
     
@@ -25,18 +25,18 @@ void SE_Init()
     load_sound("DecideSE",   DECIDE);
     load_sound("CancelSE",   CANCEL);
     load_sound("OutSE",      OUT);
-    load_sound("TestSE",     TEST);
+    load_sound("TestSE",     GLOBAL_KEY);
 #endif
 }
 
-void SE_out(enum MenuSound se)
+void sound_out(enum MenuSound se)
 {
 #if SOUND_ENABLED
     Mix_PlayChannel( -1, gSE[se], 0 );
 #endif
 }
 
-void SE_deInit()
+void sound_deinit()
 {
 #if SOUND_ENABLED
     log_debug("De-initializing");

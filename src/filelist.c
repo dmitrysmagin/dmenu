@@ -324,7 +324,7 @@ void filelist_move_single(enum Direction dir)
     int next_pos = fl_global.current_highlight + delta;
     int next_abs_pos = fl_global.current_list_start + next_pos; 
     
-    SE_out( MENUITEM_MOVE );
+    sound_out( MENUITEM_MOVE );
     
     if (in_bounds(next_pos,0,size) && next_pos < max) //If moving within page
     {
@@ -348,7 +348,7 @@ void filelist_move_page(enum Direction dir)
     int size = FILES_PER_PAGE, delta = (dir==PREV?-size:size);;
     int start = fl_global.current_list_start;
     int next = start + delta;
-    SE_out( MENU_MOVE );
+    sound_out( MENU_MOVE );
     fl_global.current_list_start =  bound(next, 0, max(fl_global.num_of_files-size, 0));
     fl_global.current_highlight = 0;
     
@@ -359,7 +359,7 @@ void filelist_move_page(enum Direction dir)
 
 void filelist_left()
 {
-    SE_out( CANCEL );
+    sound_out( CANCEL );
 
     if (fl_global.at_root) {
         return;
@@ -385,7 +385,7 @@ void filelist_right()
     char temp_path[PATH_MAX];
     int i = fl_global.current_list_start+fl_global.current_highlight;
     
-    SE_out( DECIDE );
+    sound_out( DECIDE );
     
     if (S_ISDIR(fl_global.statlist[i].st_mode) && !is_back_dir(fl_global.namelist[i])) {
         strcpy(temp_path, fl_global.current_path);
@@ -469,14 +469,14 @@ enum MenuState filelist_keypress(SDLKey key)
         case DINGOO_BUTTON_RIGHT:
             filelist_changedir(dir);
             break;
+        case DINGOO_BUTTON_START:
+            filelist_store_dir();
+            break;
         case DINGOO_BUTTON_B:
             filelist_deinit();
             return MAINMENU;
         case DINGOO_BUTTON_A:
             return filelist_run();
-        case DINGOO_BUTTON_START:
-            filelist_store_dir();
-            break;
         default:break;
     }
 
