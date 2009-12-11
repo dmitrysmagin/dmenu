@@ -29,30 +29,36 @@ char* get_user_attr(char* attr)
     return val;
 }
 
-char** get_theme_previews() 
+int get_theme_list(char* path, char*** files) 
 {
     struct dirent** dir_files;
     struct stat file_stat;
     char name[PATH_MAX], *tmp;
-    int i, pos=0, cnt=max(scandir(DMENU_THEMES, &dir_files, NULL, NULL), 0);
-    char** out = new_str_arr(0);
-    
-    
+    int i, pos=0, cnt=max(scandir(path, &dir_files, NULL, NULL), 0);
+    char* themes[100];
+
     for (i=0;i<cnt;i++) {
         tmp = dir_files[i]->d_name;
         if (tmp != NULL && tmp[0] != '.') {
-            sprintf(name, "%s%s/theme.cfg", DMENU_THEMES, tmp);
+            strcpy(name, DMENU_THEMES);
+            strcat(name, tmp);
+            strcat(name, "/theme.cfg");
+
             if (stat(name, &file_stat) == 0) {
-                sprintf(name, "%s%s", DMENU_THEMES, tmp);
-                append_str(out, pos, strdup(name));
+                strcpy(name, DMENU_THEMES);
+                strcat(name, tmp);
+                themes[pos++] = strdup(name);
             }
         }
         free_erase(dir_files[i]);
     }
-    append_str(out, pos, NULL);
-    
     free_erase(dir_files);
-    return out;
+    
+    char** out = new_array(char*, pos);
+    for (i=0;i<pos;i++) out[i] = themes[i];
+    *files = out;
+    
+    return pos;
 }
 
 TTF_Font* get_theme_font(int size)
