@@ -4,11 +4,13 @@
 #include "common.h"
 
 #define item_alpha(act, cur) (MENU_ACTIVE_ALPHA >> abs(cur-act))
-
+#define copyname_trim(str, conf) if (conf != NULL) { c = cfg_getstr(conf, "Name"); while (*c==' ') c++; strcpy(str, c); }
+#define if_names_equal(m, s) c = cfg_getstr(m, "Name"); while (*c==' ') c++; if (strcmp(c, s)==0)
+    
 int  menu_init();
-void menu_get_position(int* menu_index, int* menu_item_index);
-void menu_set_position(int menu_index, int menu_item_index);
-void menu_state_changed();
+void menu_force_redraw(SDL_Surface* screen);
+void menu_get_position(char* menu_title, char* menu_item_title, char* menu_subitem_title);
+void menu_set_position(const char* menu_title, const char* menu_item_title, const char* menu_subitem_title);
 void menu_reload_background();
 void menu_deinit();
 int  menu_draw(SDL_Surface* screen);

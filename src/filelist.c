@@ -28,7 +28,7 @@
 #define ends_with_slash(str) (str[strlen(str)-1] == '/')
 
 //Get access to the current menu item
-extern cfg_t* mi;
+extern cfg_t* menu_active_item_config;
 extern cfg_t *cfg;
 extern SDL_Surface* background;
 
@@ -427,7 +427,7 @@ void filelist_store_dir()
 {
     if (fl_global.can_change_dir) 
     {
-        conf_dirselect(mi, fl_global.current_path);
+        conf_dirselect(menu_active_item_config, fl_global.current_path);
     }
 }
 

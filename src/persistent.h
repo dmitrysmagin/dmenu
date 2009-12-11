@@ -13,7 +13,9 @@
 #define PERSISTENT_ID (0xBFAA0201)
 
 typedef struct {
-    int current_menu, current_menuitem;
+    char current_menu_title[100], 
+         current_menu_item_title[100], 
+         current_menu_subitem_title[100];
 } persistent_t;
 
 extern persistent_t* g_persistent;

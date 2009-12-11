@@ -20,12 +20,18 @@ persistent_t* g_persistent;
 
 void persistent_store_menu_position()
 {
-    menu_get_position(&g_persistent->current_menu, &g_persistent->current_menuitem);
+    menu_get_position(
+        g_persistent->current_menu_title, 
+        g_persistent->current_menu_item_title,
+        g_persistent->current_menu_subitem_title);
 }
 
 void persistent_restore_menu_position()
 {
-    menu_set_position(g_persistent->current_menu, g_persistent->current_menuitem);
+    menu_set_position(
+        g_persistent->current_menu_title, 
+        g_persistent->current_menu_item_title,
+        g_persistent->current_menu_subitem_title);
 }
 
 int persistent_init() {
