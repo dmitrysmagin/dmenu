@@ -17,8 +17,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 
-void free_str_arr(char** arr)
-{
+void free_str_arr(char** arr) {
     int i =0;
     while (*(arr + i)) i++;
     while (i) free(arr[i--]);

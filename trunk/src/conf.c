@@ -536,7 +536,7 @@ void conf_colorselect(char* color)
     reload();
 }
 
-void conf_selectordir(cfg_t* menu_item, char* dir) 
+void conf_dirselect(cfg_t* menu_item, char* dir) 
 {
     cfg_t* selector;
     cfg_setstr(menu_item, "SelectorDir", dir);
