@@ -66,8 +66,7 @@ typedef struct FileListGlobal
 FileListGlobal fl_global;
 
 
-
-SDL_Surface* render_list_text(char* text) 
+SDL_Surface* filelist_render_text(char* text) 
 {
     return draw_text(text, list_font, list_font_color);
 }
@@ -91,24 +90,18 @@ void filelist_fill()
         if (j < fl_global.num_of_files) 
         {
             fl_global.list_filename[i] = 
-                render_list_text(fl_global.namelist[j]->d_name);
+                filelist_render_text(fl_global.namelist[j]->d_name);
         }
     }
 }
 
-// Determines if entry references the parent dir as ".."
-int is_back_dir(const struct dirent *dr) 
-{
-    return !strcmp(dr->d_name, "..");
-}
-
-int list_filter(const struct dirent *dptr)
+int filelist_filter(const struct dirent *dptr)
 {
     return (fl_global.can_change_dir && !fl_global.at_root && is_back_dir(dptr)) 
             || dptr->d_name[0] != '.';
 }
 
-int sort_files(const struct dirent **a, const struct dirent **b) 
+int filelist_sort(const struct dirent **a, const struct dirent **b) 
 {
     //Note this fails for symlinks of dirs, but because the dingux runs on a Fat32 drive, this
     // shouldn't be an issue.
@@ -118,16 +111,15 @@ int sort_files(const struct dirent **a, const struct dirent **b)
     }
 
     int c = (*a)->d_type==DT_DIR, d=(*b)->d_type==DT_DIR;
-    return c==d ? alphasort(a,b) : 
-                  c ? -1 : 1;
+    return c==d ? alphasort_i(a,b) : c ? -1 : 1;
 }
 
-int get_list(char* path)
+int filelist_get_list(char* path)
 {
     int i = 0;
 
     fl_global.at_root = !strcmp(path,"/");
-    fl_global.num_of_files = scandir(path, &fl_global.namelist, list_filter, (void*)sort_files);
+    fl_global.num_of_files = scandir(path, &fl_global.namelist, filelist_filter, (void*)filelist_sort);
     fl_global.current_list_start = fl_global.current_highlight = 0;
 
     if (fl_global.num_of_files < 0) 
@@ -153,7 +145,7 @@ int get_list(char* path)
     }
 }
 
-void clear_list()
+void filelist_clear_list()
 {
     free_erase(fl_global.statlist);
     
@@ -193,7 +185,7 @@ int filelist_init(char* title, char* executable, char *exec_path, char* select_p
     list_sel       = load_theme_image(cfg_getstr(cfg, "ListSelector"));
     list_dir_icon  = load_theme_image(cfg_getstr(cfg, "ListDirIcon"));
     list_file_icon = load_theme_image(cfg_getstr(cfg, "ListFileIcon"));
-    list_title     = render_list_text(title);
+    list_title     = filelist_render_text(title);
     fl_global.status_changed = 1;
 
     // Prep path/executable vars, determine filelist_theme status
@@ -210,7 +202,7 @@ int filelist_init(char* title, char* executable, char *exec_path, char* select_p
         strcpy(real_path, "/"); //Default to root when real_path fails
         //return 1;
     }
-    if (get_list(real_path)) 
+    if (filelist_get_list(real_path)) 
     {
         log_error("Failed to read directory %s", real_path);
         return 1;
@@ -236,7 +228,7 @@ void filelist_deinit()
     free_font(list_font);
     free_color(list_font_color);
 
-    clear_list();
+    filelist_clear_list();
 }
 
 int filelist_draw(SDL_Surface* screen)
@@ -290,12 +282,7 @@ void filelist_osd(SDL_Surface* screen)
     SDL_BlitSurface(list_title, 0, screen, &rect);
 }
 
-void shift_highlight(Direction dir) 
-{
-    fl_global.current_highlight += (PREV==dir ? -1 : 1);
-}
-
-void shift_page_surfaces(Direction dir) 
+void filelist_shift_page(Direction dir) 
 {
     int i, 
         start = 0, 
@@ -316,10 +303,10 @@ void shift_page_surfaces(Direction dir)
     }
     
     fl_global.current_list_start += delta;
-    fl_global.list_filename[end] = render_list_text(fl_global.namelist[fl_global.current_list_start+end]->d_name);
+    fl_global.list_filename[end] = filelist_render_text(fl_global.namelist[fl_global.current_list_start+end]->d_name);
 }
 
-void wrap_page_surfaces(Direction dir) 
+void filelist_wrap_page(Direction dir) 
 {
     int size = FILES_PER_PAGE;
 
@@ -335,7 +322,7 @@ void wrap_page_surfaces(Direction dir)
     filelist_fill();
 }
 
-void filelist_move_single(Direction dir) 
+void filelist_move_entry(Direction dir) 
 {
     int delta    = (dir == PREV) ? -1 : 1;
     int size     = FILES_PER_PAGE;
@@ -347,15 +334,15 @@ void filelist_move_single(Direction dir)
     
     if (in_bounds(next_pos,0,size) && next_pos < max) //If moving within page
     {
-        shift_highlight(dir);
+        fl_global.current_highlight += (PREV==dir ? -1 : 1);
     } 
     else if (in_bounds(next_abs_pos, 0, max)) //Slide page
     {
-        shift_page_surfaces(dir);
+        filelist_shift_page(dir);
     }
     else  //Wrap Around
     {
-        wrap_page_surfaces(dir);
+        filelist_wrap_page(dir);
     }    
     
     fl_global.status_changed = 1;
@@ -376,7 +363,7 @@ void filelist_move_page(Direction dir)
     fl_global.status_changed = 1;
 }
 
-void filelist_left()
+void filelist_move_left()
 {
     sound_out( CANCEL );
 
@@ -397,14 +384,14 @@ void filelist_left()
         else {
             *last_separator = '\0';
         }
-        clear_list();
-        get_list(fl_global.current_path);
+        filelist_clear_list();
+        filelist_get_list(fl_global.current_path);
         fl_global.status_changed = 1;
     }
 
 }
 
-void filelist_right()
+void filelist_move_right()
 {
     char temp_path[PATH_MAX];
     int i = fl_global.current_list_start+fl_global.current_highlight;
@@ -419,10 +406,10 @@ void filelist_right()
             strcat(temp_path, "/");
         }
         strcat(temp_path, fl_global.namelist[i]->d_name);
-        clear_list();
-        if (get_list(temp_path) != 0)
+        filelist_clear_list();
+        if (filelist_get_list(temp_path) != 0)
         {
-            get_list(fl_global.current_path);
+            filelist_get_list(fl_global.current_path);
         }
         fl_global.status_changed = 1;
     }
@@ -432,7 +419,7 @@ void filelist_changedir(Direction dir)
 {
     if (fl_global.can_change_dir) 
     {
-        dir == PREV ? filelist_left() :filelist_right();
+        dir == PREV ? filelist_move_left() :filelist_move_right();
     }
 }
 
@@ -488,7 +475,7 @@ MenuState filelist_keypress(SDLKey key)
             break;
         case DINGOO_BUTTON_UP:
         case DINGOO_BUTTON_DOWN:
-            filelist_move_single(dir);
+            filelist_move_entry(dir);
             break;
         case DINGOO_BUTTON_LEFT:
         case DINGOO_BUTTON_RIGHT:

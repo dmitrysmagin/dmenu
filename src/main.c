@@ -228,22 +228,20 @@ void update_display() {
 void handle_global_key(SDLKey key) {
     //Handle OSD activity
     Direction dir  = getKeyDir(key);
-    switch (key) {
-        case DINGOO_BUTTON_L:
-        case DINGOO_BUTTON_R:
-            if (state == MAINMENU) {
+    if (state == MAINMENU) {
+        switch (key) {
+            case DINGOO_BUTTON_L:
+            case DINGOO_BUTTON_R:
                 volume_change(dir);
                 sound_out( GLOBAL_KEY );
-            }
-            break;
-        case DINGOO_BUTTON_X:
-        case DINGOO_BUTTON_Y:
-            if (state == MAINMENU) {
+                break;
+            case DINGOO_BUTTON_X:
+            case DINGOO_BUTTON_Y:
                 brightness_change(dir);
                 sound_out( GLOBAL_KEY );
-            }
-            break;
-        default: break;
+                break;
+            default: break;
+        }
     }
 }
 

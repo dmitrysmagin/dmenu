@@ -5,6 +5,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<sys/types.h>
+#include<ctype.h>
 
 #define _log(dst, pre, fmt, args...) fprintf(dst, "%-20s(%4d)[%s]: "fmt "\n", strstr(__FILE__, "src"), __LINE__, pre, ##args)
 #define log_error(fmt, args...)      _log(stderr, "err", fmt, ##args); perror(0)
@@ -18,6 +19,7 @@
 #define in_bounds(v, l, h) ((v>=l) && (v<h))
 #define min(a,b) (a<b?a:b)
 #define max(a,b) (a>b?a:b)
+#define to_lower(a) (a>='A'&&a<='Z' ? a - 'A' + 'a' : a)
 
 #define new_array(t, len)      (t*)malloc(sizeof(t) * len)
 #define new_str(len)           new_array(char, len+1)
@@ -39,6 +41,7 @@ char* strndup(char* s, size_t n);
 #endif
 
 int strrpos (char* s, int c);
+int stricmp( const char* a, const char* b);
 int bound(int val, int low, int high);
 int wrap(int val, int low, int high);
 void _foreach(void** array, void* (f)(void*), int len);

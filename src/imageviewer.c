@@ -81,7 +81,7 @@ int imageviewer_file_filter(const struct dirent *dptr)
         || strstr(name, IMAGE_TYPES[2]) != NULL;
 }
 
-int get_imagelist(char* path, ImageEntry** images)
+int imageviewer_getlist(char* path, ImageEntry** images)
 {
     int i = 0;
     if (images == NULL) {
@@ -122,7 +122,7 @@ int get_imagelist(char* path, ImageEntry** images)
     return iv_global.total_size == 0 ? 1 : 0;
 }
 
-void reset_pagination()
+void imageviewer_reset_pagination()
 {
     iv_global.set_size = IMAGE_THUMBS_PER_PAGE;
     iv_global.is_ready = 0;
@@ -140,7 +140,7 @@ int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** im
 {
     log_debug("Initializing");
     
-    reset_pagination();
+    imageviewer_reset_pagination();
     
     // try to read files before we do anything else
     char root[PATH_MAX];
@@ -151,7 +151,7 @@ int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** im
     }
     iv_global.root = strdup(root);
     
-    if (get_imagelist(iv_global.root, images)) 
+    if (imageviewer_getlist(iv_global.root, images)) 
     {
         log_error("Failed to read/find files in %s", iv_global.root);
         return 1;
@@ -218,7 +218,7 @@ void imageviewer_deinit()
     free_erase(iv_global.file_titles);
     free_erase(iv_global.entries);
     
-    reset_pagination();
+    imageviewer_reset_pagination();
     iv_global.is_ready = 0;
 }
 
