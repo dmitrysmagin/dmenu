@@ -10,7 +10,7 @@
 #define __PERSISTENT_H__
 
 // Increment this when persistent_t is changed
-#define PERSISTENT_ID (0xBFAA0201)
+#define PERSISTENT_ID (0xBFAA0202)
 
 typedef struct {
     char current_menu_title[100], 

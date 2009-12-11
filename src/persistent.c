@@ -43,6 +43,7 @@ int persistent_init() {
     shmid = shmget(key, sizeof(persistent_t), 0666);
     if (shmid == -1)
     {
+        log_debug("Initializing shared memory for the first time");
         // This is the first run, allocate shared memory
         shmid     = shmget(key, sizeof(persistent_t), IPC_CREAT | 0666);
         erase_mem = 1;

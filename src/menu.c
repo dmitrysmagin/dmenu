@@ -96,13 +96,18 @@ void menu_get_position(char* menu_name, char* menu_item_name, char* menu_subitem
     copyname_trim(menu_name, menu_config);
     copyname_trim(menu_item_name, menu_item_config);
     copyname_trim(menu_subitem_name, menu_subitem_config);
-    log_debug("Saving Position As: %s, %s, %s", menu_name, menu_item_name, menu_subitem_name);
+    log_debug("Saving Position As: %s(%d), %s(%d), %s(%d)", 
+              menu_name,current_menu_index, 
+              menu_item_name,current_menuitem_index, 
+              menu_subitem_name,current_submenuitem_index);
 }
 
 void menu_set_position(const char* menu_name, const char* menu_item_name, const char* menu_subitem_name) 
 {
+    log_debug("Trying to load: %s, %s, %s", menu_name, menu_item_name, menu_subitem_name);
+    
     cfg_t *m, *mi, *smi;
-    int i=0,j=0,k=0,n=0;
+    int i=-1,j=-1,k=-1,n=0;
     char *c;
     int has_sub = menu_subitem_name[0] != '\0';
     for (i=0;i<number_of_menu;i++) {
@@ -113,8 +118,8 @@ void menu_set_position(const char* menu_name, const char* menu_item_name, const 
                 if_names_equal(mi, menu_item_name) {
                     if (has_sub) {
                         n = cfg_size(mi, "SubMenuItem");
-                        for (i=0;i<n;i++) {
-                            smi = cfg_getnsec(mi, "SubMenuItem", i);
+                        for (k=0;k<n;k++) {
+                            smi = cfg_getnsec(mi, "SubMenuItem", k);
                             if_names_equal(smi, menu_subitem_name) break;
                         }    
                     }
@@ -124,20 +129,19 @@ void menu_set_position(const char* menu_name, const char* menu_item_name, const 
             break;
         }
     }
-    if (i == number_of_menu || j == number_of_menuitem[i] || (has_sub && k==n)) 
+    
+    if (!(i == number_of_menu || j == number_of_menuitem[i] || (k>=0 && k==n))) 
     {
-        log_message("Failed to find stored position: %d, %d, %d", i, j, k);
-        return;
-    }
+        log_debug("Loading Position As: %s(%d), %s(%d), %s(%d)", menu_name,i, menu_item_name,j, menu_subitem_name,k);
 
-    log_debug("Loading Position As: %s, %s, %s", menu_name, menu_item_name, menu_subitem_name);
-
-    //Restore menu
-    current_menu_index = i;
-    current_menuitem_index = j;
-    if (has_sub) {
-        menu_open_sub();
-        current_submenuitem_index = k;
+        //Restore menu
+        current_menu_index = i;
+        current_menuitem_index = j;
+        if (has_sub) {
+            menu_update_items();
+            menu_open_sub();
+            current_submenuitem_index = k;
+        }
     }
 }
 
@@ -222,10 +226,10 @@ void menu_deinit()
     
     TTF_Quit();
 
-    if (number_of_submenuitem > 0) menu_close_sub();
-    
     // Save current menu state
     persistent_store_menu_position();
+    
+    if (number_of_submenuitem > 0) menu_close_sub();
 }
 
 //Draw single menu item
@@ -333,7 +337,7 @@ void menu_draw_hitems(
             screen, 
             icons[draw_item], icon_rect, 
             text[draw_item],  text_rect, 
-            alpha>>(subchild_showing?1:0), draw_item != current_item ? -1 : 1);
+            alpha>>(subchild_showing?2:0), draw_item != current_item ? -1 : 1);
    
         //Store calculated position for current menu items
         if (draw_item == current_item) { 
@@ -344,12 +348,7 @@ void menu_draw_hitems(
 
         draw_item++;
         
-        if ((icon_rect->x >= screen->w) || 
-           (draw_item >= number_of_items) ||
-           (subchild_showing && draw_item > current_menu_index)) 
-        {
-            break;
-        }
+        if ((icon_rect->x >= screen->w) || (draw_item >= number_of_items)) break;
     }
 }
 
