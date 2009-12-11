@@ -29,6 +29,7 @@
 #define DMENU_THEME_MISSING  GLOBAL_RESOURCE_PATH "notfound.png"
 
 char THEME_PATH[PATH_MAX];
+char THEME_NAME[100];
 #define THUMBNAILS_PATH      "/.thumb"
 
 //Device Info

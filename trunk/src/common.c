@@ -105,21 +105,26 @@ void execute_next_command(char* dir, char** args)
     //Write next command to commandfile
     FILE* out = load_file(DMENU_COMMAND_FILE, "w");
     
-    //Write change dir
-    if (dir!=NULL && strlen(dir) > 0)
-    {
-        fprintf(out, "cd \"%s\"\n", dir);
+    if (out != NULL) {
+        
+        //Write change dir
+        if (dir!=NULL && strlen(dir) > 0)
+        {
+            fprintf(out, "cd \"%s\"\n", dir);
+        }
+        
+        //Write command
+        int i = 0;
+        for (i=0;*(args+i);i++) 
+        {
+            fprintf(out, "\"%s\" ", *(args+i)); 
+        }    
+        fprintf(out, "\n");
+        fclose(out);
+    } else {
+        log_error("Unable to write next command");
     }
     
-    //Write command
-    int i = 0;
-    for (i=0;*(args+i);i++) 
-    {
-        fprintf(out, "\"%s\" ", *(args+i)); 
-    }    
-    fprintf(out, "\n");
-    fclose(out);
-
     free_str_arr(args);
     
     //Exit program, and let shell script call DMENU_COMMAND_FILE
@@ -172,7 +177,8 @@ char* read_first_line( char* file )
     return (i == 0 || i == EOF) ? NULL : out;
 }
 
-FILE* load_file_and_handle_fail(char* file, char* mode, int die_on_fail) {
+FILE* load_file_and_handle_fail(char* file, char* mode, int die_on_fail) 
+{
     log_debug("Opening file: %s", file);
     
     FILE* out = fopen(file, mode);    
@@ -183,15 +189,18 @@ FILE* load_file_and_handle_fail(char* file, char* mode, int die_on_fail) {
     return out;
 }
 
-FILE* load_file_or_die(char* file, char* mode) {
+FILE* load_file_or_die(char* file, char* mode) 
+{
     return load_file_and_handle_fail(file,mode,1);
 }
 
-FILE* load_file(char* file, char* mode) {
+FILE* load_file(char* file, char* mode) 
+{
     return load_file_and_handle_fail(file,mode,0);
 }
 
-SDL_Surface* load_image_file_with_format( char* file , int alpha, int fail_on_notfound ) {
+SDL_Surface* load_image_file_with_format( char* file , int alpha, int fail_on_notfound ) 
+{
     SDL_Surface* out = NULL, *tmp_surface;
 
     tmp_surface = IMG_Load(file);
