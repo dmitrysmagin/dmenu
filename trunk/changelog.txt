@@ -1,5 +1,8 @@
 [0.6]
 - Various bug fixes
+- Ensuring the menu will work when filesystem is read only.
+    Performance will degrade in some cases, but the menu should function
+    in the same way it has before.  Just maybe a little bit slower.
 - Memory Leak resolved in colorpicker
 - Show/Take snapshot of menu on exit/load.  
     This allows for the menu to show something while it is setting up.

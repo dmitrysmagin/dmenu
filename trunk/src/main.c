@@ -156,12 +156,13 @@ void deinit(DeinitLevel level) {
     imageviewer_deinit();
     state = MAINMENU;
 
-    if (level == SHUTDOWN) {
-        // Save snapshot, and set menu state
-        menu_force_redraw(screen);
-        draw_osd(screen);
-        save_menu_snapshot(screen, 1);
-    
+    // Save snapshot, and set menu state
+    menu_force_redraw(screen);
+    draw_osd(screen);
+    save_menu_snapshot(screen, 1);
+
+    if (level == SHUTDOWN) 
+    {
         sound_deinit();
         brightness_deinit();
         volume_deinit();
@@ -281,9 +282,7 @@ void listen() {
             switch (event.type)
             {
                 // exit if the window is closed
-                case SDL_QUIT:
-                    quit();
-                    break;
+                case SDL_QUIT: quit(); break;
 
                 // check for keypresses
                 case SDL_KEYDOWN:

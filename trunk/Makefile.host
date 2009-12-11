@@ -7,7 +7,7 @@ LIBPATH    := $(TOOLCHAINDIR)/usr/lib
 DMENU_PATH := \"$(shell readlink -f "../")/\" 
 ARCH       := 
 CC         := $(ARCH)gcc 
-CFLAGS     := -O2 -DDEBUG=1 -DDMENU_CONF_FILE_NAME="\"dmenu-host.ini\"" -DDMENU_PATH="$(DMENU_PATH)" -DHOST_BUILD -Wall -g -fomit-frame-pointer -funroll-loops -DHAVE_CONFIG_H -I$(TOOLCHAINDIR)/usr/include -I$(TOOLCHAINDIR)/usr/include/SDL
+CFLAGS     := -O3 -DDMENU_CONF_FILE_NAME="\"dmenu-host.ini\"" -DDMENU_PATH="$(DMENU_PATH)" -DHOST_BUILD -Wall -g -fomit-frame-pointer -funroll-loops -DHAVE_CONFIG_H -I$(TOOLCHAINDIR)/usr/include -I$(TOOLCHAINDIR)/usr/include/SDL
 LDFLAGS    := -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -lconfuse -lpthread
 ifneq ($(notdir $(CURDIR)), $(BUILD))
 
