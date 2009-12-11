@@ -26,6 +26,8 @@
 #define DMENU_SNAPSHOT       DMENU_PATH ".screen"
 #define DMENU_BACKGROUNDS    DMENU_PATH "wallpapers/"
 #define GLOBAL_RESOURCE_PATH DMENU_PATH "resources/"
+#define DMENU_THEME_MISSING  GLOBAL_RESOURCE_PATH "notfound.png"
+
 char THEME_PATH[PATH_MAX];
 #define THUMBNAILS_PATH      "/.thumb"
 

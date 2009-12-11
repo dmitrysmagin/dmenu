@@ -97,9 +97,9 @@ void menu_get_position(char* menu_name, char* menu_item_name, char* menu_subitem
     copyname_trim(menu_item_name, menu_item_config);
     copyname_trim(menu_subitem_name, menu_subitem_config);
     log_debug("Saving Position As: %s(%d), %s(%d), %s(%d)", 
-              menu_name,current_menu_index, 
-              menu_item_name,current_menuitem_index, 
-              menu_subitem_name,current_submenuitem_index);
+        menu_name,current_menu_index, 
+        menu_item_name,current_menuitem_index, 
+        menu_subitem_name,current_submenuitem_index);
 }
 
 void menu_set_position(const char* menu_name, const char* menu_item_name, const char* menu_subitem_name) 
@@ -518,48 +518,14 @@ MenuState menu_run_internal()
     char* executable = cfg_getstr(menu_active_item_config, "Executable");
     char* name       = cfg_getstr(menu_active_item_config, "Name");
     char* tmp;
-    char **files;
-    ImageEntry** images;
     MenuState state = MAINMENU;
-    int rc=0, i=0, count=0;
+    int rc=0;
     
     switch (get_command(executable))
     {
         case THEMESELECT:
-            //A lot of string manipulation happens to convert the file names
-            // Of the theme directories to the proper paths for the thumbnails
-            // and the theme titles.  This is why we handle so much malloc
-            // and free in this case.  The goal is to ensure no memory
-            // is leaked.
-            files = get_theme_previews();
-            while (files[count] != NULL) count++;
-            images = new_array(ImageEntry*, count+1);
-            
-            for (i=0;i<count;i++) 
-            {
-                images[i] = new_item(ImageEntry); 
-                {
-                    images[i]->file = strdup(files[i]);
-                    tmp = strndup(files[i], strrpos(files[i], '/'));
-                    images[i]->title = strdup(strrchr(tmp,'/')+1);
-                    free_erase(tmp);
-                }
-                free_erase(files[i]);
-            }
-            free_erase(files);
-            images[count] = NULL;
-            
-            rc = imageviewer_init(name, executable, DMENU_THEMES, images);
+            rc = imageviewer_init_theme(name, executable, DMENU_THEMES);
             if (!rc) state = IMAGEVIEWER;
-            for (i=0;i<count;i++) 
-            {
-                free_erase(images[i]->file);
-                free_erase(images[i]->title);
-                free_erase(images[i]);
-            }
-            //TODO: Figure this out. For some reason, this is 
-            // causing a segfault on my machine.  
-            //free_erase(images);
             break;
         case BACKGROUNDSELECT:
             rc = imageviewer_init(name, executable, DMENU_BACKGROUNDS, NULL);

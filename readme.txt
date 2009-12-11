@@ -1,4 +1,4 @@
-                               Dmenu 0.5
+                               Dmenu 0.6
                                =========
 
 Dmenu is a simple menu system for Dingux (Linux on Dingoo A320). It resembles
@@ -45,13 +45,11 @@ Y key - Brightness level down
 In file selector menu,
 
 up, down key - select file
-Y + up/down key - page up/down
 left  - change to the parent directory
 right - go to the selected directory
 A key - run the selected file or go to the selected directory
 B key - exit file selector menu
-R key - page down
-L key - page up
+L, R key - page up/down
 Start - Save current directory as the future value of
         SelectorDir for the menuitem that called it
 
@@ -215,6 +213,23 @@ The filelist current folder is set to "SelectorDir". If the user has set
 SelectorDir manually for a MenuItem (by pressing Start in the fileselector),
 that value will override the MenuItem value.
 
+Theme Selector with thumbnail
+-----------------------------
+In the menu, you can utilize the builtin Theme Selector menuitem.
+For example,
+
+    MenuItem ThemeSelect
+    {
+        Icon = "res/star1.png"
+        Name = "Select Theme"
+        Executable = "!themeselect"
+    }
+
+The code will automatically scan the themes folder and determine
+the theme preview from an image file in the theme folder.  
+<dmenu_root>/themes/<theme_name>/theme.png is the file that will
+be used to determine the theme preview.  If the preview.png is not
+found then resources/notfound.png is used.
 
 Wallpaper Selector with thumbnail
 ---------------------------------
