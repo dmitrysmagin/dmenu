@@ -136,7 +136,7 @@ int init() {
     return rc;
 }
 
-void deinit(int hard) {
+void deinit(DeinitLevel level) {
     log_debug("De-initializing");
     
     // de-init everything
@@ -150,7 +150,7 @@ void deinit(int hard) {
     draw_osd(screen);
     save_menu_snapshot(screen, 1);
     
-    if (hard) {
+    if (level == SHUTDOWN) {
         sound_deinit();
         brightness_deinit();
         volume_deinit();
@@ -158,12 +158,18 @@ void deinit(int hard) {
     }
     
     menu_deinit();
-    conf_unload();
+    
+    if (level == SHUTDOWN) 
+    {
+        conf_unload();
+    }
 }
 
-void reload() {
-    deinit(0);
-    conf_load(THEME_NAME);
+void reload(DeinitLevel level) {
+    deinit(level);
+    if (level == RELOAD_THEME) {
+        conf_reload_theme(THEME_NAME);
+    }
     menu_init();
 }
 
@@ -318,7 +324,7 @@ int main ( int argc, char** argv )
 
     if (rc==0) {
         listen(); //main loop
-        deinit(1);
+        deinit(SHUTDOWN);
         // all is well ;)
         log_debug("Exited cleanly");
     }
