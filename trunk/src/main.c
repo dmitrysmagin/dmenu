@@ -80,8 +80,6 @@ int init_system() {
         return 1;
     }
     
-    persistent_restore_menu_position();
-    
     return 0;
 }
 
@@ -134,6 +132,7 @@ int init() {
     
     int rc =  init_display() || init_system();
     next_time = SDL_GetTicks() + TICK_INTERVAL;
+    state = MAINMENU;
     return rc;
 }
 
@@ -146,16 +145,11 @@ void deinit(int hard) {
     imageviewer_deinit();
     
     // Save snapshot, and set menu state
-    state = MAINMENU;
-    menu_state_changed();
-    menu_draw(screen);
+    menu_force_redraw(screen);
     draw_osd(screen);
     save_menu_snapshot(screen, 1);
     
     if (hard) {
-        // Save current menu state
-        persistent_store_menu_position();
-        
         sound_deinit();
         brightness_deinit();
         volume_deinit();
@@ -170,6 +164,7 @@ void reload() {
     deinit(0);
     conf_load();
     menu_init();
+    state = MAINMENU;
 }
 
 void quick_quit() {
@@ -296,7 +291,7 @@ void listen() {
                         case COLORPICKER: state = colorpicker_keypress(key); break;
                     }
                     if (state == MAINMENU && prevstate != state) {
-                        menu_state_changed();
+                        menu_force_redraw(screen_cache);
                     }
                     
                     handle_global_key(key);

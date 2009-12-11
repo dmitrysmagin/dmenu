@@ -25,15 +25,18 @@
 #include "colorpicker.h"
 #include "filelist.h"
 #include "imageviewer.h"
+#include "persistent.h"
 #include "sound.h"
 #include "dingoo.h"
 
 
 extern cfg_t *cfg;
-cfg_t *m;
-cfg_t *mi;
-cfg_t *smi;
+cfg_t *menu_config;
+cfg_t *menu_item_config;
+cfg_t *menu_subitem_config;
+cfg_t *menu_active_item_config;
 
+int menu_text_pad_left = 0;
 int menu_needs_redraw = 1; //First draw
 SDL_Rect menu_active_rect;
 
@@ -71,19 +74,70 @@ void menu_state_changed()
     menu_needs_redraw = 1;
 }
 
-void menu_get_position(int* menu_index, int* menu_item_index)
+void menu_update_items()
 {
-    *menu_index = current_menu_index;
-    *menu_item_index = current_menuitem_index;
+    menu_config  = cfg_getnsec(cfg, "Menu", current_menu_index);
+    menu_item_config = cfg_getnsec(menu_config, "MenuItem", current_menuitem_index);
+    
+    if (number_of_submenuitem > 0) 
+    {
+        menu_subitem_config = cfg_getnsec(menu_item_config, "SubMenuItem", current_submenuitem_index);
+    } 
+    else {
+        menu_subitem_config = NULL;
+    }
+    menu_active_item_config = (menu_subitem_config == NULL) ? menu_item_config : menu_subitem_config;
+}
+    
+void menu_get_position(char* menu_name, char* menu_item_name, char* menu_subitem_name)
+{
+    char* c;
+    menu_update_items();
+    copyname_trim(menu_name, menu_config);
+    copyname_trim(menu_item_name, menu_item_config);
+    copyname_trim(menu_subitem_name, menu_subitem_config);
+    log_debug("Saving Position As: %s, %s, %s", menu_name, menu_item_name, menu_subitem_name);
 }
 
-void menu_set_position(int menu_index, int menu_item_index) 
+void menu_set_position(const char* menu_name, const char* menu_item_name, const char* menu_subitem_name) 
 {
-    // Restore menu position
-    if (menu_index < number_of_menu && menu_item_index < number_of_menuitem[menu_index]) 
+    cfg_t *m, *mi, *smi;
+    int i=0,j=0,k=0,n=0;
+    char *c;
+    int has_sub = menu_subitem_name[0] != '\0';
+    for (i=0;i<number_of_menu;i++) {
+        m = cfg_getnsec(cfg, "Menu", i);
+        if_names_equal(m, menu_name) {
+            for (j=0;j<number_of_menuitem[i];j++) {
+                mi = cfg_getnsec(m, "MenuItem", j);
+                if_names_equal(mi, menu_item_name) {
+                    if (has_sub) {
+                        n = cfg_size(mi, "SubMenuItem");
+                        for (i=0;i<n;i++) {
+                            smi = cfg_getnsec(mi, "SubMenuItem", i);
+                            if_names_equal(smi, menu_subitem_name) break;
+                        }    
+                    }
+                    break;
+                }
+            }
+            break;
+        }
+    }
+    if (i == number_of_menu || j == number_of_menuitem[i] || (has_sub && k==n)) 
     {
-        current_menu_index     = menu_index;
-        current_menuitem_index = menu_item_index;
+        log_message("Failed to find stored position: %d, %d, %d", i, j, k);
+        return;
+    }
+
+    log_debug("Loading Position As: %s, %s, %s", menu_name, menu_item_name, menu_subitem_name);
+
+    //Restore menu
+    current_menu_index = i;
+    current_menuitem_index = j;
+    if (has_sub) {
+        menu_open_sub();
+        current_submenuitem_index = k;
     }
 }
 
@@ -97,6 +151,10 @@ int menu_init()
     
     /*fill_fb(background->pixels);*/
 
+    current_menu_index = 0;
+    current_menuitem_index = 0;
+    current_submenuitem_index = 0;
+    
     // load font
     TTF_Init();
     menu_font     = get_theme_font(MENU_TEXT_FONT_SIZE);
@@ -109,31 +167,27 @@ int menu_init()
     menu_text          = new_array(SDL_Surface*,  number_of_menu);
     menuitem_icons     = new_array(SDL_Surface**, number_of_menu);
     menuitem_text      = new_array(SDL_Surface**, number_of_menu);
+    menu_text_pad_left = cfg_getint(cfg, "ItemTextPadLeft");
     
     for (i=0;i<number_of_menu;i++) {
-        m = cfg_getnsec(cfg, "Menu", i);
-        menu_icons[i] = load_theme_image(cfg_getstr(m, "Icon"));
-        menu_text[i]  = draw_text(cfg_getstr(m, "Name"), menu_font, color);
+        menu_config = cfg_getnsec(cfg, "Menu", i);
+        menu_icons[i] = load_theme_image(cfg_getstr(menu_config, "Icon"));
+        menu_text[i]  = draw_text(cfg_getstr(menu_config, "Name"), menu_font, color);
 
-        number_of_menuitem[i] = cfg_size(m, "MenuItem");
+        number_of_menuitem[i] = cfg_size(menu_config, "MenuItem");
         menuitem_icons[i] = new_array(SDL_Surface*, number_of_menuitem[i]);
         menuitem_text[i]  = new_array(SDL_Surface*, number_of_menuitem[i]);
         
         for (j=0;j<number_of_menuitem[i];j++) {
-            mi = cfg_getnsec(m, "MenuItem", j);
-            menuitem_icons[i][j] = load_theme_image(cfg_getstr(mi, "Icon")); 
-            menuitem_text[i][j]  = draw_text(cfg_getstr(mi, "Name"), menuitem_font, color);
+            menu_item_config = cfg_getnsec(menu_config, "MenuItem", j);
+            menuitem_icons[i][j] = load_theme_image(cfg_getstr(menu_item_config, "Icon")); 
+            menuitem_text[i][j]  = draw_text(cfg_getstr(menu_item_config, "Name"), menuitem_font, color);
         }
     }
 
     free_color(color);
     
-    if (!in_bounds(current_menu_index, 0, number_of_menu)) {
-        current_menu_index     = 0;
-        current_menuitem_index = 0;
-    } else if (!in_bounds(current_menuitem_index, 0, number_of_menuitem[current_menu_index])) {
-        current_menuitem_index = 0;
-    }
+    persistent_restore_menu_position();
     
     return 0;
 }
@@ -169,6 +223,9 @@ void menu_deinit()
     TTF_Quit();
 
     if (number_of_submenuitem > 0) menu_close_sub();
+    
+    // Save current menu state
+    persistent_store_menu_position();
 }
 
 //Draw single menu item
@@ -180,7 +237,7 @@ void menu_draw_single_item(
 {
     if (text_position >= 0) {
         if (text_position == 0) {
-            text_rect->x = icon_rect->x + icon->w;
+            text_rect->x = (icon_rect->x + icon->w) + menu_text_pad_left;
             text_rect->y = icon_rect->y + icon->h/2 - text->h/2;
         } else {
             text_rect->x = icon_rect->x + icon->w/2 - text->w/2;
@@ -350,6 +407,11 @@ int menu_draw(SDL_Surface* screen)
     return 1;
 }
 
+void menu_force_redraw(SDL_Surface* screen) {
+    menu_needs_redraw = 1;
+    menu_draw(screen);
+}
+
 void menu_animate(SDL_Surface* screen)
 {
     /* Menu animation, but it isn't a good use
@@ -420,14 +482,14 @@ void menu_open_sub()
     SDL_Color* color = get_theme_font_color();
     sound_out( DECIDE );
 
-    number_of_submenuitem = cfg_size(mi, "SubMenuItem");
+    number_of_submenuitem = cfg_size(menu_item_config, "SubMenuItem");
     submenuitem_icons = new_array(SDL_Surface*, number_of_submenuitem);
     submenuitem_text  = new_array(SDL_Surface*, number_of_submenuitem);
     
     for (i=0;i<number_of_submenuitem;i++) {
-        smi = cfg_getnsec(mi, "SubMenuItem", i);
-        submenuitem_icons[i] = load_theme_image(cfg_getstr(smi, "Icon"));
-        submenuitem_text[i]  = draw_text(cfg_getstr(smi, "Name"), menuitem_font, color);
+        menu_subitem_config = cfg_getnsec(menu_item_config, "SubMenuItem", i);
+        submenuitem_icons[i] = load_theme_image(cfg_getstr(menu_subitem_config, "Icon"));
+        submenuitem_text[i]  = draw_text(cfg_getstr(menu_subitem_config, "Name"), menuitem_font, color);
     }    
     
     free_color(color);
@@ -454,8 +516,8 @@ void menu_close_sub()
 
 MenuState menu_run_internal()
 {
-    char* executable = cfg_getstr(mi, "Executable");
-    char* name       = cfg_getstr(mi, "Name");
+    char* executable = cfg_getstr(menu_active_item_config, "Executable");
+    char* name       = cfg_getstr(menu_active_item_config, "Name");
     char* tmp;
     char **files;
     ImageEntry** images;
@@ -517,14 +579,14 @@ MenuState menu_run_internal()
 
 MenuState menu_run_item()
 {
-    char* executable = cfg_getstr(mi, "Executable");
+    char* executable = cfg_getstr(menu_active_item_config, "Executable");
     
     if (executable) {
         if (internal_command(executable)) {
             return menu_run_internal();
         } 
         else {
-            run_command(executable, NULL, cfg_getstr(mi, "WorkDir"));
+            run_command(executable, NULL, cfg_getstr(menu_active_item_config, "WorkDir"));
         }
     } else {
         menu_open_sub();
@@ -551,21 +613,15 @@ MenuState menu_keypress(SDLKey key)
             if (number_of_submenuitem > 0) menu_close_sub();
             break;
         case DINGOO_BUTTON_A:
-            m  = cfg_getnsec(cfg, "Menu", current_menu_index);
-            mi = cfg_getnsec(m, "MenuItem", current_menuitem_index);
+            menu_update_items();
             
-            if (number_of_submenuitem > 0) 
+            if (cfg_getbool(menu_active_item_config, "Selector")) 
             {
-                mi = cfg_getnsec(mi, "SubMenuItem", current_submenuitem_index);
-            }
-            
-            if (cfg_getbool(mi, "Selector")) 
-            {
-                char* listdir = cfg_getstr(mi, "SelectorDir");
-                if (!listdir ) listdir = cfg_getstr(mi, "WorkDir");
-                if (!filelist_init(cfg_getstr(mi, "Name"),
-                        cfg_getstr(mi, "Executable"),
-                        cfg_getstr(mi, "WorkDir"),
+                char* listdir = cfg_getstr(menu_active_item_config, "SelectorDir");
+                if (!listdir ) listdir = cfg_getstr(menu_active_item_config, "WorkDir");
+                if (!filelist_init(cfg_getstr(menu_active_item_config, "Name"),
+                        cfg_getstr(menu_active_item_config, "Executable"),
+                        cfg_getstr(menu_active_item_config, "WorkDir"),
                         listdir, 1))
                 {
                     state = FILELIST;
