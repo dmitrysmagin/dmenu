@@ -51,7 +51,7 @@ int init_system() {
     change_dir(DMENU_PATH);
     
     // load config
-    if (conf_load()) return 1;
+    if (conf_load(NULL)) return 1;
     
     // Read saved persistent state
     if (!persistent_init())
@@ -143,6 +143,7 @@ void deinit(int hard) {
     colorpicker_deinit();
     filelist_deinit();
     imageviewer_deinit();
+    state = MAINMENU;
     
     // Save snapshot, and set menu state
     menu_force_redraw(screen);
@@ -162,9 +163,8 @@ void deinit(int hard) {
 
 void reload() {
     deinit(0);
-    conf_load();
+    conf_load(THEME_NAME);
     menu_init();
-    state = MAINMENU;
 }
 
 void quick_quit() {

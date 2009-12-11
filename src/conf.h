@@ -4,7 +4,7 @@
 #include "confuse.h"
 #include "env.h"
 
-int  conf_load();
+int  conf_load(char* theme);
 void conf_unload();
 void conf_merge_standalone(char *conf_file);
 void conf_dirselect(cfg_t* menu_item, char* dir);

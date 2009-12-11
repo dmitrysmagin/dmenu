@@ -190,27 +190,28 @@ int conf_to_file(cfg_t* cfg, char* file) {
 
 char* THEME_CONF_FILE;
 
-int conf_load_theme() 
+int conf_load_theme(char* theme) 
 {
     int rc = 0;
     
     // build theme_dir
     char theme_dir[PATH_MAX]; theme_dir[0] = '\0';
-    char* _theme_path = cfg_getstr(cfg_main, "Theme");
     
-    if (_theme_path[0] != '/')  //If relative
+    if (theme[0] != '/')  //If relative
     {
         strcat(theme_dir, DMENU_THEMES);
     }
     
-    strcat(theme_dir, _theme_path);
+    strcat(theme_dir, theme);
     
     rc = change_dir(theme_dir);
     if (rc) return rc;
 
     //Build theme path
     strcpy(THEME_PATH, theme_dir);
+    strcpy(THEME_NAME, strrchr(THEME_PATH, '/')+1);
     strcat(THEME_PATH, "/");
+    
     
     //Build theme conf file
     THEME_CONF_FILE = theme_file("theme.cfg");
@@ -224,7 +225,7 @@ int conf_load_theme()
     return 0;
 }
 
-int conf_load()
+int conf_load(char* theme)
 {
     log_debug("Initializing");
 
@@ -237,7 +238,10 @@ int conf_load()
     if (cfg_main == NULL) return CFG_PARSE_ERROR;
     
     //Find theme path
-    rc = conf_load_theme();
+    if (theme == NULL) {
+        theme = cfg_getstr(cfg_main, "Theme");
+    }
+    rc = conf_load_theme(theme);
     if (rc) return rc;
     
     // load dmenu.cfg files from SearchPath
@@ -513,19 +517,24 @@ void conf_themeselect(char* themedir)
     log_debug("Setting theme: %s", path);    
     cfg_setstr(cfg_main, "Theme", path);
     
+    //Update global theme
+    strcpy(THEME_PATH, themedir);
+    strcpy(THEME_NAME, strrchr(THEME_PATH, '/')+1);
+    strcat(THEME_PATH, "/");
+    
+    //Clean up
     strcpy(orig, themedir);
     free_erase(orig);
     
-    if (conf_to_file(cfg_main, DMENU_CONF_FILE)) {
-        reload();
-    }
+    conf_to_file(cfg_main, DMENU_CONF_FILE);
+    reload();
 }
 
 void conf_backgroundselect(char* bgimage)
 {
     log_debug("Setting background image: %s", bgimage);
     cfg_setstr(cfg_main, "Background", bgimage);
-    if (!conf_to_file(cfg_main, DMENU_CONF_FILE)) return;
+    conf_to_file(cfg_main, DMENU_CONF_FILE);
     menu_reload_background();
 }
 
@@ -533,7 +542,7 @@ void conf_colorselect(char* color)
 {
     log_debug("Setting font color: %s", color);
     cfg_setstr(cfg_main, "FontColor", color);
-    if (!conf_to_file(cfg_main, DMENU_CONF_FILE)) return;
+    conf_to_file(cfg_main, DMENU_CONF_FILE);
     reload();
 }
 
