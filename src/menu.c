@@ -579,15 +579,15 @@ MenuState menu_keypress(SDLKey key)
             break;
         case DINGOO_BUTTON_A:
             menu_update_items();
-            
-            if (cfg_getbool(menu_active_item_config, "Selector")) 
+
+            if (active_conf_bool("Selector") 
+                && !internal_command(active_conf_str("Executable"))) 
             {
-                char* listdir = cfg_getstr(menu_active_item_config, "SelectorDir");
-                if (!listdir ) listdir = cfg_getstr(menu_active_item_config, "WorkDir");
-                if (!filelist_init(cfg_getstr(menu_active_item_config, "Name"),
-                        cfg_getstr(menu_active_item_config, "Executable"),
-                        cfg_getstr(menu_active_item_config, "WorkDir"),
-                        listdir, 1))
+                char* listdir = active_conf_str("SelectorDir");
+                if (!listdir ) listdir = active_conf_str("WorkDir");
+                if (!filelist_init(
+                    active_conf_str("Name"),    active_conf_str("Executable"),
+                    active_conf_str("WorkDir"), listdir, 1))
                 {
                     state = FILELIST;
                 } // else we are not able to initialise the filelist display
