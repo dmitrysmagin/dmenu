@@ -32,17 +32,18 @@ char* get_user_attr(char* attr)
 char** get_theme_previews() 
 {
     struct dirent** dir_files;
-    struct stat     file_stat;
+    struct stat file_stat;
     char name[PATH_MAX], *tmp;
     int i, pos=0, cnt=max(scandir(DMENU_THEMES, &dir_files, NULL, NULL), 0);
     char** out = new_str_arr(0);
     
+    
     for (i=0;i<cnt;i++) {
         tmp = dir_files[i]->d_name;
         if (tmp != NULL && tmp[0] != '.') {
-            sprintf(name, "%s%s/theme.png", DMENU_THEMES, tmp);
-            
-            if (stat(name, &file_stat)==0) { //If file is there
+            sprintf(name, "%s%s/theme.cfg", DMENU_THEMES, tmp);
+            if (stat(name, &file_stat) == 0) {
+                sprintf(name, "%s%s", DMENU_THEMES, tmp);
                 append_str(out, pos, strdup(name));
             }
         }

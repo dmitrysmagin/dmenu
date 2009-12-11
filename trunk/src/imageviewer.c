@@ -52,20 +52,18 @@ typedef struct ImageViewerGlobal
     char* executable;
     char* root;
     SDL_Surface** entries;
-    char** files;
-    char** file_titles;
-    
+    ImageEntry** images;    
 } ImageViewerGlobal;
 
 ImageViewerGlobal iv_global;
 
 #define get_root_file(buff, i)\
     strcpy(buff, "");\
-    if (iv_global.files[i][0] != '/') {\
+    if (iv_global.images[i]->file[0] != '/') {\
         strcat(buff, iv_global.root);\
         strcat(buff,"/");\
     };\
-    strcat(buff, iv_global.files[i])
+    strcat(buff, iv_global.images[i]->file);
 
 SDL_Surface* imageviewer_render_text(char* text) 
 {
@@ -88,11 +86,12 @@ int imageviewer_getlist(char* path, ImageEntry** images)
         struct dirent** dir_files;
         iv_global.total_size = max(scandir(path, &dir_files, imageviewer_file_filter, alphasort), 0);
         if (iv_global.total_size > 0) {
-            iv_global.files       = new_array(char*, iv_global.total_size);
-            iv_global.file_titles = new_array(char*, iv_global.total_size);
+            iv_global.images = new_array(ImageEntry*, iv_global.total_size);
             for (i=0;i<iv_global.total_size;i++) {
-                iv_global.files[i] = strdup(dir_files[i]->d_name);
-                iv_global.file_titles[i] = NULL;
+                iv_global.images[i] = new_item(ImageEntry);
+                iv_global.images[i]->file = strdup(dir_files[i]->d_name);
+                iv_global.images[i]->title = NULL;
+                iv_global.images[i]->value = NULL;
                 free_erase(dir_files[i]);
             }
         }
@@ -101,14 +100,17 @@ int imageviewer_getlist(char* path, ImageEntry** images)
         while (images[i] != NULL) i++;
         iv_global.total_size = i;
         if (i > 0) {
-            iv_global.files       = new_array(char*, iv_global.total_size);
-            iv_global.file_titles = new_array(char*, iv_global.total_size);
+            iv_global.images = new_array(ImageEntry*, iv_global.total_size);
             for (i=0;i<iv_global.total_size;i++) {
-                iv_global.files[i] = strdup(images[i]->file);
-                if (strlen(images[i]->title)>0) {
-                    iv_global.file_titles[i] = strdup(images[i]->title);
-                } else {
-                    iv_global.file_titles[i] = NULL;
+                iv_global.images[i] = new_item(ImageEntry);
+                iv_global.images[i]->file = strdup(images[i]->file);
+                iv_global.images[i]->title = strdup(images[i]->title);
+                iv_global.images[i]->value = strdup(images[i]->value);
+                if (strlen(iv_global.images[i]->title) == 0) {
+                    iv_global.images[i]->title = NULL;
+                }
+                if (strlen(iv_global.images[i]->value)==0) {
+                    iv_global.images[i]->value = NULL;
                 }
             }
         }
@@ -193,6 +195,56 @@ int  imageviewer_init(char* title, char* executable, char* path, ImageEntry** im
     return 0;
 }
 
+int imageviewer_init_theme(char* title, char* executable, char* path)
+{
+    char tmp_name[200];
+    char **files;
+    ImageEntry** images;
+    int rc=0, i=0, count=0;
+    struct stat file_stat;
+    
+    //A lot of string manipulation happens to convert the file names
+    // Of the theme directories to the proper paths for the thumbnails
+    // and the theme titles.  This is why we handle so much malloc
+    // and free in this case.  The goal is to ensure no memory
+    // is leaked.
+    files = get_theme_previews();
+    while (files[count] != NULL) count++;
+    images = new_array(ImageEntry*, count+1);
+    
+    for (i=0;i<count;i++) 
+    {
+        images[i] = new_item(ImageEntry); 
+        {
+            images[i]->title = strdup(strrchr(files[i],'/')+1);
+            sprintf(tmp_name, "%s/theme.png", files[i]);
+            images[i]->value = strdup(files[i]);
+            if (stat(tmp_name, &file_stat)==0) { //If file is there
+                images[i]->file = strdup(tmp_name);
+            } else {
+                images[i]->file = strdup(DMENU_THEME_MISSING);
+            }
+        }
+        free_erase(files[i]);
+    }
+    free_erase(files);
+    images[count] = NULL;
+    
+    rc = imageviewer_init(title, executable, path, images);
+    for (i=0;i<count;i++) 
+    {
+        free_erase(images[i]->file);
+        free_erase(images[i]->title);
+        free_erase(images[i]->value);
+        free_erase(images[i]);
+    }
+    //TODO: Figure this out. For some reason, this is 
+    // causing a segfault on my machine.  
+    //free_erase(images);
+    
+    return rc;
+}
+
 void imageviewer_deinit()
 {
     int i = 0;
@@ -209,13 +261,14 @@ void imageviewer_deinit()
     free_font(imageviewer_font);
     
     for (i=0;i<iv_global.total_size;i++) {
-        free_erase(iv_global.files[i]);        
-        free_erase(iv_global.file_titles[i]);
+        free_erase(iv_global.images[i]->file);
+        free_erase(iv_global.images[i]->title);
+        free_erase(iv_global.images[i]->value);
+        free_erase(iv_global.images[i]);
     }
     for (i=0;i<iv_global.set_size;i++) free_surface(iv_global.entries[i]);
     
-    free_erase(iv_global.files);
-    free_erase(iv_global.file_titles);
+    free_erase(iv_global.images);
     free_erase(iv_global.entries);
     
     imageviewer_reset_pagination();
@@ -301,10 +354,10 @@ void imageviewer_update_preview()
         SCREEN_WIDTH  * IMAGE_PREVIEW_RATIO, 
         SCREEN_HEIGHT * IMAGE_PREVIEW_RATIO);
         
-    if (iv_global.file_titles[iv_global.absolute_pos]) {
+    if (iv_global.images[iv_global.absolute_pos]->title) {
         free_surface(imageviewer_preview_title);
         imageviewer_preview_title = imageviewer_render_text(
-            iv_global.file_titles[iv_global.absolute_pos]);
+            iv_global.images[iv_global.absolute_pos]->title);
     }
 }
 
@@ -363,8 +416,12 @@ MenuState imageviewer_select()
     sound_out( DECIDE );
     
     char tmp[PATH_MAX];
-    get_root_file(tmp, iv_global.absolute_pos);
-
+    if (iv_global.images[iv_global.absolute_pos]->value != NULL) {
+        strcpy(tmp, iv_global.images[iv_global.absolute_pos]->value);
+    } else {
+        get_root_file(tmp, iv_global.absolute_pos);
+    }
+    
     if (strlen(iv_global.executable) > 0) 
     {
         run_command(iv_global.executable, tmp, iv_global.root);
