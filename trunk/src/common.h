@@ -42,6 +42,7 @@ typedef struct {
 void run_command (char* cmd, char* args, char* workdir);
 void run_internal_command (char* cmd, char* args, char* workdir);
 void execute_next_command(char* dir, char** args);
+void execute_inline_command(char* dir, char** args);
 void clear_last_command();
 char** build_arg_list(char* commandline, char* args); 
 void free_arg_list(char** args);

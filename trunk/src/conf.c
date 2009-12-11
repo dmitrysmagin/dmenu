@@ -140,7 +140,7 @@ cfg_t* conf_from_file(cfg_opt_t* opts, char* file)
 }
 
 void move_file(char* from, char* to) {
-    if (!CAN_WRITE_FS) return;
+    if (FILESYSTSEM_READ_ONLY) return;
 
     struct stat st; 
 
@@ -155,7 +155,7 @@ void move_file(char* from, char* to) {
 }
 
 FILE* open_conf_file(cfg_t* cfg, char* file) {
-    if (!CAN_WRITE_FS) return 0;
+    if (FILESYSTSEM_READ_ONLY) return NULL;
     
     log_debug("Opening conf file for writing: %s", file);
         
@@ -168,7 +168,7 @@ FILE* open_conf_file(cfg_t* cfg, char* file) {
 }
 
 void close_conf_file(FILE* fp) {
-    if (!CAN_WRITE_FS) return;
+    if (FILESYSTSEM_READ_ONLY) return;
     
     log_debug("Closing conf file");
     int file_no;
@@ -178,7 +178,7 @@ void close_conf_file(FILE* fp) {
 }
 
 int conf_to_file(cfg_t* cfg, char* file) {
-    if (!CAN_WRITE_FS) return 0;
+    if (FILESYSTSEM_READ_ONLY) return 0;
     
     char* tmp;
 

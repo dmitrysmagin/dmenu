@@ -38,11 +38,11 @@ void run_internal_command(char* command, char* args, char* workdir);
 
 void clear_last_command()
 {
-    if (CAN_WRITE_FS) {
-        struct stat st;
-        if (stat(DMENU_COMMAND_FILE, &st) == 0) {
-            remove(DMENU_COMMAND_FILE);
-        }
+    if (FILESYSTSEM_READ_ONLY) return;
+    
+    struct stat st;
+    if (stat(DMENU_COMMAND_FILE, &st) == 0) {
+        remove(DMENU_COMMAND_FILE);
     }
 }
 
@@ -62,10 +62,11 @@ void run_command(char* executable, char* args, char* workdir)
     char tmp_work[PATH_MAX]; strcpy(tmp_work, "");
     if (workdir != NULL) strcpy(tmp_work, workdir);
     
-    if (CAN_WRITE_FS) 
-    {
+    if (!FILESYSTSEM_READ_ONLY) {
         // launch the program
         execute_next_command(tmp_work, args_list);
+    } else {
+        execute_inline_command(tmp_work, args_list);
     }
 }
 
@@ -105,9 +106,31 @@ char** build_arg_list(char* commandline, char* args)
     return args_list;
 }
 
+void execute_inline_command(char* dir, char** args)
+{
+    deinit(SHUTDOWN);
+    SDL_Quit();
+
+    int i = 0;
+    if (dir!=NULL && strlen(dir) > 0)
+    {
+        change_dir(dir);
+    }
+    
+    // launch the program and it should not return,
+    // otherwise it means we are not able to execute the application
+    execvp(args[0], args);
+    
+    log_message("Unable to execute command - ");
+    for (i=0;*(args+i);i++) printf("\"%s\" ", *(args+i)); printf("\n");
+    // it should not return, otherwise it means we are not able to execute the application
+    free_str_arr(args);
+    _exit(1);
+}
+
 void execute_next_command(char* dir, char** args) 
 {   
-    if (!CAN_WRITE_FS) return;
+    if (FILESYSTSEM_READ_ONLY) return;
     
     //Write next command to commandfile
     FILE* out = load_file(DMENU_COMMAND_FILE, "w");
@@ -482,6 +505,8 @@ SDL_Surface* copy_surface(SDL_Surface* src)
  */
 int export_surface_as_png(char *filename, SDL_Surface *surface)
 {
+    if (FILESYSTSEM_READ_ONLY) return 0;
+        
     /* Creating the output surface to save */
     SDL_Surface* surf = create_surface(surface->w, surface->h, 32, 0,0,0,0);
     SDL_BlitSurface(surface, NULL, surf, NULL);
@@ -532,6 +557,7 @@ done: //Cleanup
 
 int export_surface_as_bmp(char *filename, SDL_Surface *surface) 
 {
+    if (FILESYSTSEM_READ_ONLY) return 0;
     return SDL_SaveBMP(surface, filename);
 }
 
@@ -581,7 +607,7 @@ SDL_Surface* resize_image(SDL_Surface* in, int width, int height)
 SDL_Surface* load_resized_image(char* file, int width, int height)
 {
 
-    if (!CAN_WRITE_FS) { 
+    if (FILESYSTSEM_READ_ONLY) { 
         return resize_image(load_image_file_with_format(file,0,0), width, height);
     }
     
