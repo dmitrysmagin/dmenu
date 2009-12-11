@@ -14,7 +14,9 @@
     }
     
 #define if_names_equal(m, s) c = cfg_getstr(m, "Name"); while (*c==' ') c++; if (strcmp(c, s)==0)
-    
+#define active_conf_str(key) cfg_getstr(menu_active_item_config, key)
+#define active_conf_bool(key) cfg_getbool(menu_active_item_config, key)
+
 int  menu_init();
 void menu_force_redraw(SDL_Surface* screen);
 void menu_get_position(char* menu_title, char* menu_item_title, char* menu_subitem_title);
