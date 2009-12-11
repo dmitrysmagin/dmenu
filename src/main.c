@@ -116,10 +116,12 @@ int init_display() {
 
 void check_file_write()
 {
-    FILE* f = fopen(".tmp", "w");
-    CAN_WRITE_FS = (f != NULL);
-    if (CAN_WRITE_FS) fclose(f);
-    else log_message("Unable to open filesystem for writing.  Any changes made to system will not persist");
+    #ifndef FILESYSTEM_READ_ONLY
+        FILE* f = fopen(".tmp", "w");
+        FILESYSTSEM_READ_ONLY = (f == NULL);
+        if (f) fclose(f);
+        else log_message("Unable to open filesystem for writing.  Any changes made to system will not persist");
+    #endif
 }
 
 int init() {
@@ -146,20 +148,20 @@ int init() {
 }
 
 void deinit(DeinitLevel level) {
-    log_debug("De-initializing");
+    log_debug("De-initializing, level %d", level);
     
     // de-init everything
     colorpicker_deinit();
     filelist_deinit();
     imageviewer_deinit();
     state = MAINMENU;
-    
-    // Save snapshot, and set menu state
-    menu_force_redraw(screen);
-    draw_osd(screen);
-    save_menu_snapshot(screen, 1);
-    
+
     if (level == SHUTDOWN) {
+        // Save snapshot, and set menu state
+        menu_force_redraw(screen);
+        draw_osd(screen);
+        save_menu_snapshot(screen, 1);
+    
         sound_deinit();
         brightness_deinit();
         volume_deinit();
@@ -176,20 +178,16 @@ void deinit(DeinitLevel level) {
 
 void reload(DeinitLevel level) {
     deinit(level);
-    if (level == RELOAD_THEME) {
+    if (level == RELOAD_THEME) 
+    {
         conf_reload_theme(THEME_NAME);
     }
     menu_init();
 }
 
-void quick_quit() {
-    // Exit without calling any atexit() functions
-    _exit(1);
-}
-
 void draw_osd(SDL_Surface* screen) {
     dosd_show(screen);    
-    if (volume_enabled())    volume_show(screen);
+    if (volume_enabled())     volume_show(screen);
     if (brightness_enabled()) brightness_show(screen);
 }
 
@@ -201,8 +199,8 @@ void update_display() {
     // DRAWING STARTS HERE
     int recache = 0;
     switch (state) {
-        case MAINMENU: recache = menu_draw(screen); break;
-        case FILELIST: recache = filelist_draw(screen); break;
+        case MAINMENU:    recache = menu_draw(screen); break;
+        case FILELIST:    recache = filelist_draw(screen); break;
         case IMAGEVIEWER: recache = imageviewer_draw(screen); break;
         case COLORPICKER: recache = colorpicker_draw(screen); break;
     }
@@ -214,15 +212,15 @@ void update_display() {
     }
     
     switch (state) {
-        case MAINMENU: menu_animate(screen); break;
-        case FILELIST: filelist_animate(screen); break;
+        case MAINMENU:    menu_animate(screen); break;
+        case FILELIST:    filelist_animate(screen); break;
         case IMAGEVIEWER: imageviewer_animate(screen); break;
         case COLORPICKER: colorpicker_animate(screen); break;
     }
     
     switch (state) {
-        case MAINMENU: menu_osd(screen); draw_osd(screen);break;
-        case FILELIST: filelist_osd(screen); break;
+        case MAINMENU:    menu_osd(screen); draw_osd(screen);break;
+        case FILELIST:    filelist_osd(screen); break;
         case IMAGEVIEWER: imageviewer_osd(screen); break;
         case COLORPICKER: colorpicker_osd(screen); break;
     }
@@ -300,8 +298,8 @@ void listen() {
 
                     prevstate = state;
                     switch (state) {
-                        case MAINMENU: state = menu_keypress(key); break;
-                        case FILELIST: state = filelist_keypress(key); break;
+                        case MAINMENU:    state = menu_keypress(key); break;
+                        case FILELIST:    state = filelist_keypress(key); break;
                         case IMAGEVIEWER: state = imageviewer_keypress(key); break;
                         case COLORPICKER: state = colorpicker_keypress(key); break;
                     }

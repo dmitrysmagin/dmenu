@@ -15,7 +15,7 @@
 #endif
 
 #ifndef SOUND_ENABLED
-#define SOUND_ENABLED        0
+#define SOUND_ENABLED        1
 #endif
 
 #define DIMMER_DELAY         5
@@ -27,11 +27,14 @@
 #define DMENU_BACKGROUNDS    DMENU_PATH "wallpapers/"
 #define GLOBAL_RESOURCE_PATH DMENU_PATH "resources/"
 #define DMENU_THEME_MISSING  GLOBAL_RESOURCE_PATH "notfound.png"
+#define THUMBNAILS_PATH      "/.thumb"
 
 char THEME_PATH[PATH_MAX];
 char THEME_NAME[100];
-int  CAN_WRITE_FS;
-#define THUMBNAILS_PATH      "/.thumb"
+
+#ifndef FILESYSTSEM_READ_ONLY
+int  FILESYSTSEM_READ_ONLY;
+#endif
 
 //Device Info
 #define BACKLIGHT_DEVICE     "/proc/jz/lcd_backlight"
