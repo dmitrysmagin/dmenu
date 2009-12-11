@@ -111,6 +111,9 @@ int init_display() {
     //Show saved image as soon as possible to help hide startup times
     show_menu_snapshot(screen);
   
+    //Ready fonts
+    TTF_Init();
+    
     return 0;
 }
 
@@ -118,7 +121,7 @@ void check_file_write()
 {
     #ifndef FILESYSTEM_READ_ONLY
         FILE* f = fopen(".tmp", "w");
-        FILESYSTSEM_READ_ONLY = (f == NULL);
+        FILESYSTEM_READ_ONLY = (f == NULL);
         if (f) fclose(f);
         else log_message("Unable to open filesystem for writing.  Any changes made to system will not persist");
     #endif
@@ -173,16 +176,14 @@ void deinit(DeinitLevel level) {
     
     if (level == SHUTDOWN) 
     {
+        //Close down fonts
+        TTF_Quit();
         conf_unload();
     }
 }
 
 void reload(DeinitLevel level) {
     deinit(level);
-    if (level == RELOAD_THEME) 
-    {
-        conf_reload_theme(THEME_NAME);
-    }
     menu_init();
 }
 
@@ -331,6 +332,7 @@ int main ( int argc, char** argv )
     if (rc==0) {
         listen(); //main loop
         deinit(SHUTDOWN);
+        
         // all is well ;)
         log_debug("Exited cleanly");
     }

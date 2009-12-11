@@ -36,6 +36,7 @@ cfg_t *menu_item_config;
 cfg_t *menu_subitem_config;
 cfg_t *menu_active_item_config;
 
+int menu_is_initted = 0;
 int menu_text_pad_left = 0;
 int menu_needs_redraw = 1; //First draw
 SDL_Rect menu_active_rect;
@@ -147,6 +148,9 @@ void menu_set_position(const char* menu_name, const char* menu_item_name, const 
 
 int menu_init()
 {
+    if (menu_is_initted) return 0;
+    menu_is_initted = 1;
+    
     log_debug("Initializing");
     
     int i, j;
@@ -160,7 +164,6 @@ int menu_init()
     current_submenuitem_index = 0;
     
     // load font
-    TTF_Init();
     menu_font     = get_theme_font(MENU_TEXT_FONT_SIZE);
     menuitem_font = get_theme_font(MENU_ITEM_FONT_SIZE);
 
@@ -198,6 +201,9 @@ int menu_init()
 
 void menu_deinit()
 {
+    if (!menu_is_initted) return;
+    menu_is_initted = 0;
+    
     log_debug("De-initializing");
     
     int i, j;
@@ -224,8 +230,6 @@ void menu_deinit()
     free_font(menu_font);
     free_font(menuitem_font);
     
-    TTF_Quit();
-
     // Save current menu state
     persistent_store_menu_position();
     

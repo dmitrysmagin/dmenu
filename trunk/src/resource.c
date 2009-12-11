@@ -142,6 +142,7 @@ SDL_Color* load_global_color ( char* file ) {
 TTF_Font* load_global_font( char* file, int size)
 {   
     char* tmp = global_file(file);
+    log_debug("Loading global font: %s", tmp);
     TTF_Font* out = TTF_OpenFont(tmp, size);
     free_erase(tmp);
     return out;
