@@ -427,7 +427,7 @@ void filelist_store_dir()
 {
     if (fl_global.can_change_dir) 
     {
-        conf_selectordir(mi, fl_global.current_path);
+        conf_dirselect(mi, fl_global.current_path);
     }
 }
 
