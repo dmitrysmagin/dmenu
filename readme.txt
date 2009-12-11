@@ -89,7 +89,10 @@ to main.cfg, and add below MenuItem to one of the menu,
         }
 
 Once you select this MenuItem in Dmenu, it will display a list of themes 
-available and allow you to switch the theme.
+available and allow you to switch the theme.  The theme preview shown in the
+theme selection screen is theme.png in the root of the theme folder.  If the
+preview is not found, it will default to the notfound.png found in the 
+resources folder.
 
 ******************************************************************************* 
 A word of caution, this will update main.cfg with the new theme name you have 
