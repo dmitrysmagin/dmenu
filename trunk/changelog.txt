@@ -1,4 +1,31 @@
 [0.6]
+- Various bug fixes
+- Memory Leak resolved in colorpicker
+- Show/Take snapshot of menu on exit/load.  
+    This allows for the menu to show something while it is setting up.
+- Theme Selection now uses the image selection tool.  
+    The theme selector will look for a 'theme.png' in the root of all valid
+    theme folders (themes where theme.cfg exists).  If a theme preview
+    is not found, it will use the 'notfound.png' in the resources folder.
+- UI enhancements to the main menu
+    We now apply alpha blending to the menu items based on their distance
+    from the active item.  If the submenu is open, then another layer
+    of blending is applied to the horizontal menu, as well as the 
+    submenu's parent.  The goal with this was to help indicate which
+    parts of the menu are active, and which aren't.  
+- Set foundation for UI animations
+- Replaced sound OSD format of icon and percantage to just an icon.  
+    The icon now shows the level of sound visually in lieu of a 
+    percentage
+- UI will now autodim after a period of N seconds.
+    The default for N is 5, but is configurable in the dmenu.ini file under
+    they key DimmerDelay.  The value for DimmerDelay is an integer which represents
+    seconds.  If DimmerDelay is set to 0, then the dimming will not occur.
+- Enabled themes to define padding between icon and text, when the text is right
+  of the icon.
+    This does not apply to the horizontal items, but the vertical menu items.  The
+    key to set in the theme.cfg is ItemTextPadLeft and the value is an integer which
+    represents the left padding of the text, in pixels.
 
 [0.5]
 - Fixed a lot of SegFault bugs

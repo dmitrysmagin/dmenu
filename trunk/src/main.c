@@ -302,7 +302,7 @@ void listen() {
             } // end switch
         } // end of message processing
         
-        if ((SDL_GetTicks()-last_key_time) > (inactive_delay*1000)) 
+        if (inactive_delay > 0 && (SDL_GetTicks()-last_key_time) > (inactive_delay*1000)) 
         {
             brightness_dim(1);
         }
