@@ -200,7 +200,7 @@ int imageviewer_init_theme(char* title, char* executable, char* path)
     char tmp_name[200];
     char **files;
     ImageEntry** images;
-    int rc=0, i=0, count=0;
+    int rc=0, i=0;
     struct stat file_stat;
     
     //A lot of string manipulation happens to convert the file names
@@ -208,8 +208,7 @@ int imageviewer_init_theme(char* title, char* executable, char* path)
     // and the theme titles.  This is why we handle so much malloc
     // and free in this case.  The goal is to ensure no memory
     // is leaked.
-    files = get_theme_previews();
-    while (files[count] != NULL) count++;
+    int count = get_theme_list(path, &files);
     images = new_array(ImageEntry*, count+1);
     
     for (i=0;i<count;i++) 
@@ -239,9 +238,8 @@ int imageviewer_init_theme(char* title, char* executable, char* path)
         free_erase(images[i]);
     }
     //TODO: Figure this out. For some reason, this is 
-    // causing a segfault on my machine.  
+    // causing a segfault on my machine.
     //free_erase(images);
-    
     return rc;
 }
 

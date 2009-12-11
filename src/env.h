@@ -15,7 +15,7 @@
 #endif
 
 #ifndef SOUND_ENABLED
-#define SOUND_ENABLED        1
+#define SOUND_ENABLED        0
 #endif
 
 #define DIMMER_DELAY         5

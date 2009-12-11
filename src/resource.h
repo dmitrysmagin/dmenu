@@ -8,7 +8,7 @@
 
 char* get_user_attr(char*attr);
 TTF_Font* get_theme_font(int size);
-char** get_theme_previews();
+int get_theme_list(char* path, char*** files);
 SDL_Color* get_theme_font_color();
 char* get_theme_font_color_string();
 SDL_Surface* get_theme_background();
