@@ -38,18 +38,14 @@ char* strndup(char* s, size_t n) {
 }
 #endif
 
-int stricmp(const char *a, const char *b)
-{
-    char f, l;
-    do 
-    {
-        f = to_lower(*a);
-        l = to_lower(*b);
-        a++;
-        b++;
-    } while ((f) && (f == l));
-    
-    return (int) (f - l);
+int stricmp(const char *a, const char *b) {
+    char c,d;
+    do {
+        c = to_lower(*a);
+        d = to_lower(*b);
+        a++; b++;
+    } while ((c) && (c == d));
+    return (int) (c - d);
 }
 
 int strrpos (char* s, int c) {
