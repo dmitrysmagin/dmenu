@@ -4,7 +4,15 @@
 #include "common.h"
 
 #define item_alpha(act, cur) (MENU_ACTIVE_ALPHA >> abs(cur-act))
-#define copyname_trim(str, conf) if (conf != NULL) { c = cfg_getstr(conf, "Name"); while (*c==' ') c++; strcpy(str, c); }
+#define copyname_trim(str, conf)\
+    if (conf != NULL) {\
+        c = cfg_getstr(conf, "Name");\
+        while (*c==' ') c++;\
+        strcpy(str, c);\
+    } else {\
+        strcpy(str, "");\
+    }
+    
 #define if_names_equal(m, s) c = cfg_getstr(m, "Name"); while (*c==' ') c++; if (strcmp(c, s)==0)
     
 int  menu_init();
