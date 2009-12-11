@@ -70,15 +70,9 @@ void run_internal_command(char* command, char* args, char* workdir)
 
     switch (get_command(command)) 
     {
-        case THEMESELECT:
-            conf_themeselect(args);
-            break;
-        case BACKGROUNDSELECT:
-            conf_backgroundselect(args);
-            break;
-        case COLORSELECT:
-            conf_colorselect(args);
-            break;
+        case THEMESELECT: conf_themeselect(args); break;
+        case COLORSELECT: conf_colorselect(args); break;
+        case BACKGROUNDSELECT: conf_backgroundselect(args); break;
     }
 }
 
@@ -132,31 +126,6 @@ void execute_next_command(char* dir, char** args)
     quit();
 }
 
-void execute_command(char* dir, char** args) 
-{    
-    deinit();
-    SDL_Quit();
-    
-    int i = 0;
-    
-    if (dir!=NULL && strlen(dir) > 0)
-    {
-        change_dir(dir);
-    }
-    
-    // launch the program and it should not return, 
-    // otherwise it means we are not able to execute the application
-    execvp(args[0], args);
-    
-    log_message("Unable to execute command - ");
-    for (i=0;*(args+i);i++) printf("\"%s\" ", *(args+i)); printf("\n");
-
-    // it should not return, otherwise it means we are not able to execute the application
-    free_str_arr(args);
-    
-    quick_quit();
-}
-
 #define IF_CMD_THEN(c, k) if (strcmp(c, COMMAND_##k)==0) return k;
 InternalCommand get_command(char* cmd) {
     IF_CMD_THEN(cmd, THEMESELECT);
@@ -181,6 +150,18 @@ int change_dir(char* path)
     }
     return rc;
 }
+
+// Determines if entry references the parent dir as ".."
+int is_back_dir(const struct dirent *dr) 
+{
+    return !strcmp(dr->d_name, "..");
+}
+
+int alphasort_i(const struct dirent **a, const struct dirent **b)
+{
+    return(stricmp((*a)->d_name, (*b)->d_name));
+}
+
 
 char* read_first_line( char* file ) 
 {

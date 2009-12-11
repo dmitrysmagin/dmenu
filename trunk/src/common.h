@@ -40,12 +40,13 @@ typedef struct {
 
 void run_command (char* cmd, char* args, char* workdir);
 void run_internal_command (char* cmd, char* args, char* workdir);
-void execute_command(char* dir, char** args);
 void execute_next_command(char* dir, char** args);
 void clear_last_command();
 char** build_arg_list(char* commandline, char* args); 
 void free_arg_list(char** args);
 int change_dir(char* path);
+int is_back_dir(const struct dirent *dr);
+int alphasort_i(const struct dirent** a, const struct dirent** b);
 
 FILE* load_file_and_handle_fail ( char* file, char* mode, int die_on_fail );
 FILE* load_file( char* file, char* mode );

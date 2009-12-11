@@ -168,7 +168,7 @@ void menu_deinit()
     
     TTF_Quit();
 
-    if (number_of_submenuitem > 0) submenu_close();
+    if (number_of_submenuitem > 0) menu_close_sub();
 }
 
 //Draw single menu item
@@ -379,7 +379,7 @@ void menu_move(Direction dir)
     
     if (number_of_submenuitem > 0) {
         if (dir == PREV) {
-            submenu_close();
+            menu_close_sub();
         } else {
             sound_out( OUT );
         }
@@ -393,7 +393,7 @@ void menu_move(Direction dir)
     current_menuitem_index = 0;
 }
 
-void menuitem_move(Direction dir ) 
+void menu_move_item(Direction dir ) 
 {
     menu_state_changed();
     
@@ -412,7 +412,7 @@ void menuitem_move(Direction dir )
     sound_out( MENUITEM_MOVE );    
 }
 
-void submenu_open()
+void menu_open_sub()
 {
     menu_state_changed();
     
@@ -434,7 +434,7 @@ void submenu_open()
     current_submenuitem_index = 0;
 }
 
-void submenu_close()
+void menu_close_sub()
 {
     menu_state_changed();
     
@@ -452,7 +452,7 @@ void submenu_close()
     number_of_submenuitem = 0;
 }
 
-MenuState menuitem_runinternal()
+MenuState menu_run_internal()
 {
     char* executable = cfg_getstr(mi, "Executable");
     char* name       = cfg_getstr(mi, "Name");
@@ -515,19 +515,19 @@ MenuState menuitem_runinternal()
     return state;
 }
 
-MenuState menuitem_run()
+MenuState menu_run_item()
 {
     char* executable = cfg_getstr(mi, "Executable");
     
     if (executable) {
         if (internal_command(executable)) {
-            return menuitem_runinternal();
+            return menu_run_internal();
         } 
         else {
             run_command(executable, NULL, cfg_getstr(mi, "WorkDir"));
         }
     } else {
-        submenu_open();
+        menu_open_sub();
     }
     
     return MAINMENU;
@@ -545,10 +545,10 @@ MenuState menu_keypress(SDLKey key)
             break;
         case DINGOO_BUTTON_UP:
         case DINGOO_BUTTON_DOWN:
-            menuitem_move(dir);
+            menu_move_item(dir);
             break;
         case DINGOO_BUTTON_B:
-            if (number_of_submenuitem > 0) submenu_close();
+            if (number_of_submenuitem > 0) menu_close_sub();
             break;
         case DINGOO_BUTTON_A:
             m  = cfg_getnsec(cfg, "Menu", current_menu_index);
@@ -572,7 +572,7 @@ MenuState menu_keypress(SDLKey key)
                 } // else we are not able to initialise the filelist display
             } 
             else {
-                state = menuitem_run();
+                state = menu_run_item();
             }
             break;
         default: break;
