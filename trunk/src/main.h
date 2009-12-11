@@ -1,8 +1,10 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
-void deinit();
-void reload();
+#include "common.h"
+
+void deinit(DeinitLevel level);
+void reload(DeinitLevel level);
 void quick_quit();
 void quit();
 void update_display();

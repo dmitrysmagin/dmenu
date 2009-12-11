@@ -225,24 +225,11 @@ int conf_load_theme(char* theme)
     return 0;
 }
 
-int conf_load(char* theme)
+void conf_process_theme()
 {
-    log_debug("Initializing");
-
     struct dirent **namelist;
-    int num_of_files, rc, i, j;
+    int num_of_files, i, j;
     cfg_t* tmp;
-
-    // load dmenu.ini
-    cfg_main = conf_from_file(main_opts, DMENU_CONF_FILE);
-    if (cfg_main == NULL) return CFG_PARSE_ERROR;
-    
-    //Find theme path
-    if (theme == NULL) {
-        theme = cfg_getstr(cfg_main, "Theme");
-    }
-    rc = conf_load_theme(theme);
-    if (rc) return rc;
     
     // load dmenu.cfg files from SearchPath
     char search_path[PATH_MAX];
@@ -256,7 +243,7 @@ int conf_load(char* theme)
             strcpy(search_path, tmp);
             free_erase(tmp);
         }
-
+        
         num_of_files = scandir(search_path, &namelist, path_filter, alphasort);
         for (i=0;i<num_of_files;i++) {
             strcpy(work_path, search_path);
@@ -278,6 +265,29 @@ int conf_load(char* theme)
         for (j=0;j<3;j++) keys[j] = cfg_getnstr(tmp, "Key", j);
         conf_set_item_path(cfg, keys, "SelectorDir", dir);
     }
+}
+
+void conf_reload_theme(char* theme)
+{
+    free_erase(THEME_CONF_FILE);
+    cfg_free(cfg);
+    conf_load_theme(theme);
+    conf_process_theme();
+}
+
+int conf_load()
+{
+    log_debug("Initializing");
+
+    // load dmenu.ini
+    cfg_main = conf_from_file(main_opts, DMENU_CONF_FILE);
+    if (cfg_main == NULL) return CFG_PARSE_ERROR;
+    
+    //Find theme path
+    int rc = conf_load_theme(cfg_getstr(cfg_main, "Theme"));
+    if (rc) return rc;
+    
+    conf_process_theme();
 
     return CFG_SUCCESS;
 }
@@ -287,7 +297,6 @@ void conf_unload()
     log_debug("De-initializing");
     
     free_erase(THEME_CONF_FILE);
-    
     cfg_free(cfg);
 
     // Write to dmenu.ini
@@ -527,7 +536,7 @@ void conf_themeselect(char* themedir)
     free_erase(orig);
     
     conf_to_file(cfg_main, DMENU_CONF_FILE);
-    reload();
+    reload(RELOAD_THEME);
 }
 
 void conf_backgroundselect(char* bgimage)
@@ -543,7 +552,7 @@ void conf_colorselect(char* color)
     log_debug("Setting font color: %s", color);
     cfg_setstr(cfg_main, "FontColor", color);
     conf_to_file(cfg_main, DMENU_CONF_FILE);
-    reload();
+    reload(RELOAD_MENU);
 }
 
 void conf_dirselect(cfg_t* menu_item, char* dir) 
