@@ -114,9 +114,18 @@ int init_display() {
     return 0;
 }
 
+void check_file_write()
+{
+    FILE* f = fopen(".tmp", "w");
+    CAN_WRITE_FS = (f != NULL);
+    if (CAN_WRITE_FS) fclose(f);
+    else log_message("Unable to open filesystem for writing.  Any changes made to system will not persist");
+}
+
 int init() {
     log_debug("Initializing");
     
+    check_file_write();
     clear_last_command();
     
     #ifdef DINGOO_BUILD

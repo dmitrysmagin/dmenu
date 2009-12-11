@@ -140,8 +140,10 @@ cfg_t* conf_from_file(cfg_opt_t* opts, char* file)
 }
 
 void move_file(char* from, char* to) {
+    if (!CAN_WRITE_FS) return;
+
     struct stat st; 
-    
+
     log_debug("Moving %s to %s", from, to);
     
     //If file saved and has size
@@ -153,8 +155,10 @@ void move_file(char* from, char* to) {
 }
 
 FILE* open_conf_file(cfg_t* cfg, char* file) {
-    log_debug("Opening conf file for writing: %s", file);
+    if (!CAN_WRITE_FS) return 0;
     
+    log_debug("Opening conf file for writing: %s", file);
+        
     FILE *fp;
     fp = load_file(file, "w");
     if (fp == NULL) return 0;
@@ -164,6 +168,8 @@ FILE* open_conf_file(cfg_t* cfg, char* file) {
 }
 
 void close_conf_file(FILE* fp) {
+    if (!CAN_WRITE_FS) return;
+    
     log_debug("Closing conf file");
     int file_no;
     file_no = fileno(fp);
@@ -172,6 +178,8 @@ void close_conf_file(FILE* fp) {
 }
 
 int conf_to_file(cfg_t* cfg, char* file) {
+    if (!CAN_WRITE_FS) return 0;
+    
     char* tmp;
 
     tmp = new_str(strlen(file)+5); {

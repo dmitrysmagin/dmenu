@@ -38,9 +38,11 @@ void run_internal_command(char* command, char* args, char* workdir);
 
 void clear_last_command()
 {
-    struct stat st;
-    if (stat(DMENU_COMMAND_FILE, &st) == 0) {
-        remove(DMENU_COMMAND_FILE);
+    if (CAN_WRITE_FS) {
+        struct stat st;
+        if (stat(DMENU_COMMAND_FILE, &st) == 0) {
+            remove(DMENU_COMMAND_FILE);
+        }
     }
 }
 
@@ -60,8 +62,11 @@ void run_command(char* executable, char* args, char* workdir)
     char tmp_work[PATH_MAX]; strcpy(tmp_work, "");
     if (workdir != NULL) strcpy(tmp_work, workdir);
     
-    // launch the program
-    execute_next_command(tmp_work, args_list);
+    if (CAN_WRITE_FS) 
+    {
+        // launch the program
+        execute_next_command(tmp_work, args_list);
+    }
 }
 
 void run_internal_command(char* command, char* args, char* workdir)
@@ -102,6 +107,8 @@ char** build_arg_list(char* commandline, char* args)
 
 void execute_next_command(char* dir, char** args) 
 {   
+    if (!CAN_WRITE_FS) return;
+    
     //Write next command to commandfile
     FILE* out = load_file(DMENU_COMMAND_FILE, "w");
     
@@ -564,8 +571,20 @@ void init_export_job(char* old_filename, char* new_filename, SDL_Surface* sfc)
     pthread_create(&image_exporter[CURRENT_JOB], NULL, (void*)run_export_job, (void*)job); 
 }
 
+SDL_Surface* resize_image(SDL_Surface* in, int width, int height)
+{
+    SDL_Surface *tmp = shrink_surface(in, width, height);
+    free_surface(in);
+    return tmp;
+}
+
 SDL_Surface* load_resized_image(char* file, int width, int height)
 {
+
+    if (!CAN_WRITE_FS) { 
+        return resize_image(load_image_file_with_format(file,0,0), width, height);
+    }
+    
     struct stat orig_stat, new_stat, dir_stat;
     
     char new_file[PATH_MAX], new_dir[PATH_MAX];
@@ -607,5 +626,6 @@ SDL_Surface* load_resized_image(char* file, int width, int height)
             out = load_resized_image(file, width, height);
         }
     }
+    
     return out;
 }
