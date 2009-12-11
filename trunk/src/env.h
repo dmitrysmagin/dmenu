@@ -30,6 +30,7 @@
 
 char THEME_PATH[PATH_MAX];
 char THEME_NAME[100];
+int  CAN_WRITE_FS;
 #define THUMBNAILS_PATH      "/.thumb"
 
 //Device Info
