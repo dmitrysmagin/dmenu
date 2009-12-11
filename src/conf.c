@@ -140,7 +140,7 @@ cfg_t* conf_from_file(cfg_opt_t* opts, char* file)
 }
 
 void move_file(char* from, char* to) {
-    if (FILESYSTSEM_READ_ONLY) return;
+    if (FILESYSTEM_READ_ONLY) return;
 
     struct stat st; 
 
@@ -155,7 +155,7 @@ void move_file(char* from, char* to) {
 }
 
 FILE* open_conf_file(cfg_t* cfg, char* file) {
-    if (FILESYSTSEM_READ_ONLY) return NULL;
+    if (FILESYSTEM_READ_ONLY) return NULL;
     
     log_debug("Opening conf file for writing: %s", file);
         
@@ -168,7 +168,7 @@ FILE* open_conf_file(cfg_t* cfg, char* file) {
 }
 
 void close_conf_file(FILE* fp) {
-    if (FILESYSTSEM_READ_ONLY) return;
+    if (FILESYSTEM_READ_ONLY) return;
     
     log_debug("Closing conf file");
     int file_no;
@@ -178,7 +178,7 @@ void close_conf_file(FILE* fp) {
 }
 
 int conf_to_file(cfg_t* cfg, char* file) {
-    if (FILESYSTSEM_READ_ONLY) return 0;
+    if (FILESYSTEM_READ_ONLY) return 0;
     
     char* tmp;
 
@@ -522,29 +522,26 @@ void conf_themeselect(char* themedir)
 {
     if (!cfg_getbool(cfg_main, "AllowDynamicThemeChange")) return;
     
-    char* path = strdup(themedir), *orig = path;
-    if (strrchr(path, '.') != NULL) {
-        *strrchr(path, '/') = '\0'; //Strip out filename
+    char* theme = strdup(themedir);
+    if (strrchr(theme, '.') != NULL) {
+        *strrchr(theme, '/') = '\0'; //Strip out filename
     }
     
-    if (strrchr(path, '/')) {
-        path = (strrchr(path, '/')+1);
+    if (strrchr(theme, '/')) {
+        theme = (strrchr(theme, '/')+1);
     }
     
-    log_debug("Setting theme: %s", path);    
-    cfg_setstr(cfg_main, "Theme", path);
+    log_debug("Setting theme: %s", theme);
     
-    //Update global theme
-    strcpy(THEME_PATH, themedir);
-    strcpy(THEME_NAME, strrchr(THEME_PATH, '/')+1);
-    strcat(THEME_PATH, "/");
+    cfg_setstr(cfg_main, "Theme", theme);
+    conf_to_file(cfg_main, DMENU_CONF_FILE);
+    conf_reload_theme(theme);
+    
+    reload(RELOAD_MENU);
     
     //Clean up
-    strcpy(orig, themedir);
-    free_erase(orig);
-    
-    conf_to_file(cfg_main, DMENU_CONF_FILE);
-    reload(RELOAD_THEME);
+    strcpy(theme, themedir);
+    //free_erase(theme);
 }
 
 void conf_backgroundselect(char* bgimage)
