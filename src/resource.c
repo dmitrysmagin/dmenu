@@ -103,14 +103,18 @@ void save_menu_snapshot(SDL_Surface* screen, int blur)
     export_surface_as_bmp(DMENU_SNAPSHOT, screen);
 }
 
-char* dmenu_file(char* file) 
-{
-    return relative_file(DMENU_PATH, file);    
-}
-
 char* global_file(char* file) 
 {
     return relative_file(GLOBAL_RESOURCE_PATH, file);
+}
+
+char* dmenu_file(char* file) 
+{
+    if (strstr(file, GLOBAL_RESOURCE_PRE) != NULL) {
+        return global_file(strchr(file, ':')+1);
+    } else {    
+        return relative_file(DMENU_PATH, file);
+    }
 }
 
 char* theme_file(char* file) 
