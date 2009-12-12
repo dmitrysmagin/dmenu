@@ -28,6 +28,7 @@
 #define GLOBAL_RESOURCE_PATH DMENU_PATH "resources/"
 #define DMENU_THEME_MISSING  GLOBAL_RESOURCE_PATH "notfound.png"
 #define THUMBNAILS_PATH      "/.thumb"
+#define GLOBAL_RESOURCE_PRE  "global:"
 
 char THEME_PATH[PATH_MAX];
 char THEME_NAME[100];
