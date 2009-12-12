@@ -184,6 +184,10 @@ void deinit(DeinitLevel level) {
 
 void reload(DeinitLevel level) {
     deinit(level);
+    if (level == RELOAD_THEME) 
+    {
+        conf_reload_theme(THEME_NAME);
+    }
     menu_init();
 }
 

@@ -522,26 +522,29 @@ void conf_themeselect(char* themedir)
 {
     if (!cfg_getbool(cfg_main, "AllowDynamicThemeChange")) return;
     
-    char* theme = strdup(themedir);
-    if (strrchr(theme, '.') != NULL) {
-        *strrchr(theme, '/') = '\0'; //Strip out filename
+    char* theme, *theme_name;
+    if (strrchr(themedir, '.') != NULL) {
+        theme = strndup(themedir, strrpos(themedir, '/')); //Strip off filename
+    } else {
+        theme = strdup(themedir);
     }
     
     if (strrchr(theme, '/')) {
-        theme = (strrchr(theme, '/')+1);
+        theme_name = strrchr(theme, '/')+1;
+    } else {
+        theme_name = theme;
     }
     
-    log_debug("Setting theme: %s", theme);
+    log_debug("Setting theme: %s", theme_name);
     
-    cfg_setstr(cfg_main, "Theme", theme);
+    cfg_setstr(cfg_main, "Theme", theme_name);
     conf_to_file(cfg_main, DMENU_CONF_FILE);
-    conf_reload_theme(theme);
     
-    reload(RELOAD_MENU);
+    strcpy(THEME_NAME, theme_name);
+    reload(RELOAD_THEME);
     
     //Clean up
-    strcpy(theme, themedir);
-    //free_erase(theme);
+    free_erase(theme);
 }
 
 void conf_backgroundselect(char* bgimage)

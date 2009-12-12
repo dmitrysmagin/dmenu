@@ -28,7 +28,7 @@
 typedef enum { MAINMENU, FILELIST, IMAGEVIEWER, COLORPICKER } MenuState;
 typedef enum { THEMESELECT, BACKGROUNDSELECT, COLORSELECT } InternalCommand; 
 typedef enum { PREV, NEXT, UP, DOWN, RIGHT, LEFT } Direction;
-typedef enum { SHUTDOWN, RELOAD_MENU } DeinitLevel;
+typedef enum { SHUTDOWN, RELOAD_THEME, RELOAD_MENU } DeinitLevel;
 
 InternalCommand get_command(char* cmd);
 
