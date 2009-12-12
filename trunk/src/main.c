@@ -109,8 +109,11 @@ int init_display() {
     screen_cache = create_surface(SCREEN_WIDTH, SCREEN_HEIGHT, 24, 0xFF,0xFF,0xFF,0);
     
     //Show saved image as soon as possible to help hide startup times
-    show_menu_snapshot(screen);
-  
+    if (!FILESYSTEM_READ_ONLY) //Only show if it can be written
+    {
+        show_menu_snapshot(screen);
+    }
+    
     //Ready fonts
     TTF_Init();
     
@@ -131,7 +134,9 @@ int init() {
     log_debug("Initializing");
     
     check_file_write();
-    clear_last_command();
+    if (!FILESYSTEM_READ_ONLY) {
+        clear_last_command();
+    }
     
     #ifdef DINGOO_BUILD
     // Need to ignore SIGHUP if we are started by init.
@@ -162,10 +167,15 @@ void deinit(DeinitLevel level) {
     // Save snapshot, and set menu state
     menu_force_redraw(screen);
     draw_osd(screen);
-    save_menu_snapshot(screen, 1);
-
+    make_menu_snapshot(screen, 1);
+    
     if (level == SHUTDOWN) 
     {
+        if (!FILESYSTEM_READ_ONLY) 
+        {
+            save_menu_snapshot(screen);
+        }
+        
         sound_deinit();
         brightness_deinit();
         volume_deinit();

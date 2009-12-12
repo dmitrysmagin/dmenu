@@ -140,7 +140,6 @@ cfg_t* conf_from_file(cfg_opt_t* opts, char* file)
 }
 
 void move_file(char* from, char* to) {
-    if (FILESYSTEM_READ_ONLY) return;
 
     struct stat st; 
 
@@ -155,7 +154,6 @@ void move_file(char* from, char* to) {
 }
 
 FILE* open_conf_file(cfg_t* cfg, char* file) {
-    if (FILESYSTEM_READ_ONLY) return NULL;
     
     log_debug("Opening conf file for writing: %s", file);
         
@@ -168,7 +166,6 @@ FILE* open_conf_file(cfg_t* cfg, char* file) {
 }
 
 void close_conf_file(FILE* fp) {
-    if (FILESYSTEM_READ_ONLY) return;
     
     log_debug("Closing conf file");
     int file_no;
@@ -178,7 +175,6 @@ void close_conf_file(FILE* fp) {
 }
 
 int conf_to_file(cfg_t* cfg, char* file) {
-    if (FILESYSTEM_READ_ONLY) return 0;
     
     char* tmp;
 
@@ -308,7 +304,11 @@ void conf_unload()
     cfg_free(cfg);
 
     // Write to dmenu.ini
-    conf_to_file(cfg_main, DMENU_CONF_FILE);
+    if (!FILESYSTEM_READ_ONLY) 
+    {
+        conf_to_file(cfg_main, DMENU_CONF_FILE);
+    }
+    
     cfg_free(cfg_main);
     
     change_dir(DMENU_PATH);
@@ -536,9 +536,12 @@ void conf_themeselect(char* themedir)
     }
     
     log_debug("Setting theme: %s", theme_name);
-    
     cfg_setstr(cfg_main, "Theme", theme_name);
-    conf_to_file(cfg_main, DMENU_CONF_FILE);
+
+    if (!FILESYSTEM_READ_ONLY) 
+    {
+        conf_to_file(cfg_main, DMENU_CONF_FILE);
+    }
     
     strcpy(THEME_NAME, theme_name);
     reload(RELOAD_THEME);
@@ -551,7 +554,12 @@ void conf_backgroundselect(char* bgimage)
 {
     log_debug("Setting background image: %s", bgimage);
     cfg_setstr(cfg_main, "Background", bgimage);
-    conf_to_file(cfg_main, DMENU_CONF_FILE);
+    
+    if (!FILESYSTEM_READ_ONLY) 
+    {
+        conf_to_file(cfg_main, DMENU_CONF_FILE);
+    }
+    
     menu_reload_background();
 }
 
@@ -559,12 +567,19 @@ void conf_colorselect(char* color)
 {
     log_debug("Setting font color: %s", color);
     cfg_setstr(cfg_main, "FontColor", color);
-    conf_to_file(cfg_main, DMENU_CONF_FILE);
+   
+    if (!FILESYSTEM_READ_ONLY) 
+    {
+        conf_to_file(cfg_main, DMENU_CONF_FILE);
+    }
+    
     reload(RELOAD_MENU);
 }
 
 void conf_dirselect(cfg_t* menu_item, char* dir) 
 {
+    if (FILESYSTEM_READ_ONLY) return;
+    
     cfg_t* selector;
     cfg_setstr(menu_item, "SelectorDir", dir);
 
@@ -591,7 +606,7 @@ void conf_dirselect(cfg_t* menu_item, char* dir)
     }
     
     free_erase(keys);
-    
+
     //Persist data
     FILE* fp = open_conf_file(cfg_main, DMENU_CONF_FILE ".tmp");
     if (fp == NULL) return ;

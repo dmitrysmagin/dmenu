@@ -13,7 +13,8 @@ SDL_Color* get_theme_font_color();
 char* get_theme_font_color_string();
 SDL_Surface* get_theme_background();
 void show_menu_snapshot(SDL_Surface* screen);
-void save_menu_snapshot(SDL_Surface* screen, int blur);
+void make_menu_snapshot(SDL_Surface* screen, int blur);
+void save_menu_snapshot(SDL_Surface* screen);
 
 char* dmenu_file(char* file);
 char* global_file(char* file);
