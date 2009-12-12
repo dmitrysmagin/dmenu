@@ -29,6 +29,29 @@ char* get_user_attr(char* attr)
     return val;
 }
 
+char* global_file(char* file) 
+{
+    return relative_file(GLOBAL_RESOURCE_PATH, file);
+}
+
+char* dmenu_file(char* file) 
+{
+    if (strstr(file, GLOBAL_RESOURCE_PRE) != NULL) {
+        return global_file(strchr(file, ':')+1);
+    } else {    
+        return relative_file(DMENU_PATH, file);
+    }
+}
+
+char* theme_file(char* file) 
+{
+    if (strstr(file, GLOBAL_RESOURCE_PRE) != NULL) {
+        return global_file(strchr(file, ':')+1);
+    } else {    
+        return relative_file(THEME_PATH, file);
+    }
+}
+
 int get_theme_list(char* path, char*** files) 
 {
     struct dirent** dir_files;
@@ -92,7 +115,7 @@ void show_menu_snapshot(SDL_Surface* screen)
     }    
 }
 
-void save_menu_snapshot(SDL_Surface* screen, int blur)
+void make_menu_snapshot(SDL_Surface* screen, int blur) 
 {
     if (blur) {
         SDL_Surface* tmp = create_surface(screen->w, screen->h, 32, EXIT_TINT_COLOR);
@@ -100,30 +123,11 @@ void save_menu_snapshot(SDL_Surface* screen, int blur)
         SDL_Flip(screen);
         free_surface(tmp);
     }
+}
+
+void save_menu_snapshot(SDL_Surface* screen)
+{
     export_surface_as_bmp(DMENU_SNAPSHOT, screen);
-}
-
-char* global_file(char* file) 
-{
-    return relative_file(GLOBAL_RESOURCE_PATH, file);
-}
-
-char* dmenu_file(char* file) 
-{
-    if (strstr(file, GLOBAL_RESOURCE_PRE) != NULL) {
-        return global_file(strchr(file, ':')+1);
-    } else {    
-        return relative_file(DMENU_PATH, file);
-    }
-}
-
-char* theme_file(char* file) 
-{
-    if (strstr(file, GLOBAL_RESOURCE_PRE) != NULL) {
-        return global_file(strchr(file, ':')+1);
-    } else {    
-        return relative_file(THEME_PATH, file);
-    }
 }
 
 SDL_Surface* load_osd_image( char* file ) {
@@ -150,7 +154,6 @@ SDL_Color* load_global_color ( char* file ) {
 TTF_Font* load_global_font( char* file, int size)
 {   
     char* tmp = global_file(file);
-    log_debug("Loading global font: %s", tmp);
     TTF_Font* out = TTF_OpenFont(tmp, size);
     free_erase(tmp);
     return out;

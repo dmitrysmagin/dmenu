@@ -29,10 +29,11 @@ done
 
 #Add default theme
 mkdir -p $REL_FULL/themes/default
-cp -r $BASE/themes/default/* $REL_FULL/themes/default/
+cp -r $BASE/themes/default/* $REL_FULL/themes/default
 
 rm -f $BASE/release-$1.zip
 cd $REL_ROOT
 zip -r -x"*.svn*" -x"*.thumb*" -x"*-host*" $BASE/release-$1.zip .
 cd $BASE
+rm -rf $REL_ROOT
 

@@ -37,9 +37,7 @@ pthread_t image_exporter[MAX_IMAGE_JOBS];
 void run_internal_command(char* command, char* args, char* workdir);
 
 void clear_last_command()
-{
-    if (FILESYSTEM_READ_ONLY) return;
-    
+{    
     struct stat st;
     if (stat(DMENU_COMMAND_FILE, &st) == 0) {
         remove(DMENU_COMMAND_FILE);
@@ -130,8 +128,6 @@ void execute_inline_command(char* dir, char** args)
 
 void execute_next_command(char* dir, char** args) 
 {   
-    if (FILESYSTEM_READ_ONLY) return;
-    
     //Write next command to commandfile
     FILE* out = load_file(DMENU_COMMAND_FILE, "w");
     
@@ -504,9 +500,7 @@ SDL_Surface* copy_surface(SDL_Surface* src)
  * Copied from mailing list post, cleaned up a little bit. Works Now!
  */
 int export_surface_as_png(char *filename, SDL_Surface *surface)
-{
-    if (FILESYSTEM_READ_ONLY) return 0;
-        
+{        
     /* Creating the output surface to save */
     SDL_Surface* surf = create_surface(surface->w, surface->h, 32, 0,0,0,0);
     SDL_BlitSurface(surface, NULL, surf, NULL);
@@ -557,7 +551,6 @@ done: //Cleanup
 
 int export_surface_as_bmp(char *filename, SDL_Surface *surface) 
 {
-    if (FILESYSTEM_READ_ONLY) return 0;
     return SDL_SaveBMP(surface, filename);
 }
 
@@ -607,7 +600,8 @@ SDL_Surface* resize_image(SDL_Surface* in, int width, int height)
 SDL_Surface* load_resized_image(char* file, int width, int height)
 {
 
-    if (FILESYSTEM_READ_ONLY) { 
+    if (FILESYSTEM_READ_ONLY)
+    { 
         return resize_image(load_image_file_with_format(file,0,0), width, height);
     }
     
