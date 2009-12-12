@@ -115,7 +115,11 @@ char* global_file(char* file)
 
 char* theme_file(char* file) 
 {
-    return relative_file(THEME_PATH, file);
+    if (strstr(file, GLOBAL_RESOURCE_PRE) != NULL) {
+        return global_file(strchr(file, ':')+1);
+    } else {    
+        return relative_file(THEME_PATH, file);
+    }
 }
 
 SDL_Surface* load_osd_image( char* file ) {

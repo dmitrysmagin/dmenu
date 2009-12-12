@@ -1,5 +1,15 @@
 [0.6]
 - Various bug fixes
+- Added ability to use global resources in themes.  
+    If you prefix a path in a theme with 'global:' it will pick up
+    the file from the resources path.  This allows for the sharing of 
+    fonts, sounds, images, etc.  Hopefully this will reduce the overall
+    disk footprint of the menu.  Not sure, but the menu may also run
+    better if multiple code points are using the same resource on disk 
+    instead of copies of the same resource.  An example from default.cfg:
+
+        Font = "global:FreeSans.ttf"
+
 - Ensuring the menu will work when filesystem is read only.
     Performance will degrade in some cases, but the menu should function
     in the same way it has before.  Just maybe a little bit slower.
