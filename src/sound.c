@@ -8,7 +8,10 @@ Mix_Chunk* sound_effects[6];
 
 void load_sound(char* file, MenuSound snd) 
 {
-    sound_effects[snd] = load_theme_sound(cfg_getstr(cfg, file));
+    if (cfg_getstr(cfg, file) != NULL) 
+    {
+        sound_effects[snd] = load_theme_sound(cfg_getstr(cfg, file));
+    }
 }
 
 void sound_init()
@@ -32,7 +35,10 @@ void sound_init()
 void sound_out(MenuSound se)
 {
 #if SOUND_ENABLED
-    Mix_PlayChannel( -1, sound_effects[se], 0 );
+    if (sound_effects[se] != NULL) 
+    {
+        Mix_PlayChannel( -1, sound_effects[se], 0 );
+    }
 #endif
 }
 
