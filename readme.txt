@@ -73,12 +73,6 @@ Dmenu reads /usr/local/dmenu/themes/<theme name>/theme.cfg to load the theme.
 Check theme 'default' to find out what are the options available in theme config
 file.
 
-Due to miniSD file system corruption bug in Dingux, theme selection within Dmenu
-is disabled by default. To enable theme selection, add
-
-        AllowDynamicThemeChange = true
-        (You can use the keyword "yes" as same as "true")
-
 to main.cfg, and add below MenuItem to one of the menu,
 
         MenuItem ThemeSelect
@@ -93,6 +87,13 @@ available and allow you to switch the theme.  The theme preview shown in the
 theme selection screen is theme.png in the root of the theme folder.  If the
 preview is not found, it will default to the notfound.png found in the 
 resources folder.
+
+Due to miniSD file system corruption bug in Dingux, writing to the file system within Dmenu
+can be disabled. To control this behavior set the config value as follows (in dmenu.ini):
+
+        ReadOnly = true
+        (You can use the keyword "yes" as same as "true")
+
 
 ******************************************************************************* 
 A word of caution, this will update main.cfg with the new theme name you have 

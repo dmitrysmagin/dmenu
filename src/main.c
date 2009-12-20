@@ -53,6 +53,17 @@ int init_system() {
     // load config
     if (conf_load(NULL)) return 1;
     
+    if (can_write_fs()) 
+    {
+        clear_last_command();
+    }
+    
+    //Show saved image as soon as possible to help hide startup times
+    if (can_write_fs()) //Only show if it can be written
+    {
+        show_menu_snapshot(screen);
+    }
+    
     // Read saved persistent state
     if (!persistent_init())
     {
@@ -108,11 +119,6 @@ int init_display() {
     
     screen_cache = create_surface(SCREEN_WIDTH, SCREEN_HEIGHT, 24, 0xFF,0xFF,0xFF,0);
     
-    //Show saved image as soon as possible to help hide startup times
-    if (!FILESYSTEM_READ_ONLY) //Only show if it can be written
-    {
-        show_menu_snapshot(screen);
-    }
     
     //Ready fonts
     TTF_Init();
@@ -120,23 +126,10 @@ int init_display() {
     return 0;
 }
 
-void check_file_write()
-{
-    #ifndef FILESYSTEM_READ_ONLY
-        FILE* f = fopen(".tmp", "w");
-        FILESYSTEM_READ_ONLY = (f == NULL);
-        if (f) fclose(f);
-        else log_message("Unable to open filesystem for writing.  Any changes made to system will not persist");
-    #endif
-}
-
 int init() {
     log_debug("Initializing");
     
-    check_file_write();
-    if (!FILESYSTEM_READ_ONLY) {
-        clear_last_command();
-    }
+    if (!filesystem_writeable()) set_write_fs(0);
     
     #ifdef DINGOO_BUILD
     // Need to ignore SIGHUP if we are started by init.
@@ -171,7 +164,7 @@ void deinit(DeinitLevel level) {
     
     if (level == SHUTDOWN) 
     {
-        if (!FILESYSTEM_READ_ONLY) 
+        if (can_write_fs()) 
         {
             save_menu_snapshot(screen);
         }

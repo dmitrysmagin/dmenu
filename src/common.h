@@ -49,6 +49,7 @@ void free_arg_list(char** args);
 int change_dir(char* path);
 int is_back_dir(const struct dirent *dr);
 int alphasort_i(const struct dirent** a, const struct dirent** b);
+int filesystem_writeable();
 
 FILE* load_file_and_handle_fail ( char* file, char* mode, int die_on_fail );
 FILE* load_file( char* file, char* mode );

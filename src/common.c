@@ -44,6 +44,15 @@ void clear_last_command()
     }
 }
 
+int filesystem_writeable()
+{
+    int ret;
+    FILE* f = fopen(".tmp", "w");
+    ret = (f == NULL);
+    if (f) fclose(f);
+    return ret;
+}
+
 /* this is a simplified version when init is used to spawn dmenu */
 void run_command(char* executable, char* args, char* workdir)
 {   
@@ -60,7 +69,7 @@ void run_command(char* executable, char* args, char* workdir)
     char tmp_work[PATH_MAX]; strcpy(tmp_work, "");
     if (workdir != NULL) strcpy(tmp_work, workdir);
     
-    if (!FILESYSTEM_READ_ONLY) {
+    if (can_write_fs()) {
         // launch the program
         execute_next_command(tmp_work, args_list);
     } else {
@@ -74,8 +83,8 @@ void run_internal_command(char* command, char* args, char* workdir)
 
     switch (get_command(command)) 
     {
-        case THEMESELECT: conf_themeselect(args); break;
-        case COLORSELECT: conf_colorselect(args); break;
+        case THEMESELECT:      conf_themeselect(args);      break;
+        case COLORSELECT:      conf_colorselect(args);      break;
         case BACKGROUNDSELECT: conf_backgroundselect(args); break;
     }
 }
@@ -539,8 +548,10 @@ done: //Cleanup
     if (png_ptr)
         png_destroy_write_struct(&png_ptr, &info_ptr);
     if (fp) {
-        int fno = fileno(fp);
-        fsync(fno);
+        #ifdef FSYNC
+            int fno = fileno(fp);
+            fsync(fno);
+        #endif
         fclose(fp);
     }
     free_erase(rows);
@@ -600,7 +611,7 @@ SDL_Surface* resize_image(SDL_Surface* in, int width, int height)
 SDL_Surface* load_resized_image(char* file, int width, int height)
 {
 
-    if (FILESYSTEM_READ_ONLY)
+    if (cant_write_fs())
     { 
         return resize_image(load_image_file_with_format(file,0,0), width, height);
     }

@@ -17,7 +17,7 @@ void volume_init()
     log_debug("Initializing");
     
     volume_level  = (int)cfg_getint(cfg_main, "SndVol");
-    volume_status = load_osd_image("STATspeaker.png");
+    volume_status = load_osd_image("volume.png");
     
     //Initialize OSD positions
     init_rect(&volume_dst_rect, 

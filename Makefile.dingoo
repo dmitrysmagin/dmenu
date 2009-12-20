@@ -9,7 +9,7 @@ DMENU_PATH := \"/usr/local/dmenu/\"
 
 ARCH	:= mipsel-linux-
 CC	:= ${BINPATH}/$(ARCH)gcc
-CFLAGS	:= -O3 -DDMENU_PATH="$(DMENU_PATH)" -DDINGOO_BUILD -Wall -s -fomit-frame-pointer -funroll-loops -DHAVE_CONFIG_H -I$(TOOLCHAINDIR)/usr/include -I$(TOOLCHAINDIR)/usr/include/SDL
+CFLAGS	:= -O3 -DFSYNC -DDMENU_PATH="$(DMENU_PATH)" -DDINGOO_BUILD -Wall -s -fomit-frame-pointer -funroll-loops -DHAVE_CONFIG_H -I$(TOOLCHAINDIR)/usr/include -I$(TOOLCHAINDIR)/usr/include/SDL
 #CFLAGS	:= -DDINGOO_BUILD -O3 -Wall -g -fomit-frame-pointer -funroll-loops -DHAVE_CONFIG_H -I$(TOOLCHAINDIR)/usr/include -I$(TOOLCHAINDIR)/usr/include/SDL
 LDFLAG := -s -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -lconfuse -lpthread
 #LDFLAG := -lSDLmain -lSDL -lSDL_image -lSDL_ttf -lconfuse
