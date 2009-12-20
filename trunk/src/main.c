@@ -177,26 +177,27 @@ void deinit(DeinitLevel level) {
 
     if (shutdown) 
     {   
-        sound_deinit();
         loading_set_level(88);
-        brightness_deinit();
+        sound_deinit();
         loading_set_level(77);
-        volume_deinit();
+        brightness_deinit();
         loading_set_level(66);
-        dosd_deinit();
+        volume_deinit();
         loading_set_level(55);
+        dosd_deinit();
+        loading_set_level(44);
     }
     
     menu_deinit();
     
     if (level == SHUTDOWN) 
     {
-        loading_set_level(44);
+        loading_set_level(33);
         //Close down fonts
         TTF_Quit();
-        loading_set_level(33);
-        conf_unload();
         loading_set_level(22);
+        conf_unload();
+        loading_set_level(11);
         loading_deinit();
     }
 }
