@@ -29,7 +29,6 @@
 #include "sound.h"
 #include "dingoo.h"
 
-
 extern cfg_t *cfg;
 cfg_t *menu_config;
 cfg_t *menu_item_config;
