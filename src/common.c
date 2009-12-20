@@ -48,7 +48,7 @@ int filesystem_writeable()
 {
     int ret;
     FILE* f = fopen(".tmp", "w");
-    ret = (f == NULL);
+    ret = (f != NULL);
     if (f) fclose(f);
     return ret;
 }
@@ -325,10 +325,11 @@ void  init_rect(SDL_Rect* rect, int x, int y, int w, int h) {
     if (h>=0) rect->h = h;
 }
 
-SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a)
+SDL_Surface* create_surface(int w, int h, int depth, int color, int alpha)
 {
-    SDL_Surface *tmp;
-    Uint32 rm, gm, bm, am; rm=gm=bm=am=0xFF;
+    SDL_Surface *tmp;    
+    Uint32 rm=0xFF, gm=0xFF, bm=0xFF, am=0xFF;
+    int r=0xFF&(color>>16), g=0xFF&(color>>8), b=0xFF&(color);
     
     /* SDL interprets each pixel as a 32-bit number, so our masks must depend
     on the endianness (byte order) of the machine */
@@ -338,11 +339,11 @@ SDL_Surface* create_surface(int w, int h, int depth, int r, int g, int b, int a)
     gm<<=8; bm<<=16; am<<=24;
     #endif
     
-    tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, depth, rm, gm, bm, (a < 0 || depth <= 24) ? 0 : am);
+    tmp =  SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, depth, rm, gm, bm, (alpha < 0 || depth <= 24) ? 0 : am);
     
-    if (r>=0 && g>=0 && b>=0) {
-        if (a >= 0)  {
-            SDL_FillRect(tmp, 0, SDL_MapRGBA(tmp->format, r,g,b,a));
+    if (color>=0) {
+        if (alpha >= 0)  {
+            SDL_FillRect(tmp, 0, SDL_MapRGBA(tmp->format, r,g,b,alpha));
         } else {
             SDL_FillRect(tmp, 0, SDL_MapRGB(tmp->format, r,g,b));
         }
@@ -511,7 +512,7 @@ SDL_Surface* copy_surface(SDL_Surface* src)
 int export_surface_as_png(char *filename, SDL_Surface *surface)
 {        
     /* Creating the output surface to save */
-    SDL_Surface* surf = create_surface(surface->w, surface->h, 32, 0,0,0,0);
+    SDL_Surface* surf = create_surface(surface->w, surface->h, 32, 0,0);
     SDL_BlitSurface(surface, NULL, surf, NULL);
     
     FILE *fp = NULL;

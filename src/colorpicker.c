@@ -94,7 +94,7 @@ int  colorpicker_init(char* title, char* executable,  char* path, char* color, c
         
     cp_preview = create_surface(
         COLORPICKER_PREVIEW_W, COLORPICKER_PREVIEW_H,
-        24, -1,-1,-1, 0);
+        24, -1, 0);
         
     if (strlen(cp_global.background) > 0) {
         cp_preview_bg = load_resized_image(

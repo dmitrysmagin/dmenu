@@ -291,6 +291,7 @@ int conf_load()
     if (cfg_main == NULL) return CFG_PARSE_ERROR;
     if (cfg_getbool(cfg_main, "ReadOnly"))
     {
+        log_debug("Setting Readonly via Config");
         set_write_fs(0);
     }
     

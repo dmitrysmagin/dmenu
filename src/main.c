@@ -25,6 +25,7 @@
 #include "colorpicker.h"
 #include "imageviewer.h"
 
+#include "loading.h"
 #include "conf.h"
 #include "brightness.h"
 #include "volume.h"
@@ -53,36 +54,38 @@ int init_system() {
     // load config
     if (conf_load(NULL)) return 1;
     
-    if (can_write_fs()) 
-    {
-        clear_last_command();
-    }
+    loading_set_level(22);
     
-    //Show saved image as soon as possible to help hide startup times
-    if (can_write_fs()) //Only show if it can be written
-    {
-        show_menu_snapshot(screen);
-    }
+    if (can_write_fs()) clear_last_command();
     
     // Read saved persistent state
     if (!persistent_init())
     {
         log_error("Unable to initialize persistent memory");
     }
+    
+    loading_set_level(33);
         
     //Init OSD 
     {
         brightness_init();
+        loading_set_level(44);
+        
         volume_init();
+        loading_set_level(55);
+        
         if (!dosd_init())
         {
             log_error("Unable to initialize OSD");
             return 1;
         }
+        loading_set_level(66);
     }
     
     // Init sound
     sound_init();
+    loading_set_level(77);
+    
     
     // init menu
     if (menu_init())
@@ -90,6 +93,7 @@ int init_system() {
         log_error("Unable to load menu");
         return 1;
     }
+    loading_set_level(88);
     
     return 0;
 }
@@ -115,13 +119,19 @@ int init_display() {
     {
         log_error("Unable to set %dx%d video: %s", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_GetError());
         return 1;
+    } else {
+        loading_init(screen);
+        loading_set_level(0);
     }
     
-    screen_cache = create_surface(SCREEN_WIDTH, SCREEN_HEIGHT, 24, 0xFF,0xFF,0xFF,0);
+    screen_cache = create_surface(SCREEN_WIDTH, SCREEN_HEIGHT, 24, 0xFFFFFF,0);
     
     
     //Ready fonts
     TTF_Init();
+    
+    //Load Screen
+    loading_set_level(11);
     
     return 0;
 }
@@ -129,7 +139,8 @@ int init_display() {
 int init() {
     log_debug("Initializing");
     
-    if (!filesystem_writeable()) set_write_fs(0);
+    set_write_fs(filesystem_writeable()); 
+    log_message("Filesystem Writeable: %d", filesystem_writeable());
     
     #ifdef DINGOO_BUILD
     // Need to ignore SIGHUP if we are started by init.
@@ -157,11 +168,6 @@ void deinit(DeinitLevel level) {
     imageviewer_deinit();
     state = MAINMENU;
 
-    // Save snapshot, and set menu state
-    menu_force_redraw(screen);
-    draw_osd(screen);
-    make_menu_snapshot(screen, 1);
-    
     if (level == SHUTDOWN) 
     {
         if (can_write_fs()) 
@@ -169,6 +175,7 @@ void deinit(DeinitLevel level) {
             save_menu_snapshot(screen);
         }
         
+        loading_deinit();
         sound_deinit();
         brightness_deinit();
         volume_deinit();
