@@ -21,7 +21,7 @@ void brightness_init()
     log_debug("Initializing");
 
     brightness_icon = load_osd_image("brightness.png");
-    brightness_level = bound((int)cfg_getint(cfg_main, "Bright"), 10, 100);
+    brightness_level = bound((int)cfg_getint(cfg_main, "Bright"), 10, 99);
     
     //Icon position
     init_rect(&brightness_icon_rect,
@@ -63,7 +63,7 @@ void brightness_set(int level)
 {
     brightness_dimmed = 0;
     brightness_changed = 1;
-    brightness_level = bound(level, 10, 100);
+    brightness_level = bound(level, 10, 99);
     brightness_write(brightness_level);
     cfg_setint( cfg_main, "Bright", (long)brightness_level );
 }
