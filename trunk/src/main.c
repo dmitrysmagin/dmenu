@@ -140,7 +140,6 @@ int init() {
     log_debug("Initializing");
     
     set_write_fs(filesystem_writeable()); 
-    log_message("Filesystem Writeable: %d", filesystem_writeable());
     
     #ifdef DINGOO_BUILD
     // Need to ignore SIGHUP if we are started by init.
@@ -164,11 +163,6 @@ void deinit(DeinitLevel level) {
     
     int shutdown = level == SHUTDOWN;
     
-    if (shutdown) {
-        loading_start();
-        loading_set_level(99);
-    }
-    
     // de-init everything
     colorpicker_deinit();
     filelist_deinit();
@@ -177,27 +171,19 @@ void deinit(DeinitLevel level) {
 
     if (shutdown) 
     {   
-        loading_set_level(88);
         sound_deinit();
-        loading_set_level(77);
         brightness_deinit();
-        loading_set_level(66);
         volume_deinit();
-        loading_set_level(55);
         dosd_deinit();
-        loading_set_level(44);
     }
     
     menu_deinit();
     
     if (level == SHUTDOWN) 
     {
-        loading_set_level(33);
         //Close down fonts
         TTF_Quit();
-        loading_set_level(22);
         conf_unload();
-        loading_set_level(11);
         loading_deinit();
     }
 }
@@ -293,7 +279,7 @@ void listen() {
     MenuState prevstate;
     
     int last_key_time = SDL_GetTicks();
-    int inactive_delay = cfg_getint(cfg_main, "DimmerDelay");
+    int inactive_delay = cfg_getint(cfg_main, "DimmerDelay")*1000;
     
     //Allow for easier menu nav
     SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
@@ -339,7 +325,7 @@ void listen() {
             } // end switch
         } // end of message processing
         
-        if (inactive_delay > 0 && (SDL_GetTicks()-last_key_time) > (inactive_delay*1000)) 
+        if (inactive_delay > 0 && inactive_delay < (SDL_GetTicks()-last_key_time)) 
         {
             brightness_dim(1);
         }
