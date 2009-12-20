@@ -162,33 +162,42 @@ int init() {
 void deinit(DeinitLevel level) {
     log_debug("De-initializing, level %d", level);
     
+    int shutdown = level == SHUTDOWN;
+    
+    if (shutdown) {
+        loading_start();
+        loading_set_level(99);
+    }
+    
     // de-init everything
     colorpicker_deinit();
     filelist_deinit();
     imageviewer_deinit();
     state = MAINMENU;
 
-    if (level == SHUTDOWN) 
-    {
-        if (can_write_fs()) 
-        {
-            save_menu_snapshot(screen);
-        }
-        
-        loading_deinit();
+    if (shutdown) 
+    {   
         sound_deinit();
+        loading_set_level(88);
         brightness_deinit();
+        loading_set_level(77);
         volume_deinit();
+        loading_set_level(66);
         dosd_deinit();
+        loading_set_level(55);
     }
     
     menu_deinit();
     
     if (level == SHUTDOWN) 
     {
+        loading_set_level(44);
         //Close down fonts
         TTF_Quit();
+        loading_set_level(33);
         conf_unload();
+        loading_set_level(22);
+        loading_deinit();
     }
 }
 
