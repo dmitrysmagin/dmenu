@@ -4,7 +4,6 @@
 
 int brightness_level;
 int brightness_dimmed;
-int brightness_changed;
 
 SDL_Surface* brightness_icon;
 SDL_Rect brightness_icon_rect;
@@ -21,25 +20,20 @@ void brightness_init()
     log_debug("Initializing");
 
     brightness_icon = load_osd_image("brightness.png");
-    brightness_level = bound((int)cfg_getint(cfg_main, "Bright"), 9, 99);
     
     //Icon position
     init_rect(&brightness_icon_rect,
         BRIGHTNESS_ICON_X, BRIGHTNESS_ICON_Y,
         BRIGHTNESS_ICON_W, BRIGHTNESS_ICON_H);
     
-    brightness_set(brightness_level);
+    brightness_set((int)cfg_getint(cfg_main, "Bright"));
 }
 
 void brightness_write(int level)
 {
     #ifdef DINGOO_BUILD
         FILE *brt_fd = load_file_or_die(BACKLIGHT_DEVICE, "w");
-        fprintf(brt_fd, "%d", brightness_levels[level] );
-        #ifdef FSYNC
-            int file_no = fileno(brt_fd);
-            fsync(file_no);
-        #endif
+        fprintf(brt_fd, "%d", level );
         fclose(brt_fd);
     #endif
 }
@@ -62,7 +56,6 @@ void brightness_dim(int on)
 void brightness_set(int level) 
 {
     brightness_dimmed = 0;
-    brightness_changed = 1;
     brightness_level = bound(level, 9, 99);
     brightness_write(brightness_level);
     cfg_setint( cfg_main, "Bright", (long)brightness_level );
