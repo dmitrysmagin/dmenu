@@ -18,6 +18,11 @@
 #define SOUND_ENABLED        1
 #endif
 
+int  FILESYSTEM_READ_ONLY;
+#define set_write_fs(b)      FILESYSTEM_READ_ONLY = !b
+#define can_write_fs()       !FILESYSTEM_READ_ONLY
+#define cant_write_fs()      FILESYSTEM_READ_ONLY
+
 #define DIMMER_DELAY         5
 #define DMENU_THEMES         DMENU_PATH "themes/"
 #define DMENU_CONF_FILE      DMENU_PATH DMENU_CONF_FILE_NAME
@@ -32,10 +37,6 @@
 
 char THEME_PATH[PATH_MAX];
 char THEME_NAME[100];
-
-#ifndef FILESYSTEM_READ_ONLY
-int  FILESYSTEM_READ_ONLY;
-#endif
 
 //Device Info
 #define BACKLIGHT_DEVICE     "/proc/jz/lcd_backlight"

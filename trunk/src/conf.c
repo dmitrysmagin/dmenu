@@ -104,9 +104,11 @@ cfg_opt_t selectordir_opts[] = {
 cfg_opt_t main_opts[] = {
     CFG_STR("Theme", "default", CFGF_NONE),
     CFG_STR_LIST("SearchPath", "{}", CFGF_NONE),
-    CFG_BOOL("AllowDynamicThemeChange", cfg_false, CFGF_NONE),
+    //@decprecated
+    CFG_BOOL("AllowDynamicThemeChange", cfg_false, CFGF_NONE), 
     CFG_BOOL("VolDisp", cfg_false, CFGF_NONE),
     CFG_BOOL("BrightDisp", cfg_false, CFGF_NONE),
+    CFG_BOOL("ReadOnly", cfg_false, CFGF_NONE),
     CFG_INT("SndVol", 50, CFGF_NONE),
     CFG_INT("Bright", 3, CFGF_NONE),
     CFG_STR("Background", 0, CFGF_NONE),
@@ -168,9 +170,10 @@ FILE* open_conf_file(cfg_t* cfg, char* file) {
 void close_conf_file(FILE* fp) {
     
     log_debug("Closing conf file");
-    int file_no;
-    file_no = fileno(fp);
-    fsync(file_no);
+    #ifdef FSYNC
+        int file_no = fileno(fp);
+        fsync(file_no);
+    #endif
     fclose(fp);
 }
 
@@ -286,6 +289,10 @@ int conf_load()
     // load dmenu.ini
     cfg_main = conf_from_file(main_opts, DMENU_CONF_FILE);
     if (cfg_main == NULL) return CFG_PARSE_ERROR;
+    if (cfg_getbool(cfg_main, "ReadOnly"))
+    {
+        set_write_fs(0);
+    }
     
     //Find theme path
     int rc = conf_load_theme(cfg_getstr(cfg_main, "Theme"));
@@ -304,7 +311,7 @@ void conf_unload()
     cfg_free(cfg);
 
     // Write to dmenu.ini
-    if (!FILESYSTEM_READ_ONLY) 
+    if (can_write_fs()) 
     {
         conf_to_file(cfg_main, DMENU_CONF_FILE);
     }
@@ -520,8 +527,6 @@ char** conf_get_item_path(cfg_t* item) {
 
 void conf_themeselect(char* themedir)
 {
-    if (!cfg_getbool(cfg_main, "AllowDynamicThemeChange")) return;
-    
     char* theme, *theme_name;
     if (strrchr(themedir, '.') != NULL) {
         theme = strndup(themedir, strrpos(themedir, '/')); //Strip off filename
@@ -538,7 +543,7 @@ void conf_themeselect(char* themedir)
     log_debug("Setting theme: %s", theme_name);
     cfg_setstr(cfg_main, "Theme", theme_name);
 
-    if (!FILESYSTEM_READ_ONLY) 
+    if (can_write_fs()) 
     {
         conf_to_file(cfg_main, DMENU_CONF_FILE);
     }
@@ -555,7 +560,7 @@ void conf_backgroundselect(char* bgimage)
     log_debug("Setting background image: %s", bgimage);
     cfg_setstr(cfg_main, "Background", bgimage);
     
-    if (!FILESYSTEM_READ_ONLY) 
+    if (can_write_fs()) 
     {
         conf_to_file(cfg_main, DMENU_CONF_FILE);
     }
@@ -568,7 +573,7 @@ void conf_colorselect(char* color)
     log_debug("Setting font color: %s", color);
     cfg_setstr(cfg_main, "FontColor", color);
    
-    if (!FILESYSTEM_READ_ONLY) 
+    if (can_write_fs()) 
     {
         conf_to_file(cfg_main, DMENU_CONF_FILE);
     }
@@ -577,9 +582,7 @@ void conf_colorselect(char* color)
 }
 
 void conf_dirselect(cfg_t* menu_item, char* dir) 
-{
-    if (FILESYSTEM_READ_ONLY) return;
-    
+{    
     cfg_t* selector;
     cfg_setstr(menu_item, "SelectorDir", dir);
 

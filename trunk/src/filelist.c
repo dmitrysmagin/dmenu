@@ -425,7 +425,7 @@ void filelist_changedir(Direction dir)
 
 void filelist_store_dir()
 {
-    if (fl_global.can_change_dir) 
+    if (fl_global.can_change_dir && can_write_fs()) 
     {
         conf_dirselect(menu_active_item_config, fl_global.current_path);
     }

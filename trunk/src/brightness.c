@@ -2,11 +2,11 @@
 #include "common.h"
 #include "resource.h"
 
-int brightness_levels[5]={10,25,50,75,99};
 int brightness_level;
 int brightness_dimmed;
+int brightness_changed;
 
-SDL_Surface* brightness_icons[5];
+SDL_Surface* brightness_icon;
 SDL_Rect brightness_icon_rect;
 
 extern cfg_t *cfg_main;
@@ -19,15 +19,9 @@ int brightness_enabled()
 void brightness_init() 
 {
     log_debug("Initializing");
-    
-    char file[30];
-    int i;
-    for (i=0;i<5;i++) {
-        sprintf(file, "STATbright%d.png", i);
-        brightness_icons[i] = load_osd_image(file);
-    }
-    
-    brightness_level = bound((int)cfg_getint(cfg_main, "Bright"), 0, 4);
+
+    brightness_icon = load_osd_image("brightness.png");
+    brightness_level = bound((int)cfg_getint(cfg_main, "Bright"), 10, 100);
     
     //Icon position
     init_rect(&brightness_icon_rect,
@@ -40,19 +34,19 @@ void brightness_init()
 void brightness_write(int level)
 {
     #ifdef DINGOO_BUILD
-    int file_no;
-    FILE *brt_fd = load_file_or_die(BACKLIGHT_DEVICE, "w");
-    fprintf(brt_fd, "%d", brightness_levels[level] );
-    file_no = fileno(brt_fd);
-    fsync(file_no);
-    fclose(brt_fd);
+        FILE *brt_fd = load_file_or_die(BACKLIGHT_DEVICE, "w");
+        fprintf(brt_fd, "%d", brightness_levels[level] );
+        #ifdef FSYNC
+            int file_no = fileno(brt_fd);
+            fsync(file_no);
+        #endif
+        fclose(brt_fd);
     #endif
-    
 }
 
 void brightness_change(Direction dir)
 {
-    brightness_set(brightness_level + (dir==PREV?-1:1));
+    brightness_set(brightness_level + (dir==PREV?-1:1)*10);
 }
 
 void brightness_dim(int on) 
@@ -68,19 +62,20 @@ void brightness_dim(int on)
 void brightness_set(int level) 
 {
     brightness_dimmed = 0;
-    brightness_level = bound(level, 0, 4);
+    brightness_changed = 1;
+    brightness_level = bound(level, 10, 100);
     brightness_write(brightness_level);
     cfg_setint( cfg_main, "Bright", (long)brightness_level );
 }
 
 void brightness_show(SDL_Surface *surface) 
 {
-    SDL_BlitSurface( brightness_icons[brightness_level], NULL, surface, &brightness_icon_rect );
+    int alpha = (int)(255.0*(brightness_level/100.0));
+    blitSurfaceAlpha(brightness_icon, NULL, surface, &brightness_icon_rect, alpha);
 }
 
 void brightness_deinit() 
 {
     log_debug("De-initializing");
-    int i;
-    for (i=0;i<5;i++) free_surface(brightness_icons[i]);
+    free_surface(brightness_icon);
 }
