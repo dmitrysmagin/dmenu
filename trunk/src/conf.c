@@ -258,7 +258,7 @@ void conf_process_theme()
             strcat(work_path, namelist[i]->d_name);
             strcat(work_path, "/dmenu.cfg");
             free_erase(namelist[i]);
-            conf_merge_standalone(work_path);
+			if ( access(work_path, F_OK) == 0 ) conf_merge_standalone(work_path);
         }
         free_erase(namelist);
     }
