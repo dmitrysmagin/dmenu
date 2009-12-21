@@ -583,6 +583,7 @@ MenuState menu_keypress(SDLKey key)
         case DINGOO_BUTTON_A:
             menu_update_items();
 
+			if (menu_active_item_config == 0) break;
             if (active_conf_bool("Selector") 
                 && !internal_command(active_conf_str("Executable"))) 
             {
