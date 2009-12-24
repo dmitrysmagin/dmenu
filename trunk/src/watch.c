@@ -38,7 +38,7 @@ void watch_show(SDL_Surface* surface)
 
 	sprintf( watch_text, "%04d/%02d/%02d %02d:%02d:%02d",
 			t_st->tm_year,
-			t_st->tm_mon,
+			t_st->tm_mon +1,
 			t_st->tm_mday,
 			t_st->tm_hour,
 			t_st->tm_min,
