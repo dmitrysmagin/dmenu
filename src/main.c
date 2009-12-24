@@ -29,6 +29,7 @@
 #include "conf.h"
 #include "brightness.h"
 #include "volume.h"
+#include "watch.h"
 #include "sound.h"
 #include "persistent.h"
 #include "dosd/dosd.h"
@@ -73,6 +74,9 @@ int init_system() {
         
         volume_init();
         loading_set_level(55);
+
+		watch_init();
+		loading_set_level(60);
         
         if (!dosd_init())
         {
@@ -201,6 +205,7 @@ void draw_osd(SDL_Surface* screen) {
     dosd_show(screen);    
     if (volume_enabled())     volume_show(screen);
     if (brightness_enabled()) brightness_show(screen);
+    if (watch_enabled())      watch_show(screen);
 }
 
 /**
