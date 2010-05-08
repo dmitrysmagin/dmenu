@@ -15,6 +15,10 @@ int brightness_enabled()
     return cfg_getbool(cfg_main,"BrightDisp");
 }
 
+int brightness_is_dimmed() {
+	return brightness_dimmed;
+}
+
 void brightness_init() 
 {
     log_debug("Initializing");

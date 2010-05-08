@@ -1,5 +1,5 @@
-                               Dmenu 0.6
-                               =========
+                               Dmenu 0.7(test release)
+                               =======================
 
 Dmenu is a simple menu system for Dingux (Linux on Dingoo A320). It resembles
 the original XMB-like menu comes with the stock Dingoo A320 firmware.
@@ -36,7 +36,7 @@ left, right key - select menu
 left, B key - close SubMenu if you opened
 up, down key - select menu item
 A key - run the selected menu item / open SubMenu
-Select key - exit dmenu
+Select + Start key - exit dmenu
 R key - SoundVolume +5%
 L key - SoundVolume -5%
 X key - Brightness level up

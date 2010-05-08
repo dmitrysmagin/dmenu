@@ -109,6 +109,7 @@ cfg_opt_t main_opts[] = {
     CFG_BOOL("VolDisp", cfg_false, CFGF_NONE),
     CFG_BOOL("BrightDisp", cfg_false, CFGF_NONE),
     CFG_BOOL("WatchDisp", cfg_false, CFGF_NONE),
+	CFG_BOOL("SpeedDisp", cfg_false, CFGF_NONE),
     CFG_BOOL("ReadOnly", cfg_false, CFGF_NONE),
     CFG_INT("SndVol", 50, CFGF_NONE),
     CFG_INT("Bright", 99, CFGF_NONE),
@@ -136,8 +137,12 @@ cfg_t* conf_from_file(cfg_opt_t* opts, char* file)
     int rc = cfg_parse(out, file);
     if (rc != CFG_SUCCESS) {
         char* action = rc == CFG_FILE_ERROR ? "load" : "parse";
-        log_error( "Unable to %s config file:%s . rc = %d", action, file, rc);
-        out = NULL;
+		if(strstr(action,"parse")) {
+	        log_debug( "Unable to %s config file:%s . rc = %d", action, file, rc);
+		} else {
+	        log_error( "Unable to %s config file:%s . rc = %d", action, file, rc);
+	        out = NULL;
+		}
     }
     return out;
 }
@@ -313,11 +318,11 @@ void conf_unload()
     cfg_free(cfg);
 
     // Write to dmenu.ini
-    if (can_write_fs()) 
+/*    if (can_write_fs()) 
     {
         conf_to_file(cfg_main, DMENU_CONF_FILE);
     }
-    
+*/    
     cfg_free(cfg_main);
     
     change_dir(DMENU_PATH);

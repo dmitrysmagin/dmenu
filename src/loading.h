@@ -5,6 +5,5 @@
 
 void loading_init(SDL_Surface* screen);
 void loading_start();
-void loading_set_level(int pct);
 void loading_deinit();
 #endif
