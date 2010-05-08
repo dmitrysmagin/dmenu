@@ -12,6 +12,7 @@
 #include "menu.h"
 
 int  brightness_enabled();
+int  brightness_is_dimmed();
 void brightness_init();
 void brightness_change(Direction dir);
 void brightness_dim(int on);

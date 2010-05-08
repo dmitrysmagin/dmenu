@@ -1,3 +1,20 @@
+[0.7]
+- Removed the loading status bar from the loading screen. This increased
+ loading speed noticably.
+- When the backlight is turned off after the dim timeout, the next keypress
+ will turn the backlight on but will not be processed - i.e. if you press A
+ when the screen is dark, it won't immediately launch whatever icon was active
+ when the dimmer came on. (was driving me crazy hehe)
+- Added the option to display the clock speed in MHz as part of the on screen
+ display.
+- Added the setting "SpeedDisp = true/false" in the dmenu.ini file for
+ controlling display of the clock speed.
+- Moved all transient writes from the dmenu active directory to /tmp (.tmp,
+ .next, .screen)
+- Disabled dmenu writing dmenu.ini every time it closes; dmenu.ini is written
+ to when the theme, background or font colour is changed.
+- Select + Start to exit dmenu instead of Select.
+
 [0.6]
 - Various bug fixes
 - Added ability to use global resources in themes.  

@@ -26,9 +26,9 @@ int  FILESYSTEM_READ_ONLY;
 #define DIMMER_DELAY         5
 #define DMENU_THEMES         DMENU_PATH "themes/"
 #define DMENU_CONF_FILE      DMENU_PATH DMENU_CONF_FILE_NAME
-#define DMENU_CONF_TEMP      DMENU_PATH DMENU_CONF_FILE_NAME ".tmp"
-#define DMENU_COMMAND_FILE   DMENU_PATH ".next"
-#define DMENU_SNAPSHOT       DMENU_PATH ".screen"
+#define DMENU_CONF_TEMP     "/tmp/.tmp"
+#define DMENU_COMMAND_FILE	"/tmp/.next"
+#define DMENU_SNAPSHOT		"/tmp/.screen"
 #define DMENU_BACKGROUNDS    DMENU_PATH "wallpapers/"
 #define GLOBAL_RESOURCE_PATH DMENU_PATH "resources/"
 #define DMENU_THEME_MISSING  GLOBAL_RESOURCE_PATH "notfound.png"
@@ -39,6 +39,7 @@ char THEME_PATH[PATH_MAX];
 char THEME_NAME[100];
 
 //Device Info
+#define CPU_DEVICE			"/proc/jz/cgm"
 #define BACKLIGHT_DEVICE     "/proc/jz/lcd_backlight"
 #define MIXER_DEVICE         "/dev/mixer"
 #define BATTERY_DEVICE       "/proc/jz/battery"
@@ -51,13 +52,6 @@ char THEME_NAME[100];
 #define SCREEN_HEIGHT        240
 #define SCREEN_COLOR_DEPTH   16
 #define SCREEN_BPP           (SCREEN_COLOR_DEPTH>>3)
-
-#define LOADING_BAR_WIDTH    (SCREEN_WIDTH-40)
-#define LOADING_BAR_HEIGHT   36
-#define LOADING_BAR_PADDING  3
-#define LOADING_BAR_BG_COLOR 0xFFFFFF
-#define LOADING_BAR_FG_COLOR 0
-
 
 #define MENU_ACTIVE_ALPHA    255
 #define MENU_INACTIVE_ALPHA  127
@@ -127,5 +121,11 @@ char THEME_NAME[100];
 
 //Watch positioning
 #define WATCH_DISP_X	2
-#define WATCH_DISP_Y	0
-#define WATCH_FONT_SIZE	13
+#define WATCH_DISP_Y	1
+#define WATCH_FONT_SIZE	12
+
+//MHz display positioning
+#define CPU_DISP_X		175
+#define CPU_DISP_Y		1
+#define CPU_FONT_SIZE	12
+

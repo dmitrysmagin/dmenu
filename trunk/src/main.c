@@ -40,6 +40,7 @@ static Uint32 next_time;
 SDL_Surface *screen, *screen_cache;
 MenuState state = MAINMENU;
 int program_done;
+bool escape_held;
 
 Uint32 time_left(void)
 {
@@ -55,8 +56,6 @@ int init_system() {
     // load config
     if (conf_load(NULL)) return 1;
     
-    loading_set_level(22);
-    
     if (can_write_fs()) clear_last_command();
     
     // Read saved persistent state
@@ -65,39 +64,26 @@ int init_system() {
         log_error("Unable to initialize persistent memory");
     }
     
-    loading_set_level(33);
-        
     //Init OSD 
     {
         brightness_init();
-        loading_set_level(44);
-        
         volume_init();
-        loading_set_level(55);
-
 		watch_init();
-		loading_set_level(60);
-        
         if (!dosd_init())
         {
             log_error("Unable to initialize OSD");
             return 1;
         }
-        loading_set_level(66);
     }
     
     // Init sound
     sound_init();
-    loading_set_level(77);
-    
-    
     // init menu
     if (menu_init())
     {
         log_error("Unable to load menu");
         return 1;
     }
-    loading_set_level(88);
     
     return 0;
 }
@@ -125,7 +111,6 @@ int init_display() {
         return 1;
     } else {
         loading_init(screen);
-        loading_set_level(0);
     }
     
     screen_cache = create_surface(SCREEN_WIDTH, SCREEN_HEIGHT, 24, 0xFFFFFF,0);
@@ -133,10 +118,6 @@ int init_display() {
     
     //Ready fonts
     TTF_Init();
-    
-    //Load Screen
-    loading_set_level(11);
-    
     return 0;
 }
 
@@ -254,19 +235,23 @@ void handle_global_key(SDLKey key) {
     //Handle OSD activity
     Direction dir  = getKeyDir(key);
     if (state == MAINMENU) {
-        switch (key) {
-            case DINGOO_BUTTON_L:
-            case DINGOO_BUTTON_R:
-                volume_change(dir);
-                sound_out( GLOBAL_KEY );
-                break;
-            case DINGOO_BUTTON_X:
-            case DINGOO_BUTTON_Y:
-                brightness_change(dir);
-                sound_out( GLOBAL_KEY );
-                break;
-            default: break;
-        }
+		if(escape_held) {
+			log_debug("No functions defined yet for esc + key");
+		} else {
+	        switch (key) {
+	            case DINGOO_BUTTON_L:
+	            case DINGOO_BUTTON_R:
+	                volume_change(dir);
+	                sound_out( GLOBAL_KEY );
+	                break;
+	            case DINGOO_BUTTON_X:
+	            case DINGOO_BUTTON_Y:
+	                brightness_change(dir);
+	                sound_out( GLOBAL_KEY );
+	                break;
+	            default: break;
+	        }
+		}
     }
 }
 
@@ -282,6 +267,7 @@ void listen() {
     SDLKey key;
     SDL_Event event;
     MenuState prevstate;
+	escape_held = false;
     
     int last_key_time = SDL_GetTicks();
     int inactive_delay = cfg_getint(cfg_main, "DimmerDelay")*1000;
@@ -300,16 +286,31 @@ void listen() {
                 // exit if the window is closed
                 case SDL_QUIT: quit(); break;
 
+				case SDL_KEYUP:
+					key = event.key.keysym.sym;
+					if (key == SDLK_ESCAPE) escape_held = false;
+					break;
+
                 // check for keypresses
                 case SDL_KEYDOWN:
                     key = event.key.keysym.sym;
-                    // exit if ESCAPE is pressed
+
                     if (key == SDLK_ESCAPE) {
-                        quit();
+						escape_held = true;
                         break;
                     }
+					if ((key == SDLK_RETURN) && (escape_held)) {
+						quit();
+						break;
+					}
 
                     if (dosd_is_locked()) break;
+
+                    last_key_time = SDL_GetTicks();
+					if (brightness_is_dimmed()) {
+						brightness_dim(0);
+						break;
+					}
 
                     prevstate = state;
                     switch (state) {
@@ -321,17 +322,14 @@ void listen() {
                     if (state == MAINMENU && prevstate != state) {
                         menu_force_redraw(screen_cache);
                     }
-                    
-                    handle_global_key(key);
-                    
+
                     brightness_dim(0);
-                    last_key_time = SDL_GetTicks();
+                    handle_global_key(key);
                     break;
             } // end switch
         } // end of message processing
         
-        if (inactive_delay > 0 && inactive_delay < (SDL_GetTicks()-last_key_time)) 
-        {
+        if (inactive_delay > 0 && inactive_delay < (SDL_GetTicks()-last_key_time)) {
             brightness_dim(1);
         }
 

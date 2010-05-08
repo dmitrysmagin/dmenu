@@ -1,5 +1,5 @@
 #!/bin/sh
-ACT=".next"
+ACT="/tmp/.next"
 CMD="dmenu.bin"
 if [ "`pwd`" != "/usr/local/dmenu" ]; then 
     CMD="dmenu-host.bin"
@@ -9,11 +9,12 @@ touch "$ACT"
 
 if ./$CMD; then
     if [ -f "$ACT" ]; then 
-        if  ! sh ./$ACT; then
-            sleep 5
+        if  ! sh $ACT; then
+#           sleep 5
+            echo
         fi
         rm -f "$ACT"
     fi
 else
-    sleep 1
+    sleep 30
 fi
