@@ -3,7 +3,7 @@
 // the system ARG_MAX might be too large. just use a fixed
 // value here.
 #define MAX_CMD_LEN   4096
-#define TICK_INTERVAL 100 // this is 1000/100 = 10 fps
+#define TICK_INTERVAL 50 // this is 1000/50 = 20 fps
 
 //Currently the hardcoded defaults are intended for Dingoo A320
 #ifndef DMENU_PATH

@@ -57,6 +57,7 @@ int number_of_submenuitem;
 SDL_Surface* tmp_surface;
 
 int current_menu_index;
+int current_menu_offset, current_menu_offset_step; //used for animation
 int current_menuitem_index;
 int current_submenuitem_index;
 
@@ -159,6 +160,7 @@ int menu_init()
     /*fill_fb(background->pixels);*/
 
     current_menu_index = 0;
+    current_menu_offset = 0;
     current_menuitem_index = 0;
     current_submenuitem_index = 0;
     
@@ -327,15 +329,26 @@ void menu_draw_hitems(
 {
     int draw_item = current_item - 1;
 
+    //If we are animating scrolling, do not highlight menu icon
+    int no_alpha = icon_rect->x?1:0;
+
     //While there are empty slots to the left of the menu
     //   create a gap that is a single icon wide
     while (draw_item<0) {
         icon_rect->x += icons[0]->w; 
         draw_item++;
     }
-    
+
     while (1) {
         int alpha = item_alpha(current_item, draw_item); 
+        //Do not highlight during scrolling animation
+        if (alpha == MENU_ACTIVE_ALPHA && no_alpha)
+            alpha = item_alpha(0,1);
+        //We need to save the dest rect x position. SDL_BlitSurface will
+        //update dest rect after clipping. If our x position is negative,
+        //it will become 0 after this, which causes problem during
+        //scrolling animation
+        int saved_icon_rect_x = icon_rect->x;
         menu_draw_single_item(
             screen, 
             icons[draw_item], icon_rect, 
@@ -347,18 +360,19 @@ void menu_draw_hitems(
             init_rect_pos(child_offset, icon_rect->x, icon_rect->y);
         }
 
-        icon_rect->x += icons[draw_item]->w;
+        icon_rect->x = saved_icon_rect_x + icons[draw_item]->w;
 
         draw_item++;
         
         if ((icon_rect->x >= screen->w) || (draw_item >= number_of_items)) break;
     }
+
 }
 
 int menu_draw(SDL_Surface* screen)
 {
     if (!menu_needs_redraw) return 0;
-    menu_needs_redraw = 0;
+    if (current_menu_offset == 0) menu_needs_redraw = 0;
     int subshow = number_of_submenuitem > 0;
     
     SDL_Rect icon_rect, text_rect, offset;
@@ -370,8 +384,10 @@ int menu_draw(SDL_Surface* screen)
     // clear screen
     SDL_BlitSurface(background, 0, screen, &offset);
     
-    //Set menu offset
+    //Set menu vertical offset
     icon_rect.y = (screen->h - menu_icons[0]->h - MENU_TEXT_HEIGHT) / 3; // assuming the font height for menu name is 20
+    //Set menu horizontal offset
+    icon_rect.x = current_menu_offset;
 
     //Draw main menu items
     menu_draw_hitems(
@@ -379,6 +395,17 @@ int menu_draw(SDL_Surface* screen)
         menu_icons, &icon_rect, 
         menu_text, &text_rect, 
         current_menu_index,  number_of_menu, subshow); 
+
+    //Do not draw menu item when we are scrolling
+    if (current_menu_offset > 0) {
+        current_menu_offset -= current_menu_offset_step;
+        if (current_menu_offset < 0) current_menu_offset = 0;
+        return 1;
+    } else if (current_menu_offset < 0) {
+        current_menu_offset += current_menu_offset_step;
+        if (current_menu_offset > 0) current_menu_offset = 0;
+        return 1;
+    }
 
     //Draw menu items, starting at (x,y)
     menu_draw_vitems(
@@ -452,7 +479,16 @@ void menu_move(Direction dir)
     
     menu_state_changed();
     
+    int prev_menu_index = current_menu_index;
     current_menu_index = wrap(current_menu_index+ delta, 0, number_of_menu-1);
+    if (dir == PREV) {
+        current_menu_offset = -menu_icons[current_menu_index]->w;
+        //scroll in 5 steps(frames)
+        current_menu_offset_step = menu_icons[current_menu_index]->w / 5;
+    } else {
+        current_menu_offset = menu_icons[prev_menu_index]->w;
+        current_menu_offset_step = menu_icons[prev_menu_index]->w / 5;
+    }
     sound_out( MENU_MOVE );
     current_menuitem_index = 0;
 }

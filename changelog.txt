@@ -14,6 +14,7 @@
 - Disabled dmenu writing dmenu.ini every time it closes; dmenu.ini is written
  to when the theme, background or font colour is changed.
 - Select + Start to exit dmenu instead of Select.
+- Menu scroll animation
 
 [0.6]
 - Various bug fixes
