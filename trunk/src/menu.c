@@ -58,6 +58,8 @@ SDL_Surface* tmp_surface;
 
 int current_menu_index;
 int current_menu_offset, current_menu_offset_step; //used for animation
+int current_menuitem_offset, current_menuitem_offset_step; //used for animation
+int current_submenuitem_offset, current_submenuitem_offset_step; //used for animation
 int current_menuitem_index;
 int current_submenuitem_index;
 
@@ -162,7 +164,9 @@ int menu_init()
     current_menu_index = 0;
     current_menu_offset = 0;
     current_menuitem_index = 0;
+    current_menuitem_offset = 0;
     current_submenuitem_index = 0;
+    current_submenuitem_offset = 0;
     
     // load font
     menu_font     = get_theme_font(MENU_TEXT_FONT_SIZE);
@@ -269,6 +273,11 @@ void menu_draw_vitems(
     int child_showing,   int is_parent, int lower_offset) {
   
     int draw_item = 0, alpha = 0, ypos = 0;
+    SDL_Rect clip_rect;
+
+    //Update vertical offset
+    int saved_offset_y = offset->y;
+    offset->y += current_menuitem_offset;
     
     icon_rect->x = offset->x;
 
@@ -278,6 +287,13 @@ void menu_draw_vitems(
         draw_item = current_item - 1;
         
         if (current_item > 0 && !child_showing) {
+
+            //Set clipping rectangle before blit
+            clip_rect.x = 0;
+            clip_rect.y = 0;
+            clip_rect.w = screen->w;
+            clip_rect.h = saved_offset_y;
+            SDL_SetClipRect(screen, &clip_rect);
             
             while (1) {
                 
@@ -302,14 +318,25 @@ void menu_draw_vitems(
         menu_active_rect.x = icon_rect->x;
         menu_active_rect.y = icon_rect->y;
 
+        //Set clipping rectangle before blit
+        clip_rect.x = 0;
+        clip_rect.y = saved_offset_y + lower_offset;
+        clip_rect.w = screen->w;
+        clip_rect.h = screen->h - clip_rect.y;
+        SDL_SetClipRect(screen, &clip_rect);
+
         while (1) { 
             alpha = item_alpha(current_item, draw_item)>>(child_showing?1:0);
+            //Do not highlight during scrolling animation
+            if (alpha == MENU_ACTIVE_ALPHA && current_menuitem_offset != 0)
+                alpha = item_alpha(0,1);
+            ypos = icon_rect->y; //icon_rect's position is overwritten by blitting 
             menu_draw_single_item(
                 screen, 
                 icons[draw_item], icon_rect, 
                 text[draw_item], text_rect, 
                 alpha, child_showing ? -1 : 0); 
-            icon_rect->y += icons[draw_item]->h;
+            icon_rect->y = ypos + icons[draw_item]->h;
             draw_item++;
             alpha--;
 
@@ -317,6 +344,9 @@ void menu_draw_vitems(
                 break; //Only draw first item if child showing
             }
         }
+
+        //Reset clipping rectangle after blit
+        SDL_SetClipRect(screen, NULL);
     }
 }
 
@@ -329,8 +359,8 @@ void menu_draw_hitems(
 {
     int draw_item = current_item - 1;
 
-    //If we are animating scrolling, do not highlight menu icon
-    int no_alpha = icon_rect->x?1:0;
+    //Set menu horizontal offset
+    icon_rect->x = current_menu_offset;
 
     //While there are empty slots to the left of the menu
     //   create a gap that is a single icon wide
@@ -342,7 +372,7 @@ void menu_draw_hitems(
     while (1) {
         int alpha = item_alpha(current_item, draw_item); 
         //Do not highlight during scrolling animation
-        if (alpha == MENU_ACTIVE_ALPHA && no_alpha)
+        if (alpha == MENU_ACTIVE_ALPHA && current_menu_offset != 0)
             alpha = item_alpha(0,1);
         //We need to save the dest rect x position. SDL_BlitSurface will
         //update dest rect after clipping. If our x position is negative,
@@ -372,7 +402,10 @@ void menu_draw_hitems(
 int menu_draw(SDL_Surface* screen)
 {
     if (!menu_needs_redraw) return 0;
-    if (current_menu_offset == 0) menu_needs_redraw = 0;
+    if (current_menu_offset == 0 && current_menuitem_offset == 0 &&
+        current_submenuitem_offset == 0) {
+        menu_needs_redraw = 0;
+    }
     int subshow = number_of_submenuitem > 0;
     
     SDL_Rect icon_rect, text_rect, offset;
@@ -386,8 +419,6 @@ int menu_draw(SDL_Surface* screen)
     
     //Set menu vertical offset
     icon_rect.y = (screen->h - menu_icons[0]->h - MENU_TEXT_HEIGHT) / 3; // assuming the font height for menu name is 20
-    //Set menu horizontal offset
-    icon_rect.x = current_menu_offset;
 
     //Draw main menu items
     menu_draw_hitems(
@@ -414,6 +445,17 @@ int menu_draw(SDL_Surface* screen)
         menuitem_text[current_menu_index], &text_rect, 
         current_menuitem_index, number_of_menuitem[current_menu_index],
         subshow, 1, menu_icons[current_menu_index]->h + MENU_TEXT_HEIGHT); 
+
+    //Do not draw submenu item when we are scrolling the menu items
+    if (current_menuitem_offset > 0) {
+        current_menuitem_offset -= current_menuitem_offset_step;
+        if (current_menuitem_offset < 0) current_menuitem_offset = 0;
+        return 1;
+    } else if (current_menuitem_offset < 0) {
+        current_menuitem_offset += current_menuitem_offset_step;
+        if (current_menuitem_offset > 0) current_menuitem_offset = 0;
+        return 1;
+    }
 
     //Draw submenu (will only show if it is active)
     // at this point, text_rect.x and text_rect.y should be at the position where we want to draw the current
@@ -504,10 +546,30 @@ void menu_move_item(Direction dir )
     int next_si = current_submenuitem_index + delta;
     
     if (!nosi) {
+        int prev_menuitem_index = current_menuitem_index;
         current_menuitem_index = wrap(next_mi, 0, nomi-1);
+        if (nomi > 1) { //Only animate if we have more than 1 menuitem
+            if (dir == PREV) {
+                current_menuitem_offset = -menuitem_icons[current_menu_index][current_menuitem_index]->h;
+                current_menuitem_offset_step = menuitem_icons[current_menu_index][current_menuitem_index]->h / 5;
+            } else {
+                current_menuitem_offset = menuitem_icons[current_menu_index][prev_menuitem_index]->h;
+                current_menuitem_offset_step = menuitem_icons[current_menu_index][prev_menuitem_index]->h / 5;
+            }
+        }
     }
     else {
+        int prev_submenuitem_index = current_submenuitem_index;
         current_submenuitem_index = wrap(next_si, 0, nosi-1);
+        if (nosi > 1) { //Only animate if we have more than 1 submenu item
+            if (dir == PREV) {
+                current_submenuitem_offset = -submenuitem_icons[current_submenuitem_index]->h;
+                current_submenuitem_offset_step = submenuitem_icons[current_submenuitem_index]->h / 5;
+            } else {
+                current_submenuitem_offset = submenuitem_icons[prev_submenuitem_index]->h;
+                current_submenuitem_offset_step = submenuitem_icons[prev_submenuitem_index]->h / 5;
+            }
+        }
     }
     sound_out( MENUITEM_MOVE );    
 }
