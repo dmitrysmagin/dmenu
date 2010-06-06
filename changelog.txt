@@ -1,3 +1,18 @@
+[June 6th, 2010, Stephanie]
+- added Shutdown Delay option; if idle in dmenu for N seconds, dingoo will
+  automatically power off -- unless it is currently charging
+- enabled charging detection for battery icon & added charging icon
+- watch and clockspeed font colour now matches user's chosen font colour
+- dmenu.ini is written if volume or brightness are changed
+- fixed a write to .tmp (now /tmp/.tmp)
+TODO: stabilize charging detection so it doesn't flipflop
+TODO: get brightness, sound & battery colour to match chosen font colour
+TODO: If usb cable is plugged in but dingoo is not charging, it will
+power off if idle past shutdown time, this causes it to reboot needlessly.
+Fix it to recognize usb cable even if not charging.
+TODO: Change hold-switch from using proc to using SDL key pause
+
+
 [0.7]
 - Removed the loading status bar from the loading screen. This increased
  loading speed noticably.

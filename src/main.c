@@ -35,6 +35,7 @@
 #include "dosd/dosd.h"
 
 extern cfg_t *cfg_main;
+extern int conf_changed;
 
 static Uint32 next_time;
 SDL_Surface *screen, *screen_cache;
@@ -271,7 +272,8 @@ void listen() {
     
     int last_key_time = SDL_GetTicks();
     int inactive_delay = cfg_getint(cfg_main, "DimmerDelay")*1000;
-    
+	int shutdown_delay = cfg_getint(cfg_main, "ShutdownDelay")*1000;
+
     //Allow for easier menu nav
     SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
         
@@ -329,9 +331,19 @@ void listen() {
             } // end switch
         } // end of message processing
         
-        if (inactive_delay > 0 && inactive_delay < (SDL_GetTicks()-last_key_time)) {
-            brightness_dim(1);
-        }
+        if ((inactive_delay > 0 && inactive_delay < (SDL_GetTicks()-last_key_time)) && !(brightness_is_dimmed())) {
+             brightness_dim(1);
+         }
+		if (shutdown_delay > 0 && shutdown_delay < (SDL_GetTicks()-last_key_time)) {
+			if(!(dosd_is_charging())) {
+				log_error("No activity for %d seconds, powering off.", (shutdown_delay/1000));
+				run_command("poweroff", "", "/");
+			} else {
+				// reset the shutdown clock so it doesn't power off as soon as the USB
+				// is unplugged
+				last_key_time = SDL_GetTicks() + inactive_delay;
+			}
+		}
 
         update_display(screen, state);
     } // end main loop

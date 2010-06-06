@@ -23,7 +23,8 @@ int  FILESYSTEM_READ_ONLY;
 #define can_write_fs()       !FILESYSTEM_READ_ONLY
 #define cant_write_fs()      FILESYSTEM_READ_ONLY
 
-#define DIMMER_DELAY         5
+#define DIMMER_DELAY         60
+#define SHUTDOWN_DELAY		0
 #define DMENU_THEMES         DMENU_PATH "themes/"
 #define DMENU_CONF_FILE      DMENU_PATH DMENU_CONF_FILE_NAME
 #define DMENU_CONF_TEMP     "/tmp/.tmp"
@@ -83,8 +84,8 @@ char THEME_NAME[100];
 #define IMAGE_SELECT_COLOR      0xFFFFFF
 #define IMAGE_SELECT_ALPHA      64
 
-#define DOSD_COLOR           0xFFFFFF
-#define DOSD_UPDATE_INTERVAL 500
+//#define DOSD_COLOR           0xFFFFFF
+#define DOSD_UPDATE_INTERVAL 1000
 #define DOSD_PADDING         4
 #define DOSD_BATTERY_WIDTH   19
 #define DOSD_LOCK_WIDTH      7
