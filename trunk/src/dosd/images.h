@@ -26,6 +26,7 @@ typedef enum {
     IMG_BATTERY_1,
     IMG_BATTERY_2,
     IMG_BATTERY_3,
+	IMG_BATTERY_C,
     IMG_LOCK,
     IMG_MAX
 } image_e;

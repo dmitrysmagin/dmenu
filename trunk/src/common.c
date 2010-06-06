@@ -47,7 +47,7 @@ void clear_last_command()
 int filesystem_writeable()
 {
     int ret;
-    FILE* f = fopen(".tmp", "w");
+    FILE* f = fopen(DMENU_CONF_TEMP, "w");
     ret = (f != NULL);
     if (f) fclose(f);
     return ret;

@@ -20,6 +20,7 @@ extern cfg_t *cfg_main;
 bool show_speed;
 SDL_Rect speed_dst_rect1, speed_dst_rect2;
 TTF_Font* speed_font;
+SDL_Color* dosd_color;
 
 // ___ Globals ___________________________________________
 // Global state
@@ -32,7 +33,6 @@ struct {
     bool is_locked;
     bool is_charging;
     BatteryState battery;
-    int battery_anim;
     unsigned int update_counter;
     // Measured in SDL_GetTick()s
     uint32_t next_update;
@@ -76,10 +76,7 @@ int dosd_init()
 	g_state.is_charging = false;
 #endif
     
-    int color = DOSD_COLOR;
-    
-    // Make room for alpha "channel"
-    color <<= 8; // RRGGBBAA
+    dosd_color = get_theme_font_color();
     
     for (i = 0; i < IMG_MAX; i++)
     {
@@ -103,10 +100,15 @@ int dosd_init()
             buf[j] = image_pallette[image_data->data[j]];
         }
         
-        //Let the surface handle coloring
-        surface = SDL_CreateRGBSurfaceFrom(
-            buf, image->w, image->h, 32, image->w * 4,
-            (0xFF<<24) & color, (0xFF<<16) & color, (0xFF<<8) & color, 0xFF);
+		int color = (dosd_color->r) << 24;
+		color += (dosd_color->g) << 16;
+		color += (dosd_color->b) << 8;
+
+		surface = SDL_CreateRGBSurfaceFrom(buf, image->w, image->h, 32, image->w * 4,
+			(0xff<<24) & color,
+			(0xff<<16) & color,
+			(0xff<<8) & color,
+			0xff);
         
         if (!surface) goto init_error;
         
@@ -129,6 +131,10 @@ int dosd_init()
 init_error:
     dosd_deinit();
     return 0;
+}
+
+void dosd_color_reset() {
+	dosd_color = get_theme_font_color();
 }
 
 void dosd_deinit()
@@ -173,7 +179,8 @@ void dosd_show(SDL_Surface* surface)
     
     // This is a bit of a hack, as it relies on battery_state_e
     // To have the same index as image_e
-    battery_status = g_state.is_charging ? g_state.battery_anim : g_state.battery;
+    battery_status = g_state.battery;
+	if ( g_state.is_charging ) battery_status = BAT_STATE_CHARGING;
     if (battery_status != BAT_STATE_EMPTY)
     {
         _blit(surface, battery_status, -1);
@@ -187,17 +194,10 @@ void dosd_show(SDL_Surface* surface)
 
 	if (show_speed) {
 		SDL_Surface* speed_display;
-		SDL_Color color = {225, 225, 225, 0};
-//		SDL_Color* color = get_theme_font_color();
 		char speed_text[10] = " ";
 		int disp_mhz = g_state.mhz;
-/*		if (g_state.mhz == 198) disp_mhz = 200;
-		if (g_state.mhz == 228) disp_mhz = 230;
-		if (g_state.mhz == 306) disp_mhz = 300;
-		if (g_state.mhz == 396) disp_mhz = 400;
-		if (g_state.mhz == 426) disp_mhz = 430; */
 		sprintf(speed_text, "%03d MHz", disp_mhz);
-		speed_display = draw_text(speed_text, speed_font, &color);
+		speed_display = draw_text(speed_text, speed_font, dosd_color);
 	    SDL_BlitSurface(speed_display, 0, surface, &speed_dst_rect1 );
 	    SDL_BlitSurface(speed_display, 0, surface, &speed_dst_rect2 );
 		free_surface(speed_display);
@@ -257,8 +257,7 @@ void _update()
     
     // FIXME: the GPIO bit indicating charge status seems
     // to randomly jump when a USB cable is attached.
-//	g_state.is_charging = ((gpio & GPIO_POWER_MASK) == 0);
-	g_state.is_charging = false;
+	g_state.is_charging = ((gpio & GPIO_POWER_MASK) == 0);
 
     // Lock status
     rewind(g_state.proc_gpio3);
@@ -279,14 +278,13 @@ void _update()
 		char line[80];
 		while( fgets(line, 80, g_state.proc_cgm) != NULL) {
 			if ( strstr(line, "PLL Freq") ) {
-//				log_error("line:%s", line);
 				g_state.mhz = atoi(strstr(strstr(line, ": "), " "));
 			}
 		}
 	}
 #else
     g_state.is_locked   = false;
-    g_state.is_charging = true;
+    g_state.is_charging = false;
     g_state.battery     = BAT_STATE_EMPTY;
 	g_state.mhz			= 0;
 #endif
@@ -294,15 +292,8 @@ void _update()
     // Next update
     g_state.next_update = SDL_GetTicks() + DOSD_UPDATE_INTERVAL;
     g_state.update_counter++;
-    
-    if (g_state.is_charging && g_state.update_counter % 2 == 0)
-    {
-        // This happens every 2 * DOSD_UPDATE_INTERVAL ticks
-        g_state.battery_anim++;
-        if (g_state.battery_anim >= BAT_STATE_MAX)
-        {
-            g_state.battery_anim =  BAT_STATE_EMPTY;
-        }
-    }
 }
 
+bool dosd_is_charging() {
+	return g_state.is_charging;
+}

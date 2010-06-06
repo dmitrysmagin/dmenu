@@ -14,5 +14,6 @@ int  watch_enabled();
 void watch_init();
 void watch_show(SDL_Surface *surface);
 void watch_deinit();
+void watch_color_reset();
 
 #endif

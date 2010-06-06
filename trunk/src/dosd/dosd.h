@@ -16,12 +16,14 @@
 int dosd_init();
 void dosd_deinit();
 void dosd_show(SDL_Surface *surface);
+void dosd_color_reset();
 
 inline bool dosd_is_locked();
+bool dosd_is_charging();
 
 typedef enum {
-    BAT_LEVEL_BEST=3739,
-    BAT_LEVEL_FAIR=3675,
+    BAT_LEVEL_BEST=3900,
+    BAT_LEVEL_FAIR=3700,
     BAT_LEVEL_LOW=3611
 } BatteryLevel;
 
@@ -30,6 +32,7 @@ typedef enum {
     BAT_STATE_LEVEL1,
     BAT_STATE_LEVEL2,
     BAT_STATE_FULL,
+	BAT_STATE_CHARGING,
     BAT_STATE_MAX
 } BatteryState;
 

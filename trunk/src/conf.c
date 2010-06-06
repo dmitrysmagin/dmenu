@@ -19,6 +19,8 @@
 #include "resource.h"
 #include "common.h"
 #include "conf.h"
+#include "watch.h"
+#include "dosd/dosd.h"
 #include "main.h"
 #include "menu.h"
 
@@ -115,6 +117,7 @@ cfg_opt_t main_opts[] = {
     CFG_INT("Bright", 99, CFGF_NONE),
     CFG_STR("Background", 0, CFGF_NONE),
     CFG_INT("DimmerDelay", DIMMER_DELAY, CFGF_NONE),
+	CFG_INT("ShutdownDelay", SHUTDOWN_DELAY, CFGF_NONE),
     CFG_STR("FontColor", 0, CFGF_NONE),
     CFG_STR("Font", 0, CFGF_NONE),
     
@@ -124,6 +127,7 @@ cfg_opt_t main_opts[] = {
 
 cfg_t *cfg;
 cfg_t *cfg_main;
+int conf_changed = 0;
 
 char* theme_path;
 
@@ -317,12 +321,11 @@ void conf_unload()
     free_erase(THEME_CONF_FILE);
     cfg_free(cfg);
 
-    // Write to dmenu.ini
-/*    if (can_write_fs()) 
-    {
-        conf_to_file(cfg_main, DMENU_CONF_FILE);
-    }
-*/    
+    if (can_write_fs()) {
+		if (conf_changed ==  1) {
+			conf_to_file(cfg_main, DMENU_CONF_FILE);
+		}
+	}
     cfg_free(cfg_main);
     
     change_dir(DMENU_PATH);
@@ -584,6 +587,8 @@ void conf_colorselect(char* color)
     {
         conf_to_file(cfg_main, DMENU_CONF_FILE);
     }
+	watch_color_reset();
+	dosd_color_reset();
     
     reload(RELOAD_MENU);
 }

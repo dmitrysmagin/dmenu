@@ -131,10 +131,16 @@ void save_menu_snapshot(SDL_Surface* screen)
 }
 
 SDL_Surface* load_osd_image( char* file ) {
-    SDL_Surface* tmp = load_global_image(file);
-    SDL_Surface* ret = tint_surface(tmp, DOSD_COLOR, 0xFF);
-    free_surface(tmp);
-    return ret;
+	SDL_Color* dosd_color = get_theme_font_color();
+	int color = 0;
+	color += (dosd_color->r) << 16;
+	color += (dosd_color->g) << 8;
+	color += dosd_color->b;
+	SDL_Surface* tmp = load_global_image(file);
+	SDL_Surface* ret = tint_surface(tmp, color, 0xFF);
+	free_surface(tmp);
+	free_color(dosd_color);
+	return ret;
 }
 
 SDL_Surface* load_global_image( char* file ) {
