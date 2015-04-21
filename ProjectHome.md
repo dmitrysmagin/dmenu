@@ -1,0 +1,1 @@
+This is a menu application (launcher) for Dingoo A320 (http://www.dingoo888.com/en_index.asp). It runs on Dingux (http://code.google.com/p/dingoo-linux/).
